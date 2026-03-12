@@ -15,7 +15,7 @@ A MERN stack storefront solution built for Nigerian Instagram and WhatsApp vendo
 
 - **Frontend** — React + Vite + CSS3
 - **Backend** — Node.js + Express
-- **Database** — MongoDB Atlas
+- **Database** — Railway
 - **Image Upload** — Cloudinary
 - **Auth** — JWT + bcrypt
 - **Hosting** — Netlify (frontend) + Render (backend)
