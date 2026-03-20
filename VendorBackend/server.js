@@ -20,9 +20,12 @@ app.use(express.json()); // allows app to read JSON from requests
 //Routes
 const authRoutes = require("./routes/auth")
 const categoryRoutes = require("./routes/categories")
+const productRoutes = require("./routes/products")
 
 app.use("/api/auth", authRoutes)
 app.use("/api/categories", categoryRoutes)
+app.use("/api/products", productRoutes)
+
 
 // test route
 app.get("/", (req, res) => {
