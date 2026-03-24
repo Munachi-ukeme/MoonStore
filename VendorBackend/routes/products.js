@@ -15,10 +15,11 @@ const upload = require("../middleware/upload")
 router.get("/", protect, getProducts)
 
 // POST /api/products — add product (with image upload)
-router.post("/", protect, checkProductLimit, upload.single("image"), addProduct)
+router.post("/", protect, checkProductLimit, upload.array("images", 3), addProduct)
+
 
 // PUT /api/products/:id — edit product (with optional image upload)
-router.put("/:id", protect, upload.single("image"), editProduct)
+router.put("/:id", protect, upload.array("images", 3), editProduct)
 
 // DELETE /api/products/:id — delete product
 router.delete("/:id", protect, deleteProduct)

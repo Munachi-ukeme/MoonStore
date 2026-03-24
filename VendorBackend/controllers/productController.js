@@ -19,7 +19,7 @@ const generateSlug = (name) => {
 const getProducts = async (req, res) => {
   try {
     const products = await Product.find({ sellerId: req.seller._id })
-      .populate("categoryId", "name") // fetch category name instead of just ID
+      .populate("categoryId", "name")
     res.json(products)
   } catch (error) {
     res.status(500).json({ message: error.message })
@@ -44,26 +44,37 @@ const addProduct = async (req, res) => {
     let slug = generateSlug(name)
 
     // 3. Check if slug already exists for this seller
-    const existingSlug = await Product.findOne({ 
-      sellerId: req.seller._id, 
-      slug 
+    const existingSlug = await Product.findOne({
+      sellerId: req.seller._id,
+      slug
     })
     if (existingSlug) {
       slug = `${slug}-${Date.now()}`
     }
 
-    // 4. Handle image upload
-    // req.file comes from upload middleware after sending to Cloudinary
-    const image = req.file ? req.file.path : ""
+    // 4. Check image limit based on plan
+    const imageLimits = { basic: 1, pro: 2, premium: 3 }
+    const allowedImages = imageLimits[req.seller.plan]
 
-    // 5. Create product
+    // 5. Handle multiple image uploads
+    let images = []
+    if (req.files && req.files.length > 0) {
+      if (req.files.length > allowedImages) {
+        return res.status(403).json({
+          message: `Your ${req.seller.plan} plan allows only ${allowedImages} image(s) per product, upgrade to upload more images`
+        })
+      }
+      images = req.files.map(file => file.path)
+    }
+
+    // 6. Create product
     const product = await Product.create({
       sellerId: req.seller._id,
       categoryId,
       name,
       price,
       description,
-      images: image ? [image] : [],
+      images,
       slug,
     })
 
@@ -96,14 +107,24 @@ const editProduct = async (req, res) => {
     product.categoryId = categoryId || product.categoryId
     product.inStock = inStock !== undefined ? inStock : product.inStock
 
-    // If new image uploaded — replace old one
-    if (req.file) {
-      // Delete old image from Cloudinary
-      if (product.images[0]) {
-        const publicId = product.images[0].split("/").pop().split(".")[0]
+    // If new images uploaded — delete old ones and replace
+    if (req.files && req.files.length > 0) {
+      const imageLimits = { basic: 1, pro: 2, premium: 3 }
+      const allowedImages = imageLimits[req.seller.plan]
+
+      if (req.files.length > allowedImages) {
+        return res.status(403).json({
+          message: `Your ${req.seller.plan} plan allows only ${allowedImages} image(s) per product, upgrade to upload more images`
+        })
+      }
+
+      // Delete old images from Cloudinary
+      for (const imageUrl of product.images) {
+        const publicId = imageUrl.split("/").pop().split(".")[0]
         await cloudinary.uploader.destroy(`vendorstore/${publicId}`)
       }
-      product.images = [req.file.path]
+
+      product.images = req.files.map(file => file.path)
     }
 
     // Update slug if name changed
@@ -133,9 +154,9 @@ const deleteProduct = async (req, res) => {
       return res.status(404).json({ message: "Product not found" })
     }
 
-    // Delete image from Cloudinary
-    if (product.images[0]) {
-      const publicId = product.images[0].split("/").pop().split(".")[0]
+    // Delete all images from Cloudinary
+    for (const imageUrl of product.images) {
+      const publicId = imageUrl.split("/").pop().split(".")[0]
       await cloudinary.uploader.destroy(`vendorstore/${publicId}`)
     }
 

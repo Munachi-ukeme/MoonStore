@@ -22,11 +22,16 @@ const authRoutes = require("./routes/auth")
 const categoryRoutes = require("./routes/categories")
 const productRoutes = require("./routes/products")
 const storeRoutes = require("./routes/store")
+const adminRoutes = require("./routes/admin")
+const sellerRoutes = require("./routes/seller")
+
 
 app.use("/api/auth", authRoutes)
 app.use("/api/categories", categoryRoutes)
 app.use("/api/products", productRoutes)
 app.use("/api/store", storeRoutes)
+app.use("/api/admin", adminRoutes);
+app.use("/api/seller", sellerRoutes)
 
 
 // test route

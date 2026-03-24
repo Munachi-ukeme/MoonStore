@@ -6,7 +6,7 @@ const Category = require("../models/Category")
 // Plan limits definition
 const limits = {
   basic:   { products: 15, categories: 2 },
-  pro:     { products: 30, categories: 4 },
+  pro:     { products: 35, categories: 4 },
   premium: { products: Infinity, categories: Infinity },
 }
 

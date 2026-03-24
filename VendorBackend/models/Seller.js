@@ -60,7 +60,18 @@ const sellerSchema = new mongoose.Schema(
             type: String,
             enum: ["basic", "pro", "premium"],
             default: "basic",
+            required: true
         },
+
+    isActive: {
+      type: Boolean,
+      default: true
+    },
+    subscriptionEnd: {
+      type: Date,
+      default: null
+    },
+
     },
 
     {

@@ -1,3 +1,4 @@
+const { validationResult } = require("express-validator")
 const Seller = require("../models/Seller");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -17,6 +18,13 @@ const generateSlug = (businessName) =>{
 
 const registerSeller = async(req, res) =>{
     try{
+
+        // check for validation errors
+const errors = validationResult(req)
+if (!errors.isEmpty()) {
+  return res.status(400).json({ message: errors.array()[0].msg })
+}
+
         const {businessName, email, password, whatsappNumber } = req.body
 
         //1. Check if email already exists
@@ -77,8 +85,17 @@ const registerSeller = async(req, res) =>{
 
 // LOGIN SELLER
 // POST /api/auth/login
+
+// check for validation errors
+
 const loginSeller = async (req, res) => {
   try {
+
+     const errors = validationResult(req)
+if (!errors.isEmpty()) {
+  return res.status(400).json({ message: errors.array()[0].msg })
+}
+
     const { email, password } = req.body
 
     // 1. Check if seller exists
