@@ -17,14 +17,21 @@ const getStore = async (req, res) => {
       return res.status(404).json({ message: "Store not found" })
     }
 
-    // 2. Get all categories for this store
+    // 2. check if store is active
+if (!seller.isActive) {
+  return res.status(403).json({ 
+    message: "This store is currently inactive" 
+  })
+}
+
+    // 3. Get all categories for this store
     const categories = await Category.find({ sellerId: seller._id })
 
-    // 3. Get all products for this store
+    // 4. Get all products for this store
     const products = await Product.find({ sellerId: seller._id })
       .populate("categoryId", "name")
 
-    // 4. Return everything in one response
+    // 5. Return everything in one response
     res.json({
       store: {
         businessName: seller.businessName,

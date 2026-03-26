@@ -15,7 +15,7 @@ cloudinary.config({
 const storage = new CloudinaryStorage({
   cloudinary,
   params: {
-    folder: "vendorstore", // images go into this folder on Cloudinary
+    folder: "moonstore", // images go into this folder on Cloudinary
     allowed_formats: ["jpg", "jpeg", "png", "webp"],
   },
 })

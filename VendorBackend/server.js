@@ -36,7 +36,7 @@ app.use("/api/seller", sellerRoutes)
 
 // test route
 app.get("/", (req, res) => {
-  res.send("Vendorstore Backend is running 🚀");
+  res.send("MoonStore Backend is running 🚀");
 });
 
 // Start server

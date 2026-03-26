@@ -60,16 +60,15 @@ const sellerSchema = new mongoose.Schema(
             type: String,
             enum: ["basic", "pro", "premium"],
             default: "basic",
-            required: true
         },
 
     isActive: {
       type: Boolean,
-      default: true
+      default: true, // store is active by default when created
     },
     subscriptionEnd: {
       type: Date,
-      default: null
+      default: null, // null until i activate their subscription
     },
 
     },
