@@ -1,5 +1,7 @@
 import {BrowserRouter, Routes, Route} from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
+import ProtectedRoute from "./ProtectedRoute";
+import LoginPage from "./pages/LoginPage";
 
 function App(){
   return (
@@ -12,13 +14,33 @@ function App(){
       <Route path="/:slug/:productSlug" element={<div>Product Page</div>}/>
 
       {/* Auth */}
-      <Route path="/login" element={<div>Login Page</div>}/>
+      <Route path="/login" element={<LoginPage/>}/>
 
-      {/* Protected seller routes */}
-      <Route path="/dashboard" element={<div>Dashboard</div>}/>
-      <Route path="/dashboard/products" element={<div>Products</div>}/>
-      <Route path="/dashboard/categories" element={<div>Categories</div>}/>
-      <Route path="/dashboard/settings" element={<div>Settings</div>}/>
+      {/* Protected seller routes - wrapped in protectedRoute*/}
+      <Route path="/dashboard" element={
+        <ProtectedRoute>
+          <div>Dashboard</div>
+        </ProtectedRoute>
+        }/>
+
+      <Route path="/dashboard/products" element={
+        <ProtectedRoute>
+          <div>Products</div>
+        </ProtectedRoute>
+        }/>
+
+      <Route path="/dashboard/categories" element={
+        <ProtectedRoute>
+          <div>Categories</div>
+        </ProtectedRoute>
+        }/>
+
+      <Route path="/dashboard/settings" element={
+        <ProtectedRoute>
+          <div>Settings</div>
+        </ProtectedRoute>
+        
+        }/>
 
     </Routes>
     </BrowserRouter>
