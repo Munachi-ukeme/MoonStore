@@ -9,6 +9,9 @@ function App(){
     <BrowserRouter>
     <Routes>
 
+      {/* Launch routes */}
+      <Route path="/" element={<LoginPage />}/>
+
       {/* Public buyer routes */}
       <Route path="/:slug" element={<div>Store Page</div>}/>
       <Route path="/:slug/:productSlug" element={<div>Product Page</div>}/>

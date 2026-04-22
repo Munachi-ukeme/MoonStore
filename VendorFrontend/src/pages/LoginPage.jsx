@@ -24,7 +24,7 @@ function LoginPage() {
     //if the backend returned an error, show it and stop
     if (data.error || !data.token) {
         setError(data.error || "Login failed. Please try again.");
-        return;
+        return; //stop code from running until error is fixed
     }
 
     //if login was successful, save to AuthContext
