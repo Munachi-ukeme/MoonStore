@@ -1,6 +1,7 @@
 import Sidebar from "./Sidebar";
 import styles from "./DashboardLayout.module.css";
 import { useState } from "react";
+import Topbar from "./Topbar";
 
 function DashboardLayout({ children }) {
 
@@ -18,10 +19,9 @@ function DashboardLayout({ children }) {
         <div className={styles.layout}>
             <Sidebar isOpen={sidebarOpen} onClose={handleClose}/>
             <div className={styles.main}>
-                {/* hamburger menu button-only show on mobile */}
-                <button className={styles.menuButton} onClick={handleOpen}>
-                     ☰
-                    </button>
+                
+                    {/* topbar sits above all pafe content */}
+                    <Topbar onOpen={handleOpen}/>
                 {children}
             </div>
         </div>

@@ -16,26 +16,3 @@
     padding: 20px;
     width: 100%;
 }
-
-/* hamburger button - mobile only */
-
-.menuButton{
-    display: block;
-    background: none;
-    border: none;
-    font-size: 27px;
-    color: #7c3aed;
-    margin-bottom: 20px;
-    padding: 0;
-}
-
-/* desktop - push content beside sidebar */
-@media (min-width: 768px) {
-    .main{
-        margin-left: 240px;
-        padding: 40px;
-    }
-    .menuButton{
-        display: none;
-    }
-}
