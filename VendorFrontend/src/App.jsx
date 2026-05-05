@@ -4,6 +4,7 @@ import ProtectedRoute from "./ProtectedRoute";
 import LoginPage from "./pages/LoginPage";
 import DashboardLayout from "./sellerComponent/DashboardLayout";
 import DashboardPage from "./pages/DashboardPage";
+import SettingsPage from "./pages/SettingsPage";
 
 function App(){
   return (
@@ -49,7 +50,7 @@ function App(){
       <Route path="/dashboard/settings" element={
         <ProtectedRoute>
           <DashboardLayout>
-            <div>Settings</div>
+            <SettingsPage />
           </DashboardLayout>
         </ProtectedRoute>
         
