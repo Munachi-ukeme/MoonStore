@@ -68,6 +68,123 @@ function ProductTable({ products, categories, onEdit, onDeleted, onStockToggle})
         }
 
         onStockToggle(product._id, !product.inStock);
-    };
+    }
+
+    return(
+        <div className={styles.container}>
+            {/* error message */}
+            {error && <p className={styles.error}>{error}</p>}
+
+            {/* empty state */}
+            {products.length === 0 ? (
+                <p className={styles.empty}>You have not added any product yet.</p>
+            ) : null}
+
+            {/* product list */}
+            {products.length > 0 ?(
+                <div className={styles.table}>
+                    {/* table header */}
+                    <div className={styles.tableHeader}>
+                        <span>Product</span>
+                        <span>Price</span>
+                        <span>Category</span>
+                        <span>Description</span>
+                        <span>Stock</span>
+                        <span>Actions</span>
+                    </div>
+
+                    {/* table rows */}
+                    {products.map((product) =>(
+                        <div key={product._id} className={styles.tableRow}>
+
+                            {/* product name + image */}
+                            <div className={styles.productName}>
+                                {product.images && product.images[0] ? (
+                                    <img
+                                    src={product.images[0]} 
+                                    alt={product.name}
+                                    className={styles.productImage}
+                                     />
+                                ) : null}
+                                <span>{product.name}</span>
+                            </div>
+
+                            {/* price */}
+                            <span className={styles.price}>
+                                ₦{product.price.toLocaleString()}
+                            </span>
+
+                            {/* category */}
+                            <span className={styles.category}>
+                                {getCategoryName(product.categoryId)}
+                            </span>
+
+                            {/* description truncated */}
+                            <span className={styles.description}>
+                                {truncateDescription(product.description)}
+                            </span>
+
+                            {/* stock status toggle */}
+                            <button
+                            className={product.inStock ? styles.inStock : styles.soldOut}
+                            onClick={() => handleStockToggle(product)}
+                            >
+                                {product.inStock ? "In Stock" : "Sold Out"}
+                            </button>
+
+                            {/* action */}
+                            <div className={styles.actions}>
+                                <button
+                                className={styles.editButton}
+                                onClick={() => onEdit(product)}
+                                >
+                                    Edit
+                                </button>
+
+                                <button
+                                className={styles.deleteButton}
+                                onClick={() => handleDeleteClick (product)}
+                                >
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ) : null}
+
+            {/* delete warning popup */}
+            {showDeleteWarning ? (
+                <div className={styles.overlay}>
+                    <div className={styles.popup}>
+                        <h3 className={styles.popupTitle}>Delete Product</h3>
+                        <p className={styles.popupText}>
+                            You are about to delete{" "}
+                            <strong>{selectedProduct?.name}</strong>. This cannot be undone
+                        </p>
+
+                        <div className={styles.popupButtons}>
+                            <button
+                            className={styles.cancelButton}
+                            onClick={handleCancelDelete}
+                            >
+                                Cancel
+                            </button>
+
+                            <button
+                            className={styles.confirmDeleteButton}
+                            onClick={handleConfirmDelete}
+                            disabled={deleteLoading}
+                            >
+                                {deleteLoading ? "Deleting..." : "Yes, Delete"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
+        </div>
+    );
 
 }
+
+export default ProductTable;
