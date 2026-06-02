@@ -5,6 +5,7 @@ const Seller = require("../models/Seller");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const { createSubaccount } = require("../controllers/paymentController");
+const Referral = require("../models/Referral");
 
 //helper function - convert business name to slug
 // "Chinwe Fashion" -> "chinwe-fashion"
@@ -34,7 +35,7 @@ if (!errors.isEmpty()) {
   return res.status(400).json({ message: errors.array()[0].msg })
 }
 
-        const {businessName, email, password, whatsappNumber, plan, referredBy, bankDetails } = req.body
+        const {businessName, email, password, whatsappNumber, referredBy, bankDetails } = req.body
 
         //check if seller input their bank details
         if (!bankDetails || !bankDetails.accountNumber || !bankDetails.bankCode) {
@@ -92,7 +93,7 @@ if (!errors.isEmpty()) {
       password: hashedPassword,
       whatsappNumber,
       slug,
-      plan: plan || "basic", // defaults to basic if not specified
+      plan: "basic", // defaults to basic if not specified
       bankDetails,
       referralCode,
       referredBy: validReferredBy
@@ -115,6 +116,29 @@ if (!errors.isEmpty()) {
     }
 
        }
+
+    // Handle referral commission if seller was referred
+    if(validReferredBy) {
+      try{
+        const referrer = await Seller.findOne({ referralCode: validReferredBy});
+        if(referrer){
+          referrer.commissionBalance += 3000;
+            referrer.totalEarned += 3000;
+            await referrer.save();
+
+             await Referral.create({
+                referrerId: referrer._id,
+                referredSellerId: seller._id,
+                referralCode: validReferredBy,
+                status: "pending",
+                commissionAmount: 3000,
+            });
+        }
+      }catch (err) {
+        // referral failure must never block registration
+        console.error("Referral commission error:", err.message);
+    }
+    }
 
     // 8. Generate JWT token
     const token = jwt.sign(

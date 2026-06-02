@@ -111,10 +111,6 @@ const sellerSchema = new mongoose.Schema(
         default: null
     },
 
-    paystackCustomerId: {
-        type: String,
-        default: null
-    },
 
     // bank details for commission payout
     bankDetails: {
