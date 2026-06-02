@@ -80,6 +80,17 @@ function LoginPage() {
                         {loading ? "Signing in..." : "Sign In"}
                     </button>
 
+                    {/* login link */}
+                <p className={styles.registerLink}>
+                    Dont have an account?{" "}
+                    <button
+                        className={styles.linkBtn}
+                        onClick={() => navigate("/register")}
+                    >
+                        Signup
+                    </button>
+                </p>
+
                 </form>
 
             </div>

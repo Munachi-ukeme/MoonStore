@@ -11,6 +11,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService"
 import StorePage from "./pages/StorePage";
 import ProductPage from "./pages/ProductPage";
+import SignupPage from "./pages/SignupPage";
 
 function App(){
   return (
@@ -20,6 +21,7 @@ function App(){
 
       {/* Launch routes */}
       <Route path="/" element={<LoginPage />}/>
+      
 
       {/* Public buyer routes */}
       <Route path="/:slug" element={<StorePage />}/>
@@ -30,6 +32,7 @@ function App(){
 
       {/* Auth */}
       <Route path="/login" element={<LoginPage/>}/>
+      <Route path="/register" element={<SignupPage />}/>
 
       {/* Protected seller routes - wrapped in protectedRoute*/}
       <Route path="/dashboard" element={

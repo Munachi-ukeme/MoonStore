@@ -298,7 +298,7 @@ function ProductPage() {
                     {/* order now button */}
                         <button
                             className={styles.orderBtn}
-                            onClick={}
+                            // onClick={}
                         >
                             
                         </button>

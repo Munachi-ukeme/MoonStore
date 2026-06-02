@@ -110,3 +110,21 @@
     background-color: #a78bfa;
     cursor: not-allowed;
 }
+
+/* login link */
+.registerLink {
+    text-align: center;
+    font-size: 13px;
+    color: #6b7280;
+    margin: 16px 0 0;
+}
+
+.linkBtn {
+    background: none;
+    border: none;
+    color: #6d28d9;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    padding: 0;
+}

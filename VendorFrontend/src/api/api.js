@@ -8,6 +8,49 @@ const getAuthHeaders = () =>{
     };
 };
 
+//seller signup 
+export const registerSeller = async(data) =>{
+    try{
+        const res = await fetch(`${BASE_URL}/auth/register`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+        });
+        const json = await res.json();
+        if (!res.ok) return { error: json.message || "Registration failed" };
+        return json;
+    } catch (err) {
+        return { error: "Something went wrong. Please try again." };
+    }
+};
+
+// payment
+export const getBanks = async() =>{
+    try{
+        const res = await fetch(`${BASE_URL}/payments/banks`);
+        const json = await res.json();
+        if (!res.ok) return { error: json.message || "Could not load banks" };
+        return json;
+    } catch (err) {
+        return { error: "Could not load banks. Please try again." };
+    }
+};
+
+
+export const verifyAccount = async (accountNumber, bankCode) => {
+    try {
+        const res = await fetch(`${BASE_URL}/payments/verify-account`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ accountNumber, bankCode }),
+        });
+        const json = await res.json();
+        if (!res.ok) return { error: json.message || "Account not found" };
+        return json;
+    } catch (err) {
+        return { error: "Could not verify account. Please try again." };
+    }
+};
 //AUTH
 //Called on the login page
 //send email + password, expect back {token, seller}
