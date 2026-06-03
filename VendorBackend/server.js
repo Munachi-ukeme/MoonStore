@@ -64,6 +64,7 @@ const storeRoutes = require("./routes/store")
 const adminRoutes = require("./routes/admin")
 const sellerRoutes = require("./routes/seller")
 const paymentRoutes = require("./routes/payments");
+const buyerRoutes = require("./routes/buyer");
 
 
 app.use("/api/auth", authRoutes)
@@ -73,6 +74,8 @@ app.use("/api/store", storeRoutes)
 app.use("/api/admin", adminRoutes);
 app.use("/api/seller", sellerRoutes)
 app.use("/api/payments", paymentRoutes);
+app.use("/api/buyer", buyerRoutes);
+
 
 
 

@@ -111,6 +111,11 @@ const sellerSchema = new mongoose.Schema(
         default: null
     },
 
+    buyerEmails: {
+    type: [String],
+    default: [],
+    },
+
 
     // bank details for commission payout
     bankDetails: {
