@@ -26,6 +26,12 @@ function ProductPage() {
 
     const [copied, setCopied] = useState(false);
 
+    const [deliveryAddress, setDeliveryAddress] = useState("");
+
+    const [deliveryCity, setDeliveryCity] = useState("");
+
+    const [deliveryPhone, setDeliveryPhone] = useState("");
+
     // fetch product and store data
     useEffect(() => {
         const loadData = async () =>{
@@ -270,6 +276,33 @@ function ProductPage() {
                         </div>
                     ) : null}
 
+                         <div className={styles.deliverySection}>
+            <p className={styles.selectorLabel}>Delivery Details</p>
+            <p className={styles.deliveryHint}>Optional — fill in if you want delivery</p>
+
+            <input
+                className={styles.deliveryInput}
+                type="text"
+                placeholder="Delivery address"
+                value={deliveryAddress}
+                onChange={(e) => setDeliveryAddress(e.target.value)}
+            />
+            <input
+                className={styles.deliveryInput}
+                type="text"
+                placeholder="City"
+                value={deliveryCity}
+                onChange={(e) => setDeliveryCity(e.target.value)}
+            />
+            <input
+                className={styles.deliveryInput}
+                type="tel"
+                placeholder="Phone number for delivery"
+                value={deliveryPhone}
+                onChange={(e) => setDeliveryPhone(e.target.value)}
+            />
+        </div>
+
                     {/* quantity */}
                     <div className={styles.selectorSection}>
                         <p className={styles.selectorLabel}>Quantity</p>
@@ -289,6 +322,7 @@ function ProductPage() {
                             </button>
                         </div>
                     </div>
+
 
                     {/* total */}
                     <p className={styles.total}>

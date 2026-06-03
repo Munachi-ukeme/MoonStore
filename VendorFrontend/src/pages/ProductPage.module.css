@@ -222,6 +222,35 @@
     justify-content: center;
 }
 
+.deliverySection {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.deliveryHint {
+    font-size: 11px;
+    color: #9ca3af;
+    margin: -4px 0 0;
+}
+
+.deliveryInput {
+    padding: 10px 12px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #111;
+    background: #fff;
+    width: 100%;
+    box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.15s;
+}
+
+.deliveryInput:focus {
+    border-color: #6d28d9;
+}
+
 /* ── total ── */
 .total {
     font-size: 16px;
