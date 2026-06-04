@@ -1,0 +1,21 @@
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    background: #fff;
+    border-bottom: 1px solid #f0f0f0;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+}
+
+.link {
+    background: none;
+    border: none;
+    font-size: 13px;
+    font-weight: 600;
+    color: #6d28d9;
+    cursor: pointer;
+    padding: 0;
+}

@@ -77,6 +77,51 @@ export const getProduct = async(slug, productSlug) => {
     return res.json();
 };
 
+export const saveBuyerEmail = async (email, sessionId, sellerId) => {
+    try {
+        const res = await fetch(`${BASE_URL}/buyer/save-email`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, sessionId, sellerId }),
+        });
+        const json = await res.json();
+        if (!res.ok) return { error: json.message || "Could not save email" };
+        return json;
+    } catch (err) {
+        return { error: "Something went wrong. Please try again." };
+    }
+};
+
+export const buyerLogin = async (email) => {
+    try {
+        const res = await fetch(`${BASE_URL}/buyer/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email }),
+        });
+        const json = await res.json();
+        if (!res.ok) return { error: json.message || "Login failed" };
+        return json;
+    } catch (err) {
+        return { error: "Something went wrong. Please try again." };
+    }
+};
+
+
+export const getBuyerConversations = async (sessionIds) => {
+    try {
+        // sessionIds is an array — we join to a comma-separated query string
+        const query = sessionIds.join(",");
+        const res = await fetch(`${BASE_URL}/buyer/conversations?sessionIds=${query}`);
+        const json = await res.json();
+        if (!res.ok) return { error: json.message || "Could not load orders" };
+        return json;
+    } catch (err) {
+        return { error: "Could not load orders. Please try again." };
+    }
+};
+
+
 // PRODUCTS (Protected)
 //Get all products belonging to the logged-in seller
 export const getProducts = async() =>{

@@ -5,6 +5,7 @@
     background-color: #f9f8ff;
     display: flex;
     flex-direction: column;
+    padding-bottom: 64px;
 }
 
 /* loading */

@@ -35,8 +35,10 @@ const sendSellerNewChatEmail = async (sellerEmail, sellerBusinessName, productNa
 };
 
 // fires when seller replies after buyer has likely left (5+ minutes)
-const sendBuyerReplyEmail = async (buyerEmail, sellerBusinessName, storeSlug) => {
+const sendBuyerReplyEmail = async (buyerEmail, sellerBusinessName, storeSlug, sessionId) => {
     try {
+
+        const restoreLink = `${process.env.FRONTEND_URL}/restore?sid=${sessionId}&store=${storeSlug}`;
         await transporter.sendMail({
             from: `"MoonStore" <${process.env.EMAIL_USER}>`,
             to: buyerEmail,
@@ -45,7 +47,7 @@ const sendBuyerReplyEmail = async (buyerEmail, sellerBusinessName, storeSlug) =>
                 <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
                     <h2 style="color: #6d28d9;">You have a reply 💬</h2>
                     <p><strong>${sellerBusinessName}</strong> has responded to your order.</p>
-                    <a href="${process.env.FRONTEND_URL}/${storeSlug}"
+                     <a href="${restoreLink}"
                         style="display:inline-block;padding:10px 20px;background:#6d28d9;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;">
                         View Reply
                     </a>

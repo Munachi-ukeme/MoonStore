@@ -7,9 +7,12 @@ import CategoryTabs from "../buyerComponent/CategoryTabs";
 import ProductGrid from "../buyerComponent/ProductGrid";
 import Footer from "../buyerComponent/Footer";
 import styles from "./StorePage.module.css";
+import StoreBottomNav from "../buyerComponent/StoreBottomNav";
+import EmailCapturePopup from "../buyerComponent/EmailCapturePopup";
+import { getSavedEmail, wasPopupDismissed } from "../utils/session";
 
 function StorePage() {
-    const { slug} = useParams();
+    const { slug } = useParams();
 
     const [store, setStore] = useState(null);
     const [products, setProducts] = useState([]);
@@ -17,6 +20,7 @@ function StorePage() {
     const [filteredProducts, setFilteredProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [showEmailPopup, setShowEmailPopup] = useState(false);
 
     // fetch store data when page loads
     useEffect(() => {
@@ -33,11 +37,28 @@ function StorePage() {
             setStore(data.store);
             setProducts(data.products);
             setCategories(data.categories);
-            setFilteredProducts(data.products)
+            setFilteredProducts(data.products);
             setLoading(false);
         };
         loadStore();
     }, [slug]);
+
+     useEffect(() => {
+    const alreadySaved = getSavedEmail();
+    const dismissed = wasPopupDismissed();
+
+    if (alreadySaved || dismissed) return;
+
+    // show popup after 3 seconds if buyer has not saved email
+    const timer = setTimeout(() => {
+        setShowEmailPopup(true);
+    }, 3000);
+
+    // cleanup — if buyer leaves page before 3 seconds the timer cancels
+    // this is important to prevent memory leaks in React
+    return () => clearTimeout(timer);
+}, [setShowEmailPopup]);
+
 
     // filter products when buyer selects a category tab
     const handleSelectCategory = (categoryId) => {
@@ -73,6 +94,7 @@ function StorePage() {
         );
     }
 
+   
        return (
         <div className={styles.container}>
             {/* navbar - sticky at top */}
@@ -89,6 +111,13 @@ function StorePage() {
 
              {/* footer */}
              <Footer store={store} />
+             <StoreBottomNav sellerId={store._id} />
+
+             <EmailCapturePopup
+    show={showEmailPopup}
+    onClose={() => setShowEmailPopup(false)}
+    sellerId={store?._id}
+/>
         </div>
        );
 }

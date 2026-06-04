@@ -1,0 +1,208 @@
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: sans-serif;
+}
+
+.page {
+    min-height: 100vh;
+    background-color: #f5f5f5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px 16px 32px;
+    gap: 24px;
+}
+
+/* ── brand ── */
+.brand {
+    text-align: center;
+}
+
+/* logo is purple — MoonStore brand color */
+.logo {
+    font-size: 28px;
+    font-weight: 800;
+    color: #6d28d9;
+    margin: 0 0 4px;
+}
+
+.tagline {
+    font-size: 13px;
+    color: #9ca3af;
+    margin: 0;
+}
+
+/* ── tabs ── */
+/* the tab container acts as a pill toggle */
+.tabs {
+    display: flex;
+    background-color: #e9e3f8;
+    border-radius: 10px;
+    padding: 4px;
+    width: 100%;
+    max-width: 360px;
+    gap: 4px;
+}
+
+.tab {
+    flex: 1;
+    padding: 9px 0;
+    border: none;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    background: transparent;
+    color: #6d28d9;
+    transition: background 0.15s, color 0.15s;
+}
+
+/* active tab becomes white with purple text — stands out from the purple background */
+.activeTab {
+    background-color: #fff;
+    color: #6d28d9;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* ── card ── */
+.card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px 20px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+}
+
+/* ── tab content ── */
+.tabContent {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.contentTop {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.contentTitle {
+    font-size: 18px;
+    font-weight: 700;
+    color: #111;
+    margin: 0;
+}
+
+.contentText {
+    font-size: 13px;
+    color: #6b7280;
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* ── input group ── */
+.inputGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.input {
+    padding: 11px 14px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #111;
+    outline: none;
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color 0.15s;
+}
+
+.input:focus {
+    border-color: #6d28d9;
+}
+
+.error {
+    font-size: 12px;
+    color: #ef4444;
+    margin: 0;
+}
+
+/* ── perks list ── */
+.perks {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.perk {
+    font-size: 13px;
+    color: #374151;
+    margin: 0;
+    font-weight: 500;
+}
+
+/* ── buttons ── */
+.primaryBtn {
+    width: 100%;
+    padding: 13px;
+    background-color: #6d28d9;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.primaryBtn:hover {
+    background-color: #5b21b6;
+}
+
+.primaryBtn:disabled {
+    background-color: #a78bfa;
+    cursor: not-allowed;
+}
+
+.ghostBtn {
+    width: 100%;
+    padding: 11px;
+    background: transparent;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #6b7280;
+    cursor: pointer;
+}
+
+.ghostBtn:hover {
+    border-color: #6d28d9;
+    color: #6d28d9;
+}
+
+.hint {
+    font-size: 11px;
+    color: #9ca3af;
+    text-align: center;
+    margin: 0;
+}
+
+/* ── footer ── */
+.footer {
+    font-size: 11px;
+    color: #6d28d9;
+    margin-top: auto;
+}
+
+/* ── desktop ── */
+@media (min-width: 480px) {
+    .card {
+        padding: 32px 28px;
+    }
+}

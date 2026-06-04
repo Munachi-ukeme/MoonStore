@@ -12,6 +12,9 @@ import TermsOfService from "./pages/TermsOfService"
 import StorePage from "./pages/StorePage";
 import ProductPage from "./pages/ProductPage";
 import SignupPage from "./pages/SignupPage";
+import HomePage from "./pages/HomePage";
+import BuyerDashboard from "./buyerComponent/BuyerDashboard";
+import SessionRestore from "./pages/SessionRestore";
 
 function App(){
   return (
@@ -20,7 +23,7 @@ function App(){
     <Routes>
 
       {/* Launch routes */}
-      <Route path="/" element={<LoginPage />}/>
+      <Route path="/" element={<HomePage />} />
       
 
       {/* Public buyer routes */}
@@ -28,6 +31,8 @@ function App(){
       <Route path="/:slug/:productSlug" element={<ProductPage />}/>
       <Route path="/privacy-policy" element={<PrivacyPolicy />}/>
       <Route path="/terms-of-service" element={<TermsOfService />}/>
+      <Route path="/my-orders" element={<BuyerDashboard />} />
+      <Route path="/restore" element={<SessionRestore />} />
 
 
       {/* Auth */}
