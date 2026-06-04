@@ -1,7 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const rateLimit = require("express-rate-limit");
-const { saveEmail, buyerLogin } = require("../controllers/buyerController");
+const { saveEmail, buyerLogin, getBuyerConversations} = require("../controllers/buyerController");
+
 
 const buyerLoginLimiter = rateLimit({
     windowMs: 60 * 60 * 1000, // 1 hour
@@ -13,5 +14,6 @@ const buyerLoginLimiter = rateLimit({
 
 router.post("/save-email", saveEmail);
 router.post("/buyer-login", buyerLoginLimiter, buyerLogin);
+router.get("/conversations", getBuyerConversations);
 
 module.exports = router;
