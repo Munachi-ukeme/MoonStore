@@ -136,35 +136,63 @@ const deactivateAll = async (req, res) => {
   }
 }
 
-// -----------------------------------
+// deactivateSubaccount is a helper function — not a route handler.
+// it lives in the same file and gets called from inside deleteSeller
+const deactivateSubaccount = async (subaccountCode) => {
+    try {
+        const response = await fetch(
+            `https://api.paystack.co/subaccount/${subaccountCode}`,
+            {
+                method: "PUT",
+                headers: {
+                    Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ active: false }),
+            }
+        );
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(`Paystack error ${response.status}: ${errorData.message || "Unknown error"}`);
+        }
+
+        console.log(`Subaccount deactivated: ${subaccountCode}`);
+    } catch (err) {
+        console.error("Subaccount deactivation failed:", err.message);
+    }
+};
+
 // DELETE SELLER ACCOUNT
 // DELETE /api/admin/delete-seller
-// -----------------------------------
 const deleteSeller = async (req, res) => {
-  try {
-    if (!verifyAdmin(req, res)) return
+    try {
+        if (!verifyAdmin(req, res)) return;
 
-    const { email } = req.body
+        const { email } = req.body;
 
-    const seller = await Seller.findOne({ email })
-    if (!seller) {
-      return res.status(404).json({ message: "Seller not found" })
+        const seller = await Seller.findOne({ email });
+        if (!seller) {
+            return res.status(404).json({ message: "Seller not found" });
+        }
+
+        // deactivate Paystack subaccount before deleting seller
+        // we do this first while we still have the seller object
+        if (seller.paystackSubaccountCode) {
+            await deactivateSubaccount(seller.paystackSubaccountCode);
+        }
+
+        // delete all seller data
+        await Product.deleteMany({ sellerId: seller._id });
+        await Category.deleteMany({ sellerId: seller._id });
+        await seller.deleteOne();
+
+        res.json({ message: "Seller account and all data deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
+};
 
-    // Delete all seller's products
-    await Product.deleteMany({ sellerId: seller._id })
-
-    // Delete all seller's categories
-    await Category.deleteMany({ sellerId: seller._id })
-
-    // Delete seller account
-    await seller.deleteOne()
-
-    res.json({ message: "Seller account and all data deleted successfully" })
-  } catch (error) {
-    res.status(500).json({ message: error.message })
-  }
-}
 
 // GET ALL SELLERS
 // GET /api/admin/sellers

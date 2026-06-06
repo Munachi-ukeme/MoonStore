@@ -43,6 +43,11 @@ const addProduct = async (req, res) => {
     // 2. Generate slug from product name
     let slug = generateSlug(name)
 
+   const RESERVED_SLUGS = ["orders", "chat"];
+if (RESERVED_SLUGS.includes(slug)) {
+    slug = `${slug}-item`;
+}
+
     // 3. Check if slug already exists for this seller
     const existingSlug = await Product.findOne({
       sellerId: req.seller._id,
@@ -166,7 +171,7 @@ const deleteProduct = async (req, res) => {
     // Delete all images from Cloudinary
     for (const imageUrl of product.images) {
       const publicId = imageUrl.split("/").pop().split(".")[0]
-      await cloudinary.uploader.destroy(`moonstorestore/${publicId}`)
+      await cloudinary.uploader.destroy(`moonstore/${publicId}`)
     }
 
     await product.deleteOne()

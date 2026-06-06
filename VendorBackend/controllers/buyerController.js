@@ -1,4 +1,5 @@
 const Buyer = require("../models/Buyer");
+const Conversation = require("../models/Conversation");
 const Seller = require("../models/Seller");
 
 const saveEmail = async (req, res) => {
@@ -85,14 +86,14 @@ const getBuyerConversations = async (req, res) => {
         // split comma-separated string back into an array
         const sessionArray = sessionIds.split(",");
 
-        // TODO: uncomment when Conversation model is built in Phase 4
-        // const conversations = await Conversation.find({
-        //     sessionId: { $in: sessionArray }
-        // })
-        //     .populate("sellerId", "businessName slug logo")
-        //     .populate("productId", "name images")
-        //     .sort({ createdAt: -1 });
-        // return res.json({ conversations });
+       
+        const conversations = await Conversation.find({
+            sessionId: { $in: sessionArray }
+        })
+            .populate("sellerId", "businessName slug logo")
+            .populate("productId", "name images")
+            .sort({ createdAt: -1 });
+        return res.json({ conversations });
 
         res.json({ conversations: [] });
     } catch (err) {
@@ -100,4 +101,37 @@ const getBuyerConversations = async (req, res) => {
     }
 };
 
-module.exports = { saveEmail, buyerLogin, getBuyerConversations };
+// GET /api/buyer/conversations/seller/:slug
+// returns conversations for this buyer + this specific seller
+// sessionId identifies the buyer without requiring login
+const getSellerConversations = async (req, res) => {
+    try {
+        const { slug } = req.params;
+        const { sessionId } = req.query;
+
+        if (!sessionId) {
+            return res.json({ conversations: [] });
+        }
+
+      const seller = await Seller.findOne({ slug });
+        if (!seller) {
+            return res.status(404).json({ message: "Store not found" });
+        }
+
+        const conversations = await Conversation.find({
+            sellerId: seller._id,
+            buyerSessionId: sessionId,
+        })
+            .populate("productId", "name images")
+            .populate("sellerId", "businessName slug logo")
+            .sort({ updatedAt: -1 });
+
+        res.json({ conversations });
+    } catch (err) {
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+module.exports = { saveEmail, buyerLogin, getBuyerConversations, getSellerConversations };
+
+module.exports = { saveEmail, buyerLogin, getBuyerConversations, getSellerConversations };

@@ -37,6 +37,34 @@ const changePassword = async (req, res) => {
   }
 }
 
+
+// deactivateSubaccount is a helper function — not a route handler.
+// it lives in the same file and gets called from inside deleteSeller
+const deactivateSubaccount = async (subaccountCode) => {
+    try {
+        const response = await fetch(
+            `https://api.paystack.co/subaccount/${subaccountCode}`,
+            {
+                method: "PUT",
+                headers: {
+                    Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ active: false }),
+            }
+        );
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(`Paystack error ${response.status}: ${errorData.message || "Unknown error"}`);
+        }
+
+        console.log(`Subaccount deactivated: ${subaccountCode}`);
+    } catch (err) {
+        console.error("Subaccount deactivation failed:", err.message);
+    }
+};
+
  
 // -----------------------------------
 // DELETE SELLER ACCOUNT
@@ -56,6 +84,12 @@ const deleteAccount = async (req, res) => {
       })
     }
 
+    // deactivate Paystack subaccount before deleting seller
+        // we do this first while we still have the seller object
+        if (seller.paystackSubaccountCode) {
+            await deactivateSubaccount(seller.paystackSubaccountCode);
+        }
+
     // 3. Delete all seller's products
     await Product.deleteMany({ sellerId: seller._id })
 
@@ -73,5 +107,7 @@ const deleteAccount = async (req, res) => {
     res.status(500).json({ message: error.message })
   }
 }
+
+
 
 module.exports = { deleteAccount, changePassword }
