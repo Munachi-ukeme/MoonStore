@@ -9,7 +9,7 @@ import { getSavedEmail } from "../utils/session";
 import EmailCapturePopup from "../buyerComponent/EmailCapturePopup";
 import styles from "./StoreBottomNav.module.css";
 
-const StoreBottomNav = ({ sellerId }) => {
+const StoreBottomNav = ({ sellerId, slug }) => {
     const navigate = useNavigate();
     const [savedEmail, setSavedEmail] = useState(null);
     const [showPopup, setShowPopup] = useState(false);
@@ -20,27 +20,38 @@ const StoreBottomNav = ({ sellerId }) => {
 
 
      const handleMyOrdersClick = () => {
+       
+         // goes to this seller's conversation list
+            navigate(`/${slug}/orders`);
+        };
+
+        const handleDashboardClick = () => {
         if (savedEmail) {
-            // buyer has saved email — go straight to dashboard
             navigate("/my-orders");
             return;
         }
-        // buyer has no email saved — show popup asking them to register
         setShowPopup(true);
-    };
+        };
 
-     const handlePopupClose = () => {
+        const handlePopupClose = () => {
         setShowPopup(false);
         // re-check localStorage in case they just saved their email
         setSavedEmail(getSavedEmail());
     };
 
+    
+
     return (
         <>
             <div className={styles.nav}>
                 <button className={styles.navBtn} onClick={handleMyOrdersClick}>
-                    <span className={styles.navIcon}>📦</span>
+                    <span className={styles.navIcon}>💬</span>
                     <span className={styles.navLabel}>My Orders</span>
+                </button>
+
+                 <button className={styles.navBtn} onClick={handleDashboardClick}>
+                    <span className={styles.navIcon}>📦</span>
+                    <span className={styles.navLabel}>Dashboard</span>
                 </button>
             </div>
 

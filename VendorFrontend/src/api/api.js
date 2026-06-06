@@ -108,6 +108,7 @@ export const buyerLogin = async (email) => {
 };
 
 
+// this is for all chats across moonstore stores
 export const getBuyerConversations = async (sessionIds) => {
     try {
         // sessionIds is an array — we join to a comma-separated query string
@@ -121,6 +122,19 @@ export const getBuyerConversations = async (sessionIds) => {
     }
 };
 
+//this is for chat in a specific store
+export const getSellerConversations = async (slug, sessionId) => {
+    try {
+        const res = await fetch(
+            `${BASE_URL}/buyer/conversations/seller/${slug}?sessionId=${sessionId}`
+        );
+        const json = await res.json();
+        if (!res.ok) return { error: json.message || "Could not load orders" };
+        return json;
+    } catch (err) {
+        return { error: "Could not load orders. Please try again." };
+    }
+};
 
 // PRODUCTS (Protected)
 //Get all products belonging to the logged-in seller

@@ -15,6 +15,7 @@ import SignupPage from "./pages/SignupPage";
 import HomePage from "./pages/HomePage";
 import BuyerDashboard from "./buyerComponent/BuyerDashboard";
 import SessionRestore from "./pages/SessionRestore";
+import BuyerOrdersPage from "./pages/BuyerOrdersPage";
 
 function App(){
   return (
@@ -24,21 +25,18 @@ function App(){
 
       {/* Launch routes */}
       <Route path="/" element={<HomePage />} />
-      
-
-      {/* Public buyer routes */}
-      <Route path="/:slug" element={<StorePage />}/>
-      <Route path="/:slug/:productSlug" element={<ProductPage />}/>
-      <Route path="/privacy-policy" element={<PrivacyPolicy />}/>
-      <Route path="/terms-of-service" element={<TermsOfService />}/>
-      <Route path="/my-orders" element={<BuyerDashboard />} />
-      <Route path="/restore" element={<SessionRestore />} />
-
 
       {/* Auth */}
       <Route path="/login" element={<LoginPage/>}/>
       <Route path="/register" element={<SignupPage />}/>
 
+      {/* Public buyer routes */}  
+      <Route path="/privacy-policy" element={<PrivacyPolicy />}/>
+      <Route path="/terms-of-service" element={<TermsOfService />}/>
+      <Route path="/my-orders" element={<BuyerDashboard />} />
+      <Route path="/restore" element={<SessionRestore />} />
+    
+    
       {/* Protected seller routes - wrapped in protectedRoute*/}
       <Route path="/dashboard" element={
         <ProtectedRoute>
@@ -92,6 +90,11 @@ function App(){
         </ProtectedRoute>
         
         }/>
+
+      <Route path="/:slug/orders" element={<BuyerOrdersPage />} />
+      <Route path="/:slug/:productSlug" element={<ProductPage />}/>
+
+      <Route path="/:slug" element={<StorePage />}/>
 
     </Routes>
     </BrowserRouter>

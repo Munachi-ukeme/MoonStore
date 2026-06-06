@@ -1,0 +1,227 @@
+.page {
+    min-height: 100vh;
+    background-color: #f5f5f5;
+}
+
+/* ── header ── */
+.header {
+    background: #fff;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #f0f0f0;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+}
+
+.backBtn {
+    background: none;
+    border: none;
+    font-size: 13px;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 0;
+    font-weight: 500;
+}
+
+.title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #111;
+    margin: 0;
+    text-align: center;
+}
+
+/* dashboard button in header takes them to all-sellers view */
+.dashboardBtn {
+    background: none;
+    border: none;
+    font-size: 13px;
+    color: #6d28d9;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+}
+
+/* ── list ── */
+.list {
+    display: flex;
+    flex-direction: column;
+}
+
+/* each row is a button so the whole row is tappable — better mobile UX */
+.row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: #fff;
+    border: none;
+    border-bottom: 1px solid #f5f5f5;
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+    transition: background 0.1s;
+}
+
+.row:active {
+    background-color: #fafafa;
+}
+
+/* circle avatar — same concept as WhatsApp contact photo */
+.avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+    background-color: #ede9fe;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.avatarImg {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.avatarIcon {
+    font-size: 20px;
+    line-height: 1;
+}
+
+/* ── row info ── */
+.rowInfo {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.rowTop {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.productName {
+    font-size: 14px;
+    font-weight: 600;
+    color: #111;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+}
+
+.time {
+    font-size: 11px;
+    color: #9ca3af;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.rowBottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+/* last message preview — truncated like WhatsApp */
+.lastMessage {
+    font-size: 12px;
+    color: #6b7280;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+}
+
+/* ── badges ── */
+.badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 99px;
+    flex-shrink: 0;
+}
+
+.newBadge {
+    background-color: #ede9fe;
+    color: #6d28d9;
+}
+
+.activeBadge {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.paidBadge {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+/* ── empty state ── */
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 64px 24px;
+    gap: 10px;
+}
+
+.emptyIcon {
+    font-size: 44px;
+    margin: 0;
+}
+
+.emptyTitle {
+    font-size: 16px;
+    font-weight: 700;
+    color: #111;
+    margin: 0;
+}
+
+.emptyText {
+    font-size: 13px;
+    color: #6b7280;
+    text-align: center;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.browseBtn {
+    margin-top: 8px;
+    padding: 10px 24px;
+    background-color: #6d28d9;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+/* ── state text ── */
+.stateText {
+    text-align: center;
+    color: #6b7280;
+    font-size: 14px;
+    margin-top: 48px;
+}
+
+.errorText {
+    text-align: center;
+    color: #ef4444;
+    font-size: 14px;
+    margin-top: 48px;
+    padding: 0 16px;
+}

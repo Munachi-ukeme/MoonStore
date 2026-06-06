@@ -111,7 +111,7 @@ function StorePage() {
 
              {/* footer */}
              <Footer store={store} />
-             <StoreBottomNav sellerId={store._id} />
+             <StoreBottomNav sellerId={store._id} slug={store.slug} />
 
              <EmailCapturePopup
     show={showEmailPopup}
