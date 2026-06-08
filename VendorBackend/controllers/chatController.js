@@ -417,6 +417,54 @@ const reportConversation = async (req, res) => {
     }
 };
 
+const buyerClaimedPayment = async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+
+    const conversation = await Conversation.findById(conversationId);
+
+    if (!conversation) {
+      return res.status(404).json({ error: "Conversation not found" });
+    }
+
+    if (!conversation.accountDetailsSent) {
+      return res.status(400).json({ error: "Account details have not been sent yet" });
+    }
+
+    if (conversation.buyerClaimedPayment) {
+      return res.status(400).json({ error: "Payment already claimed" });
+    }
+
+    if (conversation.status === "paid") {
+      return res.status(400).json({ error: "This order is already marked as paid" });
+    }
+
+    conversation.buyerClaimedPayment = true;
+    await conversation.save();
+
+    const systemMessage = new Message({
+      conversationId: conversation._id,
+      sender: "system",
+      content: "The buyer has claimed they've made payment. Please check your account and confirm.",
+    });
+    await systemMessage.save();
+
+    const seller = await Seller.findById(conversation.sellerId);
+
+    if (seller) {
+      await sendBuyerClaimedPaymentEmail(seller.email, seller.slug, conversationId);
+    }
+
+    const io = getIO();
+    io.to(conversationId.toString()).emit("new_message", systemMessage);
+
+    return res.status(200).json({ message: "Payment claim sent to seller" });
+  } catch (err) {
+    console.error("buyerClaimedPayment error:", err);
+    return res.status(500).json({ error: "Server error" });
+  }
+};
+
 module.exports = {
     startConversation,
     getMessages,
@@ -426,4 +474,5 @@ module.exports = {
     markAccountDetailsSent,
     markAsPaid,
     reportConversation,
+    buyerClaimedPayment,
 };

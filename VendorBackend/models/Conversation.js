@@ -44,6 +44,11 @@ const conversationSchema = new mongoose.Schema(
             default: false,
         },
 
+        buyerClaimedPayment: { 
+            type: Boolean, 
+            default: false
+         },
+
         paidAt: {
             type: Date,
             default: null,

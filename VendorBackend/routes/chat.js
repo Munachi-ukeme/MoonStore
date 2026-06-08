@@ -10,6 +10,7 @@ const {
     markAccountDetailsSent,
     markAsPaid,
     reportConversation,
+    buyerClaimedPayment,
 } = require("../controllers/chatController");
 
 // ── public routes — buyers access these using sessionId ──
@@ -17,6 +18,7 @@ router.post("/start", startConversation);
 router.get("/:conversationId", getMessages);
 router.post("/:conversationId/message", sendMessage);
 router.post("/:conversationId/report", reportConversation);
+router.put("/:conversationId/buyer-paid", buyerClaimedPayment);
 
 // ── protected routes — seller only, requires JWT ──
 router.get("/seller/inbox", protect, getSellerInbox);
