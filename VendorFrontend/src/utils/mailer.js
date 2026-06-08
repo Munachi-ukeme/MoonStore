@@ -60,4 +60,27 @@ const sendBuyerReplyEmail = async (buyerEmail, sellerBusinessName, storeSlug, se
     }
 };
 
-module.exports = { sendSellerNewChatEmail, sendBuyerReplyEmail };
+const sendBuyerClaimedPaymentEmail = async (sellerEmail, sellerSlug, conversationId) => {
+  const chatLink = `${process.env.FRONTEND_URL}/${sellerSlug}/chat/${conversationId}`;
+
+  const mailOptions = {
+    from: `"MoonStore" <${process.env.GMAIL_USER}>`,
+    to: sellerEmail,
+    subject: "A buyer has claimed payment — please confirm",
+    html: `
+      <div style="font-family: sans-serif; max-width: 480px; margin: auto;">
+        <h2 style="color: #6c47ff;">Payment Claim Received</h2>
+        <p>A buyer in one of your chats has clicked <strong>"I Have Paid"</strong>.</p>
+        <p>Please check your bank account or MoonStore subaccount to verify the transfer, then open the chat and click <strong>Mark as Paid</strong> to confirm.</p>
+        <a href="${chatLink}" style="display: inline-block; margin-top: 16px; padding: 12px 24px; background: #6c47ff; color: #fff; border-radius: 8px; text-decoration: none; font-weight: bold;">
+          Open Chat
+        </a>
+        <p style="margin-top: 24px; color: #888; font-size: 13px;">If you did not expect this, you can ignore this email or report the conversation from within the chat.</p>
+      </div>
+    `,
+  };
+
+  await transporter.sendMail(mailOptions);
+};
+
+module.exports = { sendSellerNewChatEmail, sendBuyerReplyEmail,  sendBuyerClaimedPaymentEmail };

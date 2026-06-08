@@ -107,7 +107,7 @@ export const buyerLogin = async (email) => {
     }
 };
 
-
+//Buyer side
 // this is for all chats across moonstore stores
 export const getBuyerConversations = async (sessionIds) => {
     try {
@@ -135,6 +135,97 @@ export const getSellerConversations = async (slug, sessionId) => {
         return { error: "Could not load orders. Please try again." };
     }
 };
+
+export const buyerClaimedPayment = async (conversationId) => {
+  try {
+    const res = await fetch(`${BASE_URL}/chat/${conversationId}/buyer-paid`, {
+      method: "PUT",
+    });
+    return await res.json();
+  } catch {
+    return { error: "Failed to send claim" };
+  }
+};
+
+export const sendBuyerMessage = async (conversationId, sessionId, content) => {
+  try {
+    const res = await fetch(`${BASE_URL}/chat/${conversationId}/message`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-session-id": sessionId },
+      body: JSON.stringify({ content }),
+    });
+    return await res.json();
+  } catch {
+    return { error: "Failed to send message" };
+  }
+};
+
+export const getConversationMessages = async (conversationId, sessionId) => {
+  try {
+    const res = await fetch(`${BASE_URL}/chat/${conversationId}`, {
+      headers: { "x-session-id": sessionId },
+    });
+    return await res.json();
+  } catch {
+    return { error: "Failed to load messages" };
+  }
+};
+
+// SELLER SIDE
+export const getSellerInbox = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`${BASE_URL}/chat/seller/inbox`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return await res.json();
+  } catch {
+    return { error: "Failed to load inbox" };
+  }
+};
+
+export const getSellerChatMessages = async (conversationId) => {
+  try {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`${BASE_URL}/chat/seller/messages/${conversationId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return await res.json();
+  } catch {
+    return { error: "Failed to load messages" };
+  }
+};
+
+export const sendSellerMessage = async (conversationId, content) => {
+  try {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`${BASE_URL}/chat/${conversationId}/message`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ content }),
+    });
+    return await res.json();
+  } catch {
+    return { error: "Failed to send message" };
+  }
+};
+
+export const markAsPaid = async (conversationId) => {
+  try {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`${BASE_URL}/chat/${conversationId}/paid`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return await res.json();
+  } catch {
+    return { error: "Failed to mark as paid" };
+  }
+};
+
 
 // PRODUCTS (Protected)
 //Get all products belonging to the logged-in seller

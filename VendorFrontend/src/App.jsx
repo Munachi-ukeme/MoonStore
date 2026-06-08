@@ -16,6 +16,9 @@ import HomePage from "./pages/HomePage";
 import BuyerDashboard from "./buyerComponent/BuyerDashboard";
 import SessionRestore from "./pages/SessionRestore";
 import BuyerOrdersPage from "./pages/BuyerOrdersPage";
+import BuyerChatPage from "./pages/BuyerChatPage";
+import SellerInboxPage from "./pages/SellerInboxPage";
+import SellerChatThreadPage from "./pages/SellerChatThreadPage";
 
 function App(){
   return (
@@ -35,6 +38,7 @@ function App(){
       <Route path="/terms-of-service" element={<TermsOfService />}/>
       <Route path="/my-orders" element={<BuyerDashboard />} />
       <Route path="/restore" element={<SessionRestore />} />
+      <Route path="/:slug/chat/:conversationId" element={<BuyerChatPage />} />
     
     
       {/* Protected seller routes - wrapped in protectedRoute*/}
@@ -90,6 +94,21 @@ function App(){
         </ProtectedRoute>
         
         }/>
+
+        <Route path="/dashboard/inbox" element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <SellerInboxPage />
+            </DashboardLayout>
+            </ProtectedRoute>} />
+
+        <Route path="/dashboard/chat/:conversationId" element={
+          <ProtectedRoute>
+            <DashboardLayout>
+               <SellerChatThreadPage />
+            </DashboardLayout>
+            </ProtectedRoute>} />
+
 
       <Route path="/:slug/orders" element={<BuyerOrdersPage />} />
       <Route path="/:slug/:productSlug" element={<ProductPage />}/>
