@@ -60,64 +60,59 @@ const SECURITY_NOTICE =
 // buyer clicks Order Now — creates the conversation and sends first messages
 const startConversation = async (req, res) => {
     try {
-        const { buyerSessionId, sellerId, productId, orderMessage } = req.body;
+        const { slug, productSlug, sessionId } = req.body;
 
-        if (!buyerSessionId || !sellerId || !productId || !orderMessage) {
+        if (!slug || !productSlug || !sessionId) {
             return res.status(400).json({ message: "Missing required fields" });
         }
 
-        // verify seller and product exist
-        const seller = await Seller.findById(sellerId);
+        const seller = await Seller.findOne({ slug });
         if (!seller || !seller.isActive) {
             return res.status(404).json({ message: "Store not found" });
         }
 
-        const product = await Product.findById(productId);
+        const product = await Product.findOne({ slug: productSlug, sellerId: seller._id });
         if (!product) {
             return res.status(404).json({ message: "Product not found" });
         }
 
-        // create the conversation
+        const orderMessage = `Hi! I want to order: ${product.name} — ₦${product.price.toLocaleString()}`;
+
         const conversation = await Conversation.create({
-            buyerSessionId,
-            sellerId,
-            productId,
+            buyerSessionId: sessionId,
+            sellerId: seller._id,
+            productId: product._id,
+            amount: product.price,
             buyerLastMessageAt: new Date(),
             lastMessage: orderMessage,
         });
 
-        // automatically insert security notice as first message
-        // sender is "system" — styled differently in the UI
         await Message.create({
             conversationId: conversation._id,
             sender: "system",
             content: SECURITY_NOTICE,
         });
 
-        // insert the buyer's order details as the second message
         await Message.create({
             conversationId: conversation._id,
             sender: "buyer",
             content: orderMessage,
         });
 
-        // notify seller via email
-        // this runs after the response is sent so it does not slow down the buyer
         sendSellerNewChatEmail(
             seller.email,
             seller.businessName,
             product.name
         ).catch((err) => console.error("Email error:", err.message));
 
-      
-       try {
-    getIO().to(sellerId.toString()).emit("new_conversation", { conversationId: conversation._id });
-} catch (err) {
-    console.error("Socket emit error:", err.message);
-}
+        try {
+            getIO().to(seller._id.toString()).emit("new_conversation", { conversationId: conversation._id });
+        } catch (err) {
+            console.error("Socket emit error:", err.message);
+        }
 
         res.status(201).json({
-            conversationId: conversation._id,
+            conversation: { _id: conversation._id },
             message: "Conversation started",
         });
     } catch (err) {
@@ -307,79 +302,6 @@ const getSellerInbox = async (req, res) => {
     }
 };
 
-// ── PUT /api/chat/:conversationId/account-sent ──
-// seller marks that they have shared their subaccount details
-// this unlocks the Mark as Paid button on seller's side
-const markAccountDetailsSent = async (req, res) => {
-    try {
-        const conversation = await Conversation.findById(req.params.conversationId);
-
-        if (!conversation) {
-            return res.status(404).json({ message: "Conversation not found" });
-        }
-
-        // only the seller who owns this conversation can do this
-        if (conversation.sellerId.toString() !== req.seller._id.toString()) {
-            return res.status(403).json({ message: "Access denied" });
-        }
-
-        conversation.accountDetailsSent = true;
-        await conversation.save();
-
-        res.json({ message: "Account details marked as sent" });
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-};
-
-// ── PUT /api/chat/:conversationId/paid ──
-// seller confirms payment received — protected route
-const markAsPaid = async (req, res) => {
-    try {
-        const conversation = await Conversation.findById(req.params.conversationId);
-
-        if (!conversation) {
-            return res.status(404).json({ message: "Conversation not found" });
-        }
-
-        if (conversation.sellerId.toString() !== req.seller._id.toString()) {
-            return res.status(403).json({ message: "Access denied" });
-        }
-
-        if (!conversation.accountDetailsSent) {
-            return res.status(400).json({
-                message: "You must share your payment details before marking as paid",
-            });
-        }
-
-        conversation.status = "paid";
-        conversation.paidAt = new Date();
-        conversation.lastMessage = "✅ Payment confirmed";
-        await conversation.save();
-
-        // insert system confirmation message — buyer sees this instantly
-        const confirmationMessage = await Message.create({
-            conversationId: conversation._id,
-            sender: "system",
-            content:
-                "✅ Payment confirmed by seller. Thank you for shopping on MoonStore! " +
-                "This conversation will be automatically deleted after 7 days.",
-        });
-
-        
-        try {
-    getIO().to(conversation._id.toString()).emit("payment_confirmed", {
-        message: confirmationMessage,
-    });
-} catch (err) {
-    console.error("Socket emit error:", err.message);
-}
-
-        res.json({ message: "Marked as paid", confirmationMessage });
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-};
 
 // ── POST /api/chat/:conversationId/report ──
 // buyer reports seller for trying to move conversation off platform
@@ -417,53 +339,93 @@ const reportConversation = async (req, res) => {
     }
 };
 
-const buyerClaimedPayment = async (req, res) => {
-  try {
-    const { conversationId } = req.params;
+// ── POST /api/chat/:conversationId/generate-payment-link ──
+// seller clicks Generate Payment Link — initializes Paystack transaction
+// returns a payment URL that appears in chat as a system message
+const initializeOrderPayment = async (req, res) => {
+    try {
+        const { conversationId } = req.params;
 
-    const conversation = await Conversation.findById(conversationId);
+        const conversation = await Conversation.findById(conversationId)
+            .populate("productId", "name price")
+            .populate("sellerId", "email businessName slug paystackSubaccountCode");
 
-    if (!conversation) {
-      return res.status(404).json({ error: "Conversation not found" });
+        if (!conversation) {
+            return res.status(404).json({ message: "Conversation not found" });
+        }
+
+        // only the seller who owns this conversation can generate the link
+        if (conversation.sellerId._id.toString() !== req.seller._id.toString()) {
+            return res.status(403).json({ message: "Access denied" });
+        }
+
+        if (conversation.status === "paid") {
+            return res.status(400).json({ message: "This order is already paid" });
+        }
+
+        const seller = conversation.sellerId;
+        const product = conversation.productId;
+
+        if (!seller.paystackSubaccountCode) {
+            return res.status(400).json({
+                message: "Your Paystack subaccount is not set up. Please contact support.",
+            });
+        }
+
+        const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY;
+        const PAYSTACK_BASE = "https://api.paystack.co";
+
+        const response = await fetch(`${PAYSTACK_BASE}/transaction/initialize`, {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${PAYSTACK_SECRET}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                email: seller.email,
+                amount: product.price * 100, // price already grossed up, convert to kobo
+                subaccount: seller.paystackSubaccountCode,
+                bearer: "account",
+                metadata: {
+                    sellerId: seller._id,
+                    conversationId: conversation._id,
+                    productName: product.name,
+                },
+                callback_url: `${process.env.FRONTEND_URL}/${seller.slug}/chat/${conversationId}`,
+            }),
+        });
+
+        const data = await response.json();
+
+        if (!data.status) {
+            return res.status(400).json({ message: "Could not generate payment link" });
+        }
+
+        const paymentUrl = data.data.authorization_url;
+
+        // insert payment link as system message in the chat
+        const systemMessage = await Message.create({
+            conversationId: conversation._id,
+            sender: "system",
+            content: `💳 Payment link ready. Tap to pay:\n${paymentUrl}`,
+        });
+
+        // update conversation last message
+        conversation.lastMessage = "Payment link sent";
+        await conversation.save();
+
+        try {
+            getIO().to(conversationId).emit("new_message", systemMessage);
+        } catch (err) {
+            console.error("Socket emit error:", err.message);
+        }
+
+        res.json({ message: "Payment link generated", paymentUrl });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
     }
-
-    if (!conversation.accountDetailsSent) {
-      return res.status(400).json({ error: "Account details have not been sent yet" });
-    }
-
-    if (conversation.buyerClaimedPayment) {
-      return res.status(400).json({ error: "Payment already claimed" });
-    }
-
-    if (conversation.status === "paid") {
-      return res.status(400).json({ error: "This order is already marked as paid" });
-    }
-
-    conversation.buyerClaimedPayment = true;
-    await conversation.save();
-
-    const systemMessage = new Message({
-      conversationId: conversation._id,
-      sender: "system",
-      content: "The buyer has claimed they've made payment. Please check your account and confirm.",
-    });
-    await systemMessage.save();
-
-    const seller = await Seller.findById(conversation.sellerId);
-
-    if (seller) {
-      await sendBuyerClaimedPaymentEmail(seller.email, seller.slug, conversationId);
-    }
-
-    const io = getIO();
-    io.to(conversationId.toString()).emit("new_message", systemMessage);
-
-    return res.status(200).json({ message: "Payment claim sent to seller" });
-  } catch (err) {
-    console.error("buyerClaimedPayment error:", err);
-    return res.status(500).json({ error: "Server error" });
-  }
 };
+
 
 module.exports = {
     startConversation,
@@ -471,8 +433,6 @@ module.exports = {
     getMessagesAsSeller,
     sendMessage,
     getSellerInbox,
-    markAccountDetailsSent,
-    markAsPaid,
     reportConversation,
-    buyerClaimedPayment,
+    initializeOrderPayment,
 };

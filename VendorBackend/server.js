@@ -70,6 +70,7 @@ const sellerRoutes = require("./routes/seller");
 const paymentRoutes = require("./routes/payments");
 const buyerRoutes = require("./routes/buyer");
 const chatRoutes = require("./routes/chat");
+const analyticsRoutes = require("./routes/analyticsRoutes");
 
 
 app.use("/api/auth", authRoutes);
@@ -81,6 +82,7 @@ app.use("/api/seller", sellerRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/buyer", buyerRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/analytics", analyticsRoutes);
 
 
 

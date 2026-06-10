@@ -152,8 +152,7 @@ const paystackWebhook = async (req, res) => {
         .update(req.rawBody)
         .digest("hex");
 
-
- if (hash !== req.headers["x-paystack-signature"]) {
+    if (hash !== req.headers["x-paystack-signature"]) {
         return res.status(401).json({ message: "Invalid signature" });
     }
 
@@ -163,31 +162,66 @@ const paystackWebhook = async (req, res) => {
         const { metadata } = event.data;
         const sellerId = metadata?.sellerId;
         const plan = metadata?.plan;
+        const conversationId = metadata?.conversationId;
 
-          try {
-        const Seller = require("../models/Seller");
-        const seller = await Seller.findById(sellerId);
+        // ── subscription / activation payment ──
+        if (sellerId && plan) {
+            try {
+                const Seller = require("../models/Seller");
+                const seller = await Seller.findById(sellerId);
 
-        if (seller && plan) {
-            const now = new Date();
-            const end = new Date();
-            end.setDate(end.getDate() + 30);
+                if (seller) {
+                    const now = new Date();
+                    const end = new Date();
+                    end.setDate(end.getDate() + 30);
 
-            seller.isActive = true;
-            seller.plan = plan;
-            seller.subscriptionStart = now;
-            seller.subscriptionEnd = end;
-            await seller.save();
+                    seller.isActive = true;
+                    seller.plan = plan;
+                    seller.subscriptionStart = now;
+                    seller.subscriptionEnd = end;
+                    await seller.save();
+                }
+            } catch (err) {
+                console.error("Webhook subscription update failed:", err.message);
+            }
         }
-    } catch (err) {
-        console.error("Webhook seller update failed:", err.message);
 
-         return res.sendStatus(200);
+        // ── order payment ──
+        if (conversationId) {
+            try {
+                const Conversation = require("../models/Conversation");
+                const Message = require("../models/Message");
+                const { getIO } = require("../utils/socket");
+
+                const conversation = await Conversation.findById(conversationId);
+
+                if (conversation && conversation.status !== "paid") {
+                    conversation.status = "paid";
+                    conversation.paidAt = new Date();
+                    conversation.amount = event.data.amount / 100; // kobo to naira
+                    await conversation.save();
+
+                    await Message.create({
+                        conversationId: conversation._id,
+                        sender: "system",
+                        content: "✅ Payment confirmed. Thank you for your order! This conversation will be deleted in 7 days.",
+                    });
+
+                    try {
+                        getIO().to(conversationId.toString()).emit("conversation_paid", {
+                            conversationId,
+                        });
+                    } catch (err) {
+                        console.error("Socket emit error:", err.message);
+                    }
+                }
+            } catch (err) {
+                console.error("Webhook order update failed:", err.message);
+            }
+        }
     }
-}
 
-return res.sendStatus(200);
-
+    return res.sendStatus(200);
 };
 
 module.exports = {

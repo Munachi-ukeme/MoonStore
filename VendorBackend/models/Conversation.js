@@ -39,15 +39,6 @@ const conversationSchema = new mongoose.Schema(
 
         // true once seller pastes their MoonStore subaccount details
         // controls visibility of Mark as Paid button on seller side
-        accountDetailsSent: {
-            type: Boolean,
-            default: false,
-        },
-
-        buyerClaimedPayment: { 
-            type: Boolean, 
-            default: false
-         },
 
         paidAt: {
             type: Date,
