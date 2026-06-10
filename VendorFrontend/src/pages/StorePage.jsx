@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { getStore } from "../api/api";
+import { trackStoreVisit } from "../api/api";
+import { getOrCreateSessionId } from "../utils/session";
 import Navbar from "../buyerComponent/Navbar";
 import HeroSection from "../buyerComponent/HeroSection";
 import CategoryTabs from "../buyerComponent/CategoryTabs";
@@ -39,6 +41,14 @@ function StorePage() {
             setCategories(data.categories);
             setFilteredProducts(data.products);
             setLoading(false);
+
+             if (data.store && data.store.seller) {
+             trackStoreVisit({
+             sellerId: data.store.seller._id,
+             sessionId: getOrCreateSessionId(),
+             referrer: document.referrer || "",
+            });
+            }
         };
         loadStore();
     }, [slug]);

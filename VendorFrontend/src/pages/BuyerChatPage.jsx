@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams } from "react-router-dom";
-import { getConversationMessages, sendBuyerMessage, reportConversation, buyerClaimedPayment } from "../api/api";
+import { getConversationMessages, sendBuyerMessage, reportConversation } from "../api/api";
 import { getOrCreateSessionId } from "../utils/session";
 import styles from "./BuyerChatPage.module.css";
 
@@ -15,8 +15,6 @@ const BuyerChatPage = () => {
   const [reportReason, setReportReason] = useState("");
   const [reportSending, setReportSending] = useState(false);
   const [reportSent, setReportSent] = useState(false);
-  const [claimSending, setClaimSending] = useState(false);
-  const [claimSent, setClaimSent] = useState(false);
   const [error, setError] = useState("");
   const bottomRef = useRef(null);
   const sessionId = getOrCreateSessionId();
@@ -29,7 +27,6 @@ const BuyerChatPage = () => {
       } else {
         setMessages(data.messages);
         setConversation(data.conversation);
-        setClaimSent(data.conversation.buyerClaimedPayment);
       }
       setLoading(false);
     };
@@ -69,62 +66,71 @@ const BuyerChatPage = () => {
     setReportSending(false);
   };
 
-  const handleClaimPayment = async () => {
-    setClaimSending(true);
-    const data = await buyerClaimedPayment(conversationId);
-    if (!data.error) {
-      setClaimSent(true);
-      setMessages((prev) => [
-        ...prev,
-        {
-          _id: Date.now(),
-          sender: "system",
-          content: "Your payment claim has been sent. The seller will confirm shortly.",
-          createdAt: new Date().toISOString(),
-        },
-      ]);
-    }
-    setClaimSending(false);
-  };
-
-
-   const renderMessage = (msg) => {
+  const renderMessage = (msg) => {
     if (msg.sender === "system") {
+      const isPaymentLink = msg.content.includes("https://");
+      if (isPaymentLink) {
+        const urlMatch = msg.content.match(/https:\/\/\S+/);
+        const url = urlMatch ? urlMatch[0] : null;
+        return (
+          <div key={msg._id} className={styles.systemMessage}>
+            <span>💳 Your payment link is ready</span>
+            {url ? (
+              <a
+                href={url}
+                target="_blank"
+                rel="noreferrer"
+                className={styles.payNowBtn}
+              >
+                Tap to Pay
+              </a>
+            ) : null}
+          </div>
+        );
+      }
       return (
         <div key={msg._id} className={styles.systemMessage}>
           <span>{msg.content}</span>
         </div>
       );
     }
+
     if (msg.sender === "buyer") {
       return (
         <div key={msg._id} className={`${styles.bubble} ${styles.buyerBubble}`}>
           <p>{msg.content}</p>
-          <span className={styles.time}>{new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+          <span className={styles.time}>
+            {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+          </span>
         </div>
       );
     }
+
     return (
       <div key={msg._id} className={`${styles.bubble} ${styles.sellerBubble}`}>
         <p>{msg.content}</p>
-        <span className={styles.time}>{new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+        <span className={styles.time}>
+          {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+        </span>
       </div>
     );
   };
-
 
   if (loading) return <div className={styles.loading}>Loading chat...</div>;
   if (error) return <div className={styles.error}>{error}</div>;
 
   const isPaid = conversation?.status === "paid";
-  const canClaimPayment = conversation?.accountDetailsSent && !claimSent && !isPaid;
 
   return (
     <div className={styles.page}>
 
+      <div className={styles.securityBanner}>
+        ⚠️ Only pay through the official payment link in this chat. Never send money to a personal account.
+      </div>
+
       <div className={styles.header}>
         <span className={styles.storeName}>{slug}</span>
-        {isPaid && <span className={styles.paidBadge}>✓ Paid</span>}
+        {isPaid ? <span className={styles.paidBadge}>✓ Paid</span> : null}
         <button className={styles.reportBtn} onClick={() => setShowReportModal(true)}>
           Report
         </button>
@@ -135,26 +141,7 @@ const BuyerChatPage = () => {
         <div ref={bottomRef} />
       </div>
 
-      {canClaimPayment && (
-        <div className={styles.claimBar}>
-          <button
-            className={styles.claimBtn}
-            onClick={handleClaimPayment}
-            disabled={claimSending}
-          >
-            {claimSending ? "Sending..." : "I Have Paid"}
-          </button>
-        </div>
-      )}
-
-
-      {claimSent && !isPaid && (
-        <div className={styles.claimNotice}>
-          Payment claim sent. Waiting for seller confirmation.
-        </div>
-      )}
-
-       {!isPaid && (
+      {!isPaid ? (
         <div className={styles.inputBar}>
           <textarea
             className={styles.input}
@@ -168,15 +155,13 @@ const BuyerChatPage = () => {
             {sending ? "..." : "Send"}
           </button>
         </div>
-      )}
-
-       {isPaid && (
+      ) : (
         <div className={styles.paidBar}>
           This order has been confirmed as paid.
         </div>
       )}
 
-      {showReportModal && (
+      {showReportModal ? (
         <div className={styles.modalOverlay}>
           <div className={styles.modal}>
             <h3>Report Seller</h3>
@@ -203,13 +188,12 @@ const BuyerChatPage = () => {
                 {reportSending ? "Sending..." : "Submit Report"}
               </button>
             </div>
-            {reportSent && <p className={styles.reportSuccess}>Report submitted.</p>}
+            {reportSent ? <p className={styles.reportSuccess}>Report submitted.</p> : null}
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 };
 
 export default BuyerChatPage;
-

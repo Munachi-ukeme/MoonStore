@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { getProducts } from "../api/api";
 import styles from "./DashboardPage.module.css";
+import AnalyticsSection from "./AnalyticsSection";
 
 function DashboardPage() {
     const { seller } = useAuth();
@@ -100,7 +101,6 @@ function DashboardPage() {
                 <div className={styles.heroCard}>
                     <p className={styles.heroLabel}>Your Store Link</p>
                     <div className={styles.storeLinkRow}>
-                        <p className={styles.storeLink}>{storeLink}</p>
                         <button
                             className={styles.copyButton}
                             onClick={handleCopyLink}
@@ -146,7 +146,6 @@ function DashboardPage() {
             <div className={styles.referralCard}>
                 <p className={styles.heroLabel}>Earn ₦3,000 Per Referral</p>
                 <div className={styles.storeLinkRow}>
-                    <p className={styles.storeLink}>{referralLink}</p>
                     <button
                         className={styles.copyButton}
                         onClick={handleCopyReferral}
@@ -154,10 +153,6 @@ function DashboardPage() {
                         {copiedReferral ? "Copied!" : "Copy"}
                     </button>
                 </div>
-
-                <p className={styles.storeLinkHint}>
-                    Share with vendor friends. You earn ₦3,000 when they join and pay.
-                </p>
 
                 {/* commission stats */}
                 <div className={styles.commissionRow}>
@@ -184,13 +179,7 @@ function DashboardPage() {
 
             {/* basic analytics - pro and premium only */}
             {seller ? (
-                <div className={styles.comingSoonCard}>
-                    <p className={styles.comingSoonLabel}>Basic Analytics</p>
-                    <p className={styles.comingSoonTitle}>Coming Soon</p>
-                    <p className={styles.comingSoonText}>
-                        Track store visits, product clicks, and order activity.
-                    </p>
-                </div>
+                < AnalyticsSection />
             ) : null}
 
             {/* advanced sales insights - premium only */}

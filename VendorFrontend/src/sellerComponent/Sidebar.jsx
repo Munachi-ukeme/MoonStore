@@ -38,41 +38,50 @@ return(
             end
             className={({ isActive }) =>
                 isActive ? `${styles.link} ${styles.activeLink}` : styles.link
-            }> Dashboard </NavLink>
+            } onClick={handleLinkClick}> Dashboard </NavLink>
 
             <NavLink
             to="/dashboard/products"
             className={({ isActive }) =>
                 isActive ? `${styles.link} ${styles.activeLink}` : styles.link
-            }> Products </NavLink>
+            } onClick={handleLinkClick}> Products </NavLink>
 
 
             <NavLink
             to="/dashboard/categories"
             className={({ isActive }) =>
                 isActive ? `${styles.link} ${styles.activeLink}` : styles.link
-            }> Categories </NavLink>
+            } onClick={handleLinkClick}> Categories </NavLink>
+
+            <NavLink
+            to="/dashboard/inbox"
+            className={({ isActive }) =>
+               isActive ? `${styles.link} ${styles.activeLink}` : styles.link
+            }
+            onClick={handleLinkClick}
+            > Inbox </NavLink>
+
 
 
             <NavLink
             to="/dashboard/settings"
             className={({ isActive }) =>
                 isActive ? `${styles.link} ${styles.activeLink}` : styles.link
-            }> Settings </NavLink>
+            } onClick={handleLinkClick}> Settings </NavLink>
 
 
             <NavLink
-            to="/dashboard/privacyPolicy"
+            to="/dashboard/privacypolicy"
             className={({ isActive }) =>
                 isActive ? `${styles.link} ${styles.activeLink}` : styles.link
-            }> Privacy Policy </NavLink>
+            } onClick={handleLinkClick}> Privacy Policy </NavLink>
 
 
             <NavLink
-            to="/dashboard/termsOfService"
+            to="/dashboard/termsofservice"
             className={({ isActive }) =>
                 isActive ? `${styles.link} ${styles.activeLink}` : styles.link
-            }> Terms of Service </NavLink>
+            } onClick={handleLinkClick}> Terms of Service </NavLink>
 
 
         </nav>

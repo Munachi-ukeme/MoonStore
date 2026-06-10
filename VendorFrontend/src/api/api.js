@@ -1,5 +1,21 @@
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000/api"; //backend address
 
+const fetchWithTimeout = async (url, options = {}, timeout = 13000) => {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeout);
+  try {
+    const res = await fetch(url, { ...options, signal: controller.signal });
+    clearTimeout(timer);
+    return res;
+  } catch (err) {
+    clearTimeout(timer);
+    if (err.name === "AbortError") {
+      throw new Error("Request timed out. Check your connection and try again.");
+    }
+    throw err;
+  }
+};
+
 const getAuthHeaders = () =>{
     const token = localStorage.getItem("token");
     return{
@@ -11,7 +27,7 @@ const getAuthHeaders = () =>{
 //seller signup 
 export const registerSeller = async(data) =>{
     try{
-        const res = await fetch(`${BASE_URL}/auth/register`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/auth/register`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(data),
@@ -27,7 +43,7 @@ export const registerSeller = async(data) =>{
 // payment
 export const getBanks = async() =>{
     try{
-        const res = await fetch(`${BASE_URL}/payments/banks`);
+        const res = await fetchWithTimeout(`${BASE_URL}/payments/banks`);
         const json = await res.json();
         if (!res.ok) return { error: json.message || "Could not load banks" };
         return json;
@@ -39,7 +55,7 @@ export const getBanks = async() =>{
 
 export const verifyAccount = async (accountNumber, bankCode) => {
     try {
-        const res = await fetch(`${BASE_URL}/payments/verify-account`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/payments/verify-account`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ accountNumber, bankCode }),
@@ -51,35 +67,64 @@ export const verifyAccount = async (accountNumber, bankCode) => {
         return { error: "Could not verify account. Please try again." };
     }
 };
+
+export const initializePayment = async (plan) => {
+  try {
+    const token = localStorage.getItem("token");
+    const res = await fetchWithTimeout(`${BASE_URL}/payments/initialize`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ plan }),
+    });
+    return await res.json();
+  } catch {
+    return { error: "Payment initialization failed" };
+  }
+};
 //AUTH
 //Called on the login page
 //send email + password, expect back {token, seller}
 export const loginSeller = async(email, password) =>{
-    const res = await fetch(`${BASE_URL}/auth/login`,{
+    try{
+    const res = await fetchWithTimeout(`${BASE_URL}/auth/login`,{
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({ email, password}),
         });
         return res.json();
+    }catch (err) {
+    return { error: err.message || "Something went wrong." };
+  }
 };
 
 
 // PUBLIC (BUYER)
 // Loads the full store for a given slug - used on StorePage
 export const getStore = async (slug) => {
-    const res = await fetch(`${BASE_URL}/store/${slug}`);
+    try{
+    const res = await fetchWithTimeout(`${BASE_URL}/store/${slug}`);
     return res.json();
+    } catch (err) {
+    return { error: err.message || "Something went wrong." };
+  }
 };
 
 //Loads the full store for a given slug - used on StorePage
 export const getProduct = async(slug, productSlug) => {
-    const res = await fetch(`${BASE_URL}/store/${slug}/${productSlug}`);
+    try{
+    const res = await fetchWithTimeout(`${BASE_URL}/store/${slug}/${productSlug}`);
     return res.json();
+    } catch (err) {
+    return { error: err.message || "Something went wrong." };
+  }
 };
 
 export const saveBuyerEmail = async (email, sessionId, sellerId) => {
     try {
-        const res = await fetch(`${BASE_URL}/buyer/save-email`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/buyer/save-email`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email, sessionId, sellerId }),
@@ -94,7 +139,7 @@ export const saveBuyerEmail = async (email, sessionId, sellerId) => {
 
 export const buyerLogin = async (email) => {
     try {
-        const res = await fetch(`${BASE_URL}/buyer/login`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/buyer/login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email }),
@@ -113,7 +158,7 @@ export const getBuyerConversations = async (sessionIds) => {
     try {
         // sessionIds is an array — we join to a comma-separated query string
         const query = sessionIds.join(",");
-        const res = await fetch(`${BASE_URL}/buyer/conversations?sessionIds=${query}`);
+        const res = await fetchWithTimeout(`${BASE_URL}/buyer/conversations?sessionIds=${query}`);
         const json = await res.json();
         if (!res.ok) return { error: json.message || "Could not load orders" };
         return json;
@@ -125,7 +170,7 @@ export const getBuyerConversations = async (sessionIds) => {
 //this is for chat in a specific store
 export const getSellerConversations = async (slug, sessionId) => {
     try {
-        const res = await fetch(
+        const res = await fetchWithTimeout(
             `${BASE_URL}/buyer/conversations/seller/${slug}?sessionId=${sessionId}`
         );
         const json = await res.json();
@@ -138,7 +183,7 @@ export const getSellerConversations = async (slug, sessionId) => {
 
 export const buyerClaimedPayment = async (conversationId) => {
   try {
-    const res = await fetch(`${BASE_URL}/chat/${conversationId}/buyer-paid`, {
+    const res = await fetchWithTimeout(`${BASE_URL}/chat/${conversationId}/buyer-paid`, {
       method: "PUT",
     });
     return await res.json();
@@ -149,7 +194,7 @@ export const buyerClaimedPayment = async (conversationId) => {
 
 export const sendBuyerMessage = async (conversationId, sessionId, content) => {
   try {
-    const res = await fetch(`${BASE_URL}/chat/${conversationId}/message`, {
+    const res = await fetchWithTimeout(`${BASE_URL}/chat/${conversationId}/message`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-session-id": sessionId },
       body: JSON.stringify({ content }),
@@ -162,7 +207,7 @@ export const sendBuyerMessage = async (conversationId, sessionId, content) => {
 
 export const getConversationMessages = async (conversationId, sessionId) => {
   try {
-    const res = await fetch(`${BASE_URL}/chat/${conversationId}`, {
+    const res = await fetchWithTimeout(`${BASE_URL}/chat/${conversationId}`, {
       headers: { "x-session-id": sessionId },
     });
     return await res.json();
@@ -171,11 +216,51 @@ export const getConversationMessages = async (conversationId, sessionId) => {
   }
 };
 
+export const reportConversation = async (conversationId, sessionId, reason) => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/chat/${conversationId}/report`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-session-id": sessionId },
+      body: JSON.stringify({ reason }),
+    });
+    return await res.json();
+  } catch {
+    return { error: "Failed to submit report" };
+  }
+};
+
+export const markAccountDetailsSent = async (conversationId) => {
+  try {
+    const token = localStorage.getItem("token");
+    const res = await fetchWithTimeout(`${BASE_URL}/chat/${conversationId}/account-sent`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return await res.json();
+  } catch {
+    return { error: "Failed to mark account details sent" };
+  }
+};
+
+
+export const startConversation = async (slug, productSlug, sessionId) => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/chat/start`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slug, productSlug, sessionId }),
+    });
+    return await res.json();
+  } catch {
+    return { error: "Failed to start conversation" };
+  }
+};
+
 // SELLER SIDE
 export const getSellerInbox = async () => {
   try {
     const token = localStorage.getItem("token");
-    const res = await fetch(`${BASE_URL}/chat/seller/inbox`, {
+    const res = await fetchWithTimeout(`${BASE_URL}/chat/seller/inbox`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return await res.json();
@@ -187,7 +272,7 @@ export const getSellerInbox = async () => {
 export const getSellerChatMessages = async (conversationId) => {
   try {
     const token = localStorage.getItem("token");
-    const res = await fetch(`${BASE_URL}/chat/seller/messages/${conversationId}`, {
+    const res = await fetchWithTimeout(`${BASE_URL}/chat/seller/messages/${conversationId}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return await res.json();
@@ -199,7 +284,7 @@ export const getSellerChatMessages = async (conversationId) => {
 export const sendSellerMessage = async (conversationId, content) => {
   try {
     const token = localStorage.getItem("token");
-    const res = await fetch(`${BASE_URL}/chat/${conversationId}/message`, {
+    const res = await fetchWithTimeout(`${BASE_URL}/chat/${conversationId}/message`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -213,24 +298,12 @@ export const sendSellerMessage = async (conversationId, content) => {
   }
 };
 
-export const markAsPaid = async (conversationId) => {
-  try {
-    const token = localStorage.getItem("token");
-    const res = await fetch(`${BASE_URL}/chat/${conversationId}/paid`, {
-      method: "PUT",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return await res.json();
-  } catch {
-    return { error: "Failed to mark as paid" };
-  }
-};
 
 
 // PRODUCTS (Protected)
 //Get all products belonging to the logged-in seller
 export const getProducts = async() =>{
-    const res = await fetch(`${BASE_URL}/products`, {
+    const res = await fetchWithTimeout(`${BASE_URL}/products`, {
         headers: getAuthHeaders(),
     });
     return res.json();
@@ -242,7 +315,7 @@ export const getProducts = async() =>{
 // The browser sets it automatically with the correct format for file uploads.
 export const createProduct = async (formData) => {
     const token = localStorage.getItem("token");
-    const res = await fetch(`${BASE_URL}/products`, {
+    const res = await fetchWithTimeout(`${BASE_URL}/products`, {
         method: "POST",
         headers: {
             ...(token && { Authorization: `Bearer ${token}`}),
@@ -256,7 +329,7 @@ export const createProduct = async (formData) => {
 //Updates an existing product by ID
 export const updateProduct = async(id, formData) =>{
     const token = localStorage.getItem("token");
-    const res = await fetch(`${BASE_URL}/products/${id}`, {
+    const res = await fetchWithTimeout(`${BASE_URL}/products/${id}`, {
         method: "PUT",
         headers: {
             ...(token && { Authorization: `Bearer ${token}`}),
@@ -268,7 +341,7 @@ export const updateProduct = async(id, formData) =>{
 
 //Delete a product by ID
 export const deleteProduct = async (id) =>{
-    const res = await fetch(`${BASE_URL}/products/${id}`, {
+    const res = await fetchWithTimeout(`${BASE_URL}/products/${id}`, {
         method: "DELETE",
         headers: getAuthHeaders(),
     });
@@ -277,14 +350,14 @@ export const deleteProduct = async (id) =>{
 
 //CATEGORIES (Protected)
 export const getCategories = async () =>{
-    const res = await fetch(`${BASE_URL}/categories`, {
+    const res = await fetchWithTimeout(`${BASE_URL}/categories`, {
         headers: getAuthHeaders(),
     });
     return res.json();
 };
 
 export const createCategory = async(name) =>{
-    const res = await fetch(`${BASE_URL}/categories`, {
+    const res = await fetchWithTimeout(`${BASE_URL}/categories`, {
         method: "POST",
         headers: getAuthHeaders(),
         body: JSON.stringify({name}),
@@ -294,7 +367,7 @@ export const createCategory = async(name) =>{
 
 export const updateCategory = async (id, name) =>{
     try{
-        const res = await fetch(`${BASE_URL}/categories/${id}`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/categories/${id}`, {
             method: "PUT",
             headers: getAuthHeaders(),
             body: JSON.stringify({ name }),
@@ -306,7 +379,7 @@ export const updateCategory = async (id, name) =>{
 };
 
 export const deleteCategory = async(id) =>{
-    const res = await fetch(`${BASE_URL}/categories/${id}`, {
+    const res = await fetchWithTimeout(`${BASE_URL}/categories/${id}`, {
         method: "DELETE",
         headers: getAuthHeaders(),
     });
@@ -318,7 +391,7 @@ export const deleteCategory = async(id) =>{
 //Updates store settings - uses FormData bacause logo/banner are image uploads
 export const updateStoreSettings = async(formData) =>{
     const token = localStorage.getItem("token");
-    const res = await fetch(`${BASE_URL}/store/settings`, {
+    const res = await fetchWithTimeout(`${BASE_URL}/store/settings`, {
         method: "PUT",
         headers: {
             ...(token && {Authorization: `Bearer ${token}`}),
@@ -330,7 +403,7 @@ export const updateStoreSettings = async(formData) =>{
 
 export const changeSellerPassword = async (currentPassword, newPassword) => {
     try {
-        const res = await fetch(`${BASE_URL}/seller/change-password`, {
+        const res = await fetchWithTimeout(`${BASE_URL}/seller/change-password`, {
             method: "PUT",
             headers: getAuthHeaders(),
             body: JSON.stringify({ currentPassword, newPassword }),
@@ -345,9 +418,60 @@ export const changeSellerPassword = async (currentPassword, newPassword) => {
 //SELLER ACCOUNT
 //Permently delete the seller's account
 export const deleteSellerAccount = async () =>{
-    const res = await fetch(`${BASE_URL}/seller/account`, {
+    const res = await fetchWithTimeout(`${BASE_URL}/seller/account`, {
         method: "DELETE",
         headers: getAuthHeaders(),
     });
     return res.json();
+};
+
+export const trackStoreVisit = async ({ sellerId, sessionId, referrer }) => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/analytics/store-visit`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sellerId, sessionId, referrer }),
+    });
+    return await res.json();
+  } catch {
+    return { error: "Failed to track store visit" };
+  }
+};
+
+export const trackProductClick = async ({ sellerId, productId, sessionId }) => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/analytics/product-click`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sellerId, productId, sessionId }),
+    });
+    return await res.json();
+  } catch {
+    return { error: "Failed to track product click" };
+  }
+};
+
+export const getAnalyticsSummary = async (period) => {
+  try {
+    const token = localStorage.getItem("token");
+    const res = await fetchWithTimeout(`${BASE_URL}/analytics/summary?period=${period}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return await res.json();
+  } catch {
+    return { error: "Failed to fetch analytics" };
+  }
+};
+
+export const generatePaymentLink = async (conversationId) => {
+    try {
+        const token = localStorage.getItem("token");
+        const res = await fetchWithTimeout(`${BASE_URL}/chat/${conversationId}/generate-payment-link`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+        });
+        return await res.json();
+    } catch {
+        return { error: "Failed to generate payment link" };
+    }
 };

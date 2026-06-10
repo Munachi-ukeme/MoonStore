@@ -3,11 +3,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import {
   getSellerChatMessages,
   sendSellerMessage,
-  markAccountDetailsSent,
-  markAsPaid,
+  generatePaymentLink,
 } from "../api/api";
 import styles from "./SellerChatThreadPage.module.css";
-
 
 const SellerChatThreadPage = () => {
   const { conversationId } = useParams();
@@ -17,13 +15,12 @@ const SellerChatThreadPage = () => {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
-  const [markingAccountSent, setMarkingAccountSent] = useState(false);
-  const [markingPaid, setMarkingPaid] = useState(false);
-  const [confirmPaid, setConfirmPaid] = useState(false);
+  const [generatingLink, setGeneratingLink] = useState(false);
+  const [linkError, setLinkError] = useState("");
   const [error, setError] = useState("");
   const bottomRef = useRef(null);
 
-   useEffect(() => {
+  useEffect(() => {
     const fetchThread = async () => {
       const data = await getSellerChatMessages(conversationId);
       if (data.error) {
@@ -37,7 +34,7 @@ const SellerChatThreadPage = () => {
     fetchThread();
   }, [conversationId]);
 
-    useEffect(() => {
+  useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
@@ -59,33 +56,53 @@ const SellerChatThreadPage = () => {
     }
   };
 
-  const handleMarkAsPaid = async () => {
-    setMarkingPaid(true);
-    const data = await markAsPaid(conversationId);
-    if (!data.error) {
-      setConversation((prev) => ({ ...prev, status: "paid" }));
-      setConfirmPaid(false);
-      setMessages((prev) => [
-        ...prev,
-        {
-          _id: Date.now(),
-          sender: "system",
-          content: "Order marked as paid. This conversation will be deleted in 7 days.",
-          createdAt: new Date().toISOString(),
-        },
-      ]);
+  const handleGeneratePaymentLink = async () => {
+    setGeneratingLink(true);
+    setLinkError("");
+    const data = await generatePaymentLink(conversationId);
+    setGeneratingLink(false);
+    if (data.error) {
+      setLinkError(data.error);
+      setTimeout(() => setLinkError(""), 3000);
+      return;
     }
-    setMarkingPaid(false);
+    // system message with the link already inserted by backend
+    // just reload messages so it appears in the thread
+    const updated = await getSellerChatMessages(conversationId);
+    if (!updated.error) {
+      setMessages(updated.messages);
+    }
   };
 
   const renderMessage = (msg) => {
     if (msg.sender === "system") {
+      // check if message contains a payment link
+      const isPaymentLink = msg.content.includes("https://");
+      if (isPaymentLink) {
+        const urlMatch = msg.content.match(/https:\/\/\S+/);
+        const url = urlMatch ? urlMatch[0] : null;
+        return (
+          <div key={msg._id} className={styles.systemMessage}>
+            <span>💳 Payment link ready for buyer</span>
+            {url ? ( <a
+                href={url}
+                target="_blank"
+                rel="noreferrer"
+                className={styles.paymentLinkBtn}
+              >
+                Open Payment Page
+              </a>
+            ) : null}
+          </div>
+        );
+      }
       return (
         <div key={msg._id} className={styles.systemMessage}>
           <span>{msg.content}</span>
         </div>
       );
     }
+
     if (msg.sender === "seller") {
       return (
         <div key={msg._id} className={`${styles.bubble} ${styles.sellerBubble}`}>
@@ -97,7 +114,7 @@ const SellerChatThreadPage = () => {
       );
     }
 
-     return (
+    return (
       <div key={msg._id} className={`${styles.bubble} ${styles.buyerBubble}`}>
         <p>{msg.content}</p>
         <span className={styles.time}>
@@ -111,21 +128,13 @@ const SellerChatThreadPage = () => {
   if (error) return <div className={styles.error}>{error}</div>;
 
   const isPaid = conversation?.status === "paid";
-  const accountSent = conversation?.accountDetailsSent;
-  const buyerClaimed = conversation?.buyerClaimedPayment;
-
 
   return (
     <div className={styles.page}>
+
       {isPaid && (
         <div className={styles.paidBanner}>
           ✓ This order has been marked as paid
-        </div>
-      )}
-
-      {buyerClaimed && !isPaid && (
-        <div className={styles.claimBanner}>
-          💬 Buyer has claimed they made payment — please verify and confirm below
         </div>
       )}
 
@@ -133,7 +142,6 @@ const SellerChatThreadPage = () => {
         <button className={styles.backBtn} onClick={() => navigate("/dashboard/inbox")}>
           ←
         </button>
-
         <div className={styles.headerInfo}>
           <span className={styles.productName}>
             {conversation?.productId?.name || "Order"}
@@ -149,49 +157,31 @@ const SellerChatThreadPage = () => {
         <div ref={bottomRef} />
       </div>
 
-      {!isPaid && accountSent && (
-        <div className={styles.markPaidBar}>
-          {confirmPaid ? (
-            <div className={styles.confirmRow}>
-              <span className={styles.confirmText}>Confirm payment received?</span>
-              <button
-                className={styles.confirmYes}
-                onClick={handleMarkAsPaid}
-                disabled={markingPaid}
-              >
-                {markingPaid ? "..." : "Yes, Paid"}
-              </button>
-              <button
-                className={styles.confirmNo}
-                onClick={() => setConfirmPaid(false)}
-              >
-                Cancel
-              </button>
-            </div>
-          ) : (
-            <button
-              className={styles.markPaidBtn}
-              onClick={() => setConfirmPaid(true)}
-            >
-              Mark as Paid
-            </button>
-          )}
-        </div>
-      )}
-
       {!isPaid && (
-        <div className={styles.inputBar}>
-          <textarea
-            className={styles.input}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Type a message..."
-            rows={1}
-          />
-          <button className={styles.sendBtn} onClick={handleSend} disabled={sending}>
-            {sending ? "..." : "Send"}
+        <div className={styles.bottomBar}>
+          {linkError ? <p className={styles.linkError}>{linkError}</p> : null}
+
+          <button
+            className={styles.generateBtn}
+            onClick={handleGeneratePaymentLink}
+            disabled={generatingLink}
+          >
+            {generatingLink ? "Generating..." : "💳 Generate Payment Link"}
           </button>
+
+          <div className={styles.inputRow}>
+            <textarea
+              className={styles.input}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Type a message..."
+              rows={1}
+            />
+            <button className={styles.sendBtn} onClick={handleSend} disabled={sending}>
+              {sending ? "..." : "Send"}
+            </button>
+          </div>
         </div>
       )}
 

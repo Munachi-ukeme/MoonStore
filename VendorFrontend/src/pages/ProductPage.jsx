@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getProduct, getStore } from "../api/api";
+import { trackProductClick } from "../api/api";
+import { getProduct, getStore, startConversation } from "../api/api";
+import { getOrCreateSessionId } from "../utils/session";
 import styles from "./ProductPage.module.css";
 import Navbar from "../buyerComponent/Navbar";
 
@@ -31,6 +33,10 @@ function ProductPage() {
     const [deliveryCity, setDeliveryCity] = useState("");
 
     const [deliveryPhone, setDeliveryPhone] = useState("");
+
+    const [orderLoading, setOrderLoading] = useState(false);
+
+    const [orderError, setOrderError] = useState(null);
 
     // fetch product and store data
     useEffect(() => {
@@ -127,14 +133,38 @@ function ProductPage() {
         }
     };
 
-
-
     const handleCopyLink = () =>{
         navigator.clipboard.writeText(window.location.href);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
 
+    const handleOrderNow = async () => {
+  if (!product.inStock) return;
+  setOrderLoading(true);
+  setOrderError(null);
+
+  const sessionId = getOrCreateSessionId();
+
+  // track the click
+  await trackProductClick({
+    sellerId: store._id,
+    productId: product._id,
+    sessionId,
+  });
+
+  const data = await startConversation(slug, productSlug, sessionId);
+  setOrderLoading(false);
+
+  if (data.error) {
+    setOrderError("Could not start order. Please try again.");
+    setTimeout(() => setOrderError(null), 3000);
+    return;
+  }
+
+  navigate(`/${slug}/chat/${data.conversation._id}`);
+};
+    
      // loading state
     if (loading) {
         return (
@@ -330,12 +360,15 @@ function ProductPage() {
                     </p>
 
                     {/* order now button */}
-                        <button
-                            className={styles.orderBtn}
-                            // onClick={}
-                        >
-                            
-                        </button>
+                        {orderError ? <p className={styles.orderError}>{orderError}</p> : null}
+
+                    <button
+                       className={styles.orderBtn}
+                       onClick={handleOrderNow}
+                       disabled={!product.inStock || orderLoading}
+                    >
+                    {orderLoading ? "Starting order..." : "Order Now"}
+                    </button>
                     
 
                     {/* copy product link */}

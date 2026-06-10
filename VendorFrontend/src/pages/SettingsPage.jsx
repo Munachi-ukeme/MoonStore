@@ -6,7 +6,6 @@ function SettingsPage() {
     return(
         <div className={styles.container}>
             <StoreSettings />
-            <ChangePassword />
         </div>
     );
 }

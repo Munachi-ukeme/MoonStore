@@ -19,10 +19,12 @@ import BuyerOrdersPage from "./pages/BuyerOrdersPage";
 import BuyerChatPage from "./pages/BuyerChatPage";
 import SellerInboxPage from "./pages/SellerInboxPage";
 import SellerChatThreadPage from "./pages/SellerChatThreadPage";
+import OfflineBanner from "./buyerComponent/OfflineBanner";
 
 function App(){
   return (
     <AuthProvider>
+    <OfflineBanner />
     <BrowserRouter>
     <Routes>
 
@@ -34,7 +36,7 @@ function App(){
       <Route path="/register" element={<SignupPage />}/>
 
       {/* Public buyer routes */}  
-      <Route path="/privacy-policy" element={<PrivacyPolicy />}/>
+      <Route path="/privacypolicy" element={<PrivacyPolicy />}/>
       <Route path="/terms-of-service" element={<TermsOfService />}/>
       <Route path="/my-orders" element={<BuyerDashboard />} />
       <Route path="/restore" element={<SessionRestore />} />

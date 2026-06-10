@@ -130,7 +130,6 @@
 .copyButton {
     display: flex;
     align-items: center;
-    gap: 4px;
     padding: 6px 12px;
     background-color: #f5f3ff;
     color: #7c3aed;
@@ -141,6 +140,7 @@
     cursor: pointer;
     transition: background-color 0.2s;
     white-space: nowrap;
+    margin-left: 260px;
 }
 
 .copyButton:hover {
@@ -185,9 +185,9 @@
 }
 
 .cardValue {
-    font-size: 15px;
-    font-weight: 800;
-    color: #1e1b2e;
+    font-size: 13px;
+    font-weight: 600;
+    color: black;
     text-transform: capitalize;
 }
 

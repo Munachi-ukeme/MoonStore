@@ -1,0 +1,86 @@
+*{
+    margin: 0;
+    padding: 0;
+    font-family: sans-serif;
+    box-sizing: border-box;
+}
+
+.wrapper {
+  margin-top: 20px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding: 0 2px;
+}
+
+.sectionLabel {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary, #111);
+  margin: 0;
+}
+
+.periodSelect {
+  font-size: 12px;
+  padding: 6px 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+  color: #333;
+  outline: none;
+  cursor: pointer;
+}
+
+.periodSelect:focus {
+  border-color: #7c3aed;
+}
+
+.scrollRow {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.scrollRow::-webkit-scrollbar {
+  display: none;
+}
+
+.card {
+  min-width: 130px;
+  flex-shrink: 0;
+  background: #fff;
+  border: 1px solid #ece9f7;
+  border-radius: 12px;
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cardValue {
+  font-size: 17px;
+  font-weight: 600;
+  color: #7c3aed;
+  margin: 4px 0 0;
+}
+
+.cardLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: #111;
+  margin: 0;
+}
+
+
+.loadingText {
+  font-size: 12px;
+  color: #888;
+  padding: 10px 0;
+}

@@ -289,3 +289,25 @@
   font-size: 14px;
   color: #888;
 }
+.securityBanner {
+  background: #fff3cd;
+  color: #856404;
+  font-size: 11px;
+  padding: 8px 14px;
+  text-align: center;
+  border-bottom: 1px solid #ffc107;
+  flex-shrink: 0;
+}
+
+.payNowBtn {
+  display: block;
+  margin-top: 8px;
+  padding: 10px 16px;
+  background: #6c47ff;
+  color: #fff;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+}

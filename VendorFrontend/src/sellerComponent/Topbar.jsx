@@ -17,13 +17,16 @@ function Topbar ({ onOpen}){
         pageTitle = "Categories"
     } else if(location.pathname === "/dashboard/settings"){
         pageTitle = "Settings"
-    } else if(location.pathname === "/dashboard/privacypolicy"){
-
-    } else if(location.pathname === "/dashboard/termsofservice"){
-
+    } else if(location.pathname === "/dashboard/privacy-policy"){
+        pageTitle = "Privacy Policy"
+    } else if(location.pathname === "/dashboard/terms-of-service"){
+        pageTitle = "Terms Of Service"
+    } else if(location.pathname === "/dashboard/inbox"){
+        pageTitle = "Inbox"
     } else{
         pageTitle = "Dashboard"
     }
+    
     
 
     // check plan and return the right badge color class

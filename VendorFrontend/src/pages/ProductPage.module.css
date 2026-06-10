@@ -288,6 +288,12 @@
     cursor: not-allowed;
 }
 
+.orderError {
+  font-size: 12px;
+  color: #ef4444;
+  margin-bottom: 8px;
+}
+
 .copyBtn {
     width: 100%;
     padding: 12px;

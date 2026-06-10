@@ -42,6 +42,11 @@ function ProductForm ({ editingProduct, onSaved, onCancel }) {
 
     const[error, setError] = useState(null);
 
+    const [originalPrice, setOriginalPrice] = useState("");
+
+    const [displayPrice, setDisplayPrice] = useState(null);
+
+
     //load categories for the dropdown
     useEffect(() =>{
         const loadCategories = async() =>{
@@ -147,7 +152,7 @@ function ProductForm ({ editingProduct, onSaved, onCancel }) {
 
         const formData = new FormData();
         formData.append("name", name);
-        formData.append("price", price);
+        formData.append("price", displayPrice);
         formData.append("description", description);
         formData.append("categoryId", categoryId);
 
@@ -180,6 +185,20 @@ function ProductForm ({ editingProduct, onSaved, onCancel }) {
         onSaved(data);
     };
 
+    const grossUpPrice = (originalPrice) => {
+  return Math.ceil((originalPrice + 100) / 0.985);
+   };
+
+   const handlePriceChange = (e) => {
+  const val = e.target.value;
+  setOriginalPrice(val);
+  if (val && !isNaN(val) && Number(val) > 0) {
+    setDisplayPrice(grossUpPrice(Number(val)));
+  } else {
+    setDisplayPrice(null);
+  }
+};
+
     return (
         <div className={styles.container}>
             <h3 className={styles.title}>
@@ -204,14 +223,19 @@ function ProductForm ({ editingProduct, onSaved, onCancel }) {
             
             {/* price */}
             <div className={styles.field}>
-                <label className={styles.label}>Price</label>
+                <label className={styles.label}>Price (₦)</label>
                 <input
                 type="number"
-                value={price}
+                value={originalPrice}
                 className={styles.input}
-                onChange={(e) => setPrice(e.target.value)}
+                onChange={handlePriceChange}
                 placeholder="e.g 15,000.00"
                 />
+                {displayPrice ? (
+    <p className={styles.priceNote}>
+      Buyer will pay <strong>₦{displayPrice.toLocaleString()}</strong>, includes Paystack transaction fee. You receive ₦{Number(originalPrice).toLocaleString()} exactly.
+    </p>
+  ) : null}
             </div>
 
 
