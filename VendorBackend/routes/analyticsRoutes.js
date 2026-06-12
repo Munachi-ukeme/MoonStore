@@ -5,7 +5,7 @@ const {
   trackStoreVisit,
   trackProductClick,
   getAnalyticsSummary,
-} = require("../controllers/analyticsController");
+} = require("../controllers/AnalyticsController");
 
 router.post("/store-visit", trackStoreVisit);
 router.post("/product-click", trackProductClick);
