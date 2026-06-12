@@ -41,20 +41,18 @@ function ProductPage() {
     // fetch product and store data
     useEffect(() => {
         const loadData = async () =>{
+            setError(null);
+            setLoading(true);
             try {
-                setLoading(true);
-
                 const [storeData, productData] = await Promise.all([
                     getStore(slug),
                     getProduct(slug, productSlug),
                 ]);
-
                 if (storeData.error || productData.error) {
-                    setError("Product not found.");
-                    setLoading(false);
-                    return;
+                setError(storeData.error || productData.error || "Product not found.");
+                setLoading(false);
+                 return;
                 }
-
                 setStore(storeData.store);
                 setProduct(productData.product);
                 setLoading(false);
@@ -62,7 +60,7 @@ function ProductPage() {
                 setError("Something went wrong. Please try again.");
                 setLoading(false);
             }
-        };
+        }; 
         loadData();
     }, [slug, productSlug]);
 
@@ -179,6 +177,9 @@ function ProductPage() {
         return (
             <div className={styles.centered}>
                 <p className={styles.errorText}>{error || "Product not found."}</p>
+                <button className={styles.retryBtn} onClick={loadData}>
+                 Try Again
+                </button>
                 <button
                     className={styles.backBtnAlt}
                     onClick={() => navigate(`/${slug}`)}

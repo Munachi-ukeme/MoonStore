@@ -229,18 +229,7 @@ export const reportConversation = async (conversationId, sessionId, reason) => {
   }
 };
 
-export const markAccountDetailsSent = async (conversationId) => {
-  try {
-    const token = localStorage.getItem("token");
-    const res = await fetchWithTimeout(`${BASE_URL}/chat/${conversationId}/account-sent`, {
-      method: "PUT",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return await res.json();
-  } catch {
-    return { error: "Failed to mark account details sent" };
-  }
-};
+
 
 
 export const startConversation = async (slug, productSlug, sessionId) => {

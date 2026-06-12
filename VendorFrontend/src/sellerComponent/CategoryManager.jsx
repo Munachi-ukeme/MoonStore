@@ -26,6 +26,8 @@ function CategoryManager (){
     // fetch all categories when page loads 
     useEffect(() =>{
         const loadingCategories = async ()=>{
+            setError(null);
+            setLoading(true);
             const data = await getCategories();
 
             if (data.error) {

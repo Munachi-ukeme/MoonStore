@@ -108,6 +108,12 @@
     background-color: #fee2e2;
 }
 
+.lockedLink {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
 /* desktop sidebar always visible */
 @media (min-width: 768px) {
     .sidebar{

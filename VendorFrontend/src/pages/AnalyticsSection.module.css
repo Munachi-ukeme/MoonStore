@@ -84,3 +84,29 @@
   color: #888;
   padding: 10px 0;
 }
+
+.retryBtn {
+  margin-top: 10px;
+  padding: 10px 20px;
+  background: #6c47ff;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.errorRow {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+
+.errorText {
+    font-size: 15px;
+    color: #ef4444;
+    text-align: center;
+}

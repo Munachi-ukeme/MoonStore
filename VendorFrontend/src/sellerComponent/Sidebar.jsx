@@ -6,6 +6,8 @@ function Sidebar({ isOpen, onClose}){
     const { seller, logout } = useAuth();
     const navigate = useNavigate();
 
+    const isInactive = !seller?.isActive;
+
     const handleLogout =() =>{
         logout();
         navigate("/login");
@@ -13,6 +15,10 @@ function Sidebar({ isOpen, onClose}){
 
     const handleLinkClick = ()=>{
         onClose();
+    };
+
+    const handleLockedClick = (e) => {
+        e.preventDefault();
     };
 
 return(
@@ -40,26 +46,55 @@ return(
                 isActive ? `${styles.link} ${styles.activeLink}` : styles.link
             } onClick={handleLinkClick}> Dashboard </NavLink>
 
-            <NavLink
-            to="/dashboard/products"
-            className={({ isActive }) =>
-                isActive ? `${styles.link} ${styles.activeLink}` : styles.link
-            } onClick={handleLinkClick}> Products </NavLink>
+            {isInactive ? (
+                        <span className={`${styles.link} ${styles.lockedLink}`} onClick={handleLockedClick}>
+                            Products
+                        </span>
+                    ) : (
+                        <NavLink
+                            to="/dashboard/products"
+                            className={({ isActive }) =>
+                                isActive ? `${styles.link} ${styles.activeLink}` : styles.link
+                            }
+                            onClick={handleLinkClick}
+                        >
+                            Products
+                        </NavLink>
+                    )}
+            
 
+            {isInactive ? (
+                        <span className={`${styles.link} ${styles.lockedLink}`} onClick={handleLockedClick}>
+                            Categories
+                        </span>
+                    ) : (
+                        <NavLink
+                            to="/dashboard/categories"
+                            className={({ isActive }) =>
+                                isActive ? `${styles.link} ${styles.activeLink}` : styles.link
+                            }
+                            onClick={handleLinkClick}
+                        >
+                            Categories
+                        </NavLink>
+                    )}
 
-            <NavLink
-            to="/dashboard/categories"
-            className={({ isActive }) =>
-                isActive ? `${styles.link} ${styles.activeLink}` : styles.link
-            } onClick={handleLinkClick}> Categories </NavLink>
-
-            <NavLink
-            to="/dashboard/inbox"
-            className={({ isActive }) =>
-               isActive ? `${styles.link} ${styles.activeLink}` : styles.link
-            }
-            onClick={handleLinkClick}
-            > Inbox </NavLink>
+            
+            {isInactive ? (
+                        <span className={`${styles.link} ${styles.lockedLink}`} onClick={handleLockedClick}>
+                            Inbox
+                        </span>
+                    ) : (
+                        <NavLink
+                            to="/dashboard/inbox"
+                            className={({ isActive }) =>
+                                isActive ? `${styles.link} ${styles.activeLink}` : styles.link
+                            }
+                            onClick={handleLinkClick}
+                        >
+                            Inbox
+                        </NavLink>
+                    )}       
 
 
 

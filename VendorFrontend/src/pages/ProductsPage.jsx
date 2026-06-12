@@ -15,6 +15,8 @@ function ProductsPage (){
     //fetch all products when page loads
     useEffect(() =>{
         const loadData = async () =>{
+            setError(null);
+            setLoading(true);
             const [productsData, categoriesData] = await Promise.all([
                 getProducts(),
                 getCategories(),
@@ -27,11 +29,7 @@ function ProductsPage (){
             }
 
             setProducts(productsData);
-
-            if (!categoriesData.error){
-                setCategories(categoriesData)
-            }
-
+            setCategories(categoriesData || []);
             setLoading(false);
         };
         loadData();  
@@ -107,8 +105,14 @@ function ProductsPage (){
                 )}
             </div>
 
-            {/* error message */}
-            {error && <p className={styles.error}>{error}</p>}
+            {error ? (
+            <div className={styles.errorRow}>
+            <p className={styles.error}>{error}</p>
+            <button className={styles.retryBtn} onClick={loadProducts}>
+             Try Again
+            </button>
+            </div>
+            ) : null}
 
             {/* loading state */}
             {loading ? (

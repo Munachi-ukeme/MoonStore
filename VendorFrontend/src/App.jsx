@@ -20,6 +20,7 @@ import BuyerChatPage from "./pages/BuyerChatPage";
 import SellerInboxPage from "./pages/SellerInboxPage";
 import SellerChatThreadPage from "./pages/SellerChatThreadPage";
 import OfflineBanner from "./buyerComponent/OfflineBanner";
+import ErrorBoundary from "./sellerComponent/ErrorBoundary";
 
 function App(){
   return (
@@ -29,56 +30,87 @@ function App(){
     <Routes>
 
       {/* Launch routes */}
-      <Route path="/" element={<HomePage />} />
+       <Route path="/" element={<ErrorBoundary><HomePage /></ErrorBoundary>} />
 
       {/* Auth */}
-      <Route path="/login" element={<LoginPage/>}/>
-      <Route path="/register" element={<SignupPage />}/>
+      <Route path="/login" element={<ErrorBoundary><LoginPage /></ErrorBoundary>} />
+      <Route path="/register" element={<ErrorBoundary><SignupPage /></ErrorBoundary>} />
+      
 
       {/* Public buyer routes */}  
-      <Route path="/privacypolicy" element={<PrivacyPolicy />}/>
-      <Route path="/terms-of-service" element={<TermsOfService />}/>
-      <Route path="/my-orders" element={<BuyerDashboard />} />
-      <Route path="/restore" element={<SessionRestore />} />
-      <Route path="/:slug/chat/:conversationId" element={<BuyerChatPage />} />
-    
-    
+      <Route path="/privacypolicy" element={<ErrorBoundary><PrivacyPolicy /></ErrorBoundary>} />
+      <Route path="/termsofservice" element={<ErrorBoundary><TermsOfService /></ErrorBoundary>} />
+       <Route path="/my-orders" element={<ErrorBoundary><BuyerDashboard /></ErrorBoundary>} />
+      <Route path="/restore" element={<ErrorBoundary><SessionRestore /></ErrorBoundary>} />
+      
+
       {/* Protected seller routes - wrapped in protectedRoute*/}
       <Route path="/dashboard" element={
-        <ProtectedRoute>
-          <DashboardLayout>
-            <DashboardPage />
-          </DashboardLayout>
-        </ProtectedRoute>
-        }/>
-
-      <Route path="/dashboard/products" element={
-        <ProtectedRoute>
-          <DashboardLayout>
-            <ProductsPage/>
-          </DashboardLayout>
-        </ProtectedRoute>
-        }/>
-
-      <Route path="/dashboard/categories" element={
-        <ProtectedRoute>
-          <DashboardLayout>
-            <CategoriesPage />
-          </DashboardLayout>
-        </ProtectedRoute>
-        }/>
-
-      <Route path="/dashboard/settings" element={
-        <ProtectedRoute>
-          <DashboardLayout>
-            <SettingsPage />
-          </DashboardLayout>
-        </ProtectedRoute>
-        
-        }/>
+  <ProtectedRoute>
+    <ErrorBoundary>
+      <DashboardLayout>
+        <DashboardPage />
+      </DashboardLayout>
+    </ErrorBoundary>
+  </ProtectedRoute>
+} />
 
 
-      <Route path="/dashboard/privacypolicy" element={
+<Route path="/dashboard/products" element={
+  <ProtectedRoute>
+    <ErrorBoundary>
+      <DashboardLayout>
+        <ProductsPage />
+      </DashboardLayout>
+    </ErrorBoundary>
+  </ProtectedRoute>
+} />
+
+
+<Route path="/dashboard/categories" element={
+  <ProtectedRoute>
+    <ErrorBoundary>
+      <DashboardLayout>
+        <CategoriesPage />
+      </DashboardLayout>
+    </ErrorBoundary>
+  </ProtectedRoute>
+} />
+
+
+<Route path="/dashboard/settings" element={
+  <ProtectedRoute>
+    <ErrorBoundary>
+      <DashboardLayout>
+        <SettingsPage />
+      </DashboardLayout>
+    </ErrorBoundary>
+  </ProtectedRoute>
+} />
+
+
+<Route path="/dashboard/inbox" element={
+  <ProtectedRoute>
+    <ErrorBoundary>
+      <DashboardLayout>
+        <SellerInboxPage />
+      </DashboardLayout>
+    </ErrorBoundary>
+  </ProtectedRoute>
+} />
+
+
+<Route path="/dashboard/chat/:conversationId" element={
+  <ProtectedRoute>
+    <ErrorBoundary>
+      <DashboardLayout>
+        <SellerChatThreadPage />
+      </DashboardLayout>
+    </ErrorBoundary>
+  </ProtectedRoute>
+} />
+
+<Route path="/dashboard/privacypolicy" element={
         <ProtectedRoute>
           <DashboardLayout>
             <PrivacyPolicy/>
@@ -97,25 +129,15 @@ function App(){
         
         }/>
 
-        <Route path="/dashboard/inbox" element={
-          <ProtectedRoute>
-            <DashboardLayout>
-              <SellerInboxPage />
-            </DashboardLayout>
-            </ProtectedRoute>} />
 
-        <Route path="/dashboard/chat/:conversationId" element={
-          <ProtectedRoute>
-            <DashboardLayout>
-               <SellerChatThreadPage />
-            </DashboardLayout>
-            </ProtectedRoute>} />
+      {/* buyer routes — dynamic last */}
+      <Route path="/:slug/orders" element={<ErrorBoundary><BuyerOrdersPage /></ErrorBoundary>} />
 
+      <Route path="/:slug/chat/:conversationId" element={<ErrorBoundary><BuyerChatPage /></ErrorBoundary>} />
+      
+      <Route path="/:slug/:productSlug" element={<ErrorBoundary><ProductPage /></ErrorBoundary>} />
 
-      <Route path="/:slug/orders" element={<BuyerOrdersPage />} />
-      <Route path="/:slug/:productSlug" element={<ProductPage />}/>
-
-      <Route path="/:slug" element={<StorePage />}/>
+      <Route path="/:slug" element={<ErrorBoundary><StorePage /></ErrorBoundary>} />
 
     </Routes>
     </BrowserRouter>

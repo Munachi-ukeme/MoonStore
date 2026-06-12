@@ -75,6 +75,25 @@
     padding: 8px 12px;
 }
 
+.retryBtn {
+  margin-top: 10px;
+  padding: 10px 20px;
+  background: #6c47ff;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.errorRow {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
 /* loading */
 .loading {
     font-size: 13px;
@@ -264,6 +283,130 @@
     color: #9ca3af;
     line-height: 1.5;
 }
+
+/* inactive notice bar */
+.inactiveBar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: #856404;
+    margin-bottom: 16px;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.inactiveBarBtn {
+    background: #6c47ff;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+/* locked button state */
+.lockedBtn {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* welcome popup */
+.popupOverlay{
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 200;
+}
+
+.popup{
+    background: #fff;
+    border-radius: 20px 20px 0 0;
+    padding: 28px 20px 32px;
+    width: 100%;
+    max-width: 480px;
+    position: relative;
+}
+
+.popupClose {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: #f5f5f5;
+    border: none;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    font-size: 13px;
+    cursor: pointer;
+    color: #555;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.popupIcon {
+    font-size: 28px;
+    font-weight: 800;
+    color: #6d28d9;
+    letter-spacing: -0.5px;
+    text-align: center;
+}
+
+.popupTitle {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0 0 10px 0;
+}
+
+.popupText {
+    font-size: 13px;
+    color: #666;
+    line-height: 1.6;
+    margin: 0 0 16px 0;
+}
+
+.popupSteps {
+    background: #f5f2ff;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.popupStep {
+    font-size: 13px;
+    color: #6c47ff;
+    font-weight: 600;
+    margin: 0;
+}
+
+.popupActivateBtn {
+    width: 100%;
+    padding: 13px;
+    background: #6c47ff;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+
 
 /* desktop */
 @media (min-width: 768px) {

@@ -24,15 +24,49 @@ function StorePage() {
     const [error, setError] = useState(null);
     const [showEmailPopup, setShowEmailPopup] = useState(false);
 
+    const CACHE_KEY = `moonstore_store_${slug}`;
+    const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+
     // fetch store data when page loads
     useEffect(() => {
         const loadStore = async () =>{
+            setError(null);
+            setLoading(true);
+
+            // check cache first
+            try {
+                const cached = localStorage.getItem(CACHE_KEY);
+                if (cached) {
+                    const { data, timestamp } = JSON.parse(cached);
+                    if (Date.now() - timestamp < CACHE_TTL) {
+                        setStore(data.store);
+                        setProducts(data.products);
+                        setCategories(data);
+                        setFilteredProducts(data.products);
+                        setLoading(false);
+                        return;
+                    }
+                }
+            } catch {
+                // cache read failed — continue to fetch
+            }
             const data = await getStore(slug);
 
             if (data.error) {
                 setError(data.error);
                 setLoading(false);
                 return;
+            }
+
+             // save to cache
+            try {
+                localStorage.setItem(CACHE_KEY, JSON.stringify({
+                    data,
+                    timestamp: Date.now(),
+                }));
+            } catch {
+                
             }
 
             // backend return { store, products, categories}
@@ -98,8 +132,10 @@ function StorePage() {
     if (error) {
         return(
             <div className={styles.errorContainer}>
-                <p className={styles.errorTitle}>Store not found</p>
-                <p className={styles.errorText}>This store does not exist or is currently unavailable.</p>
+                <p className={styles.errorTitle}>{error}</p>
+                <button className={styles.retryBtn} onClick={loadStore}>
+                Try Again
+                </button>
             </div>
         );
     }
@@ -121,7 +157,7 @@ function StorePage() {
 
              {/* footer */}
              <Footer store={store} />
-             <StoreBottomNav sellerId={store._id} slug={store.slug} />
+             <StoreBottomNav sellerId={store?._id} slug={store?.slug} />
 
              <EmailCapturePopup
     show={showEmailPopup}

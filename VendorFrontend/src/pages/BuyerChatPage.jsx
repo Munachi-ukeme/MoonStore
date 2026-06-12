@@ -21,6 +21,8 @@ const BuyerChatPage = () => {
 
   useEffect(() => {
     const fetchMessages = async () => {
+      setError("");
+      setLoading(true);
       const data = await getConversationMessages(conversationId, sessionId);
       if (data.error) {
         setError("Could not load conversation.");
@@ -117,7 +119,16 @@ const BuyerChatPage = () => {
   };
 
   if (loading) return <div className={styles.loading}>Loading chat...</div>;
-  if (error) return <div className={styles.error}>{error}</div>;
+  if (error) {
+  return (
+    <div className={styles.errorRow}>
+      <p>{error}</p>
+      <button className={styles.retryBtn} onClick={fetchMessages}>
+        Try Again
+      </button>
+    </div>
+  );
+}
 
   const isPaid = conversation?.status === "paid";
 

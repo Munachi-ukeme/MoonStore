@@ -224,6 +224,8 @@ const StoreSettings = () => {
       <div className={styles.container}>
 
         <div className={styles.menu}>
+
+          {isActive ? (
           <div className={styles.menuItem} onClick={() => setActiveSection("store")}>
             <div className={styles.menuLeft}>
               <span className={styles.menuIcon}>🏪</span>
@@ -234,7 +236,10 @@ const StoreSettings = () => {
             </div>
             <span className={styles.chevron}>›</span>
           </div>
+           ) : null}
 
+
+          {isActive ? (
           <div className={styles.menuItem} onClick={() => setActiveSection("password")}>
             <div className={styles.menuLeft}>
               <span className={styles.menuIcon}>🔒</span>
@@ -245,7 +250,10 @@ const StoreSettings = () => {
             </div>
             <span className={styles.chevron}>›</span>
           </div>
+           ) : null}
 
+          
+          {isActive ? (
           <div className={styles.menuItem} onClick={() => setActiveSection("payout")}>
             <div className={styles.menuLeft}>
               <span className={styles.menuIcon}>🏦</span>
@@ -256,6 +264,8 @@ const StoreSettings = () => {
             </div>
             <span className={styles.chevron}>›</span>
           </div>
+           ) : null}
+
 
           {!isPremium && isActive ? (
             <div className={styles.menuItem} onClick={() => setActiveSection("upgrade")}>
@@ -269,6 +279,7 @@ const StoreSettings = () => {
               <span className={styles.chevron}>›</span>
             </div>
           ) : null}
+
 
           {!isActive ? (
             <div className={styles.menuItem} onClick={() => setActiveSection("activate")}>

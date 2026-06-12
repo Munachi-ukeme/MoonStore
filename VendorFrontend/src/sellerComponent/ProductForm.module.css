@@ -198,3 +198,8 @@
     background-color: #a78bfa;
     cursor: pointer;
 }
+
+.priceNote{
+    color: #6d28d9;
+    font-size: 12px;
+}

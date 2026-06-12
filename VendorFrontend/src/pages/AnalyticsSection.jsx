@@ -80,7 +80,14 @@ const AnalyticsSection = () => {
         </select>
       </div>
 
-      {error ? <p className={styles.errorText}>{error}</p> : null}
+      {error ? (
+  <div className={styles.errorRow}>
+    <p className={styles.errorText}>{error}</p>
+    <button className={styles.retryBtn} onClick={load}>
+      Try Again
+    </button>
+  </div>
+) : null}
 
       {loading ? (
         <p className={styles.loadingText}>Loading analytics...</p>

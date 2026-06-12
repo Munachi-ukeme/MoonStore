@@ -14,6 +14,8 @@ const SellerInboxPage = () => {
 
   useEffect(() => {
     const fetchInbox = async () => {
+       setError("");
+  setLoading(true);
       const data = await getSellerInbox();
       if (data.error) {
         setError("Could not load inbox.");
@@ -59,7 +61,16 @@ const SellerInboxPage = () => {
   };
 
   if (loading) return <div className={styles.loading}>Loading inbox...</div>;
-  if (error) return <div className={styles.error}>{error}</div>;
+if (error) {
+  return (
+    <div className={styles.error}>
+      <p>{error}</p>
+      <button className={styles.retryBtn} onClick={fetchInbox}>
+        Try Again
+      </button>
+    </div>
+  );
+}
 
 
   return (

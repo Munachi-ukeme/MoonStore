@@ -20,7 +20,6 @@ function ProductForm ({ editingProduct, onSaved, onCancel }) {
 
     const[name, setName] = useState("");
 
-    const[price, setPrice] = useState("");
 
     const[description, setDescription] = useState("");
 
@@ -62,7 +61,7 @@ function ProductForm ({ editingProduct, onSaved, onCancel }) {
     useEffect(() =>{
         if (editingProduct) {
             setName(editingProduct.name || "");
-            setPrice(editingProduct.price || "");
+            setOriginalPrice(editingProduct.price || "");
             setDescription(editingProduct.description || "");
             setCategoryId(editingProduct.categoryId || "");
             setColors(editingProduct.colors || [])
@@ -70,7 +69,8 @@ function ProductForm ({ editingProduct, onSaved, onCancel }) {
         } else {
             //reset form when adding new product
             setName("");
-            setPrice("");
+            setOriginalPrice("");
+            setDisplayPrice(null)
             setDescription("");
             setCategoryId("");
             setImages([]);
@@ -133,7 +133,7 @@ function ProductForm ({ editingProduct, onSaved, onCancel }) {
             return;
         }
 
-        if(!price) {
+        if(!originalPrice) {
             setError("Price is required.");
             return;
         }
@@ -186,7 +186,11 @@ function ProductForm ({ editingProduct, onSaved, onCancel }) {
     };
 
     const grossUpPrice = (originalPrice) => {
-  return Math.ceil((originalPrice + 100) / 0.985);
+        if (originalPrice >= 126667) {
+    return originalPrice + 2000;
+  }
+
+  return Math.ceil((originalPrice + 100) / (1 - 0.015));
    };
 
    const handlePriceChange = (e) => {
@@ -233,7 +237,7 @@ function ProductForm ({ editingProduct, onSaved, onCancel }) {
                 />
                 {displayPrice ? (
     <p className={styles.priceNote}>
-      Buyer will pay <strong>₦{displayPrice.toLocaleString()}</strong>, includes Paystack transaction fee. You receive ₦{Number(originalPrice).toLocaleString()} exactly.
+      Buyer will pay <strong>₦{displayPrice.toLocaleString()}</strong>, this is Paystack transaction fee. You receive ₦{Number(originalPrice).toLocaleString()} exactly.
     </p>
   ) : null}
             </div>

@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
 import { getProducts } from "../api/api";
 import styles from "./DashboardPage.module.css";
 import AnalyticsSection from "./AnalyticsSection";
 
 function DashboardPage() {
     const { seller } = useAuth();
+    const navigate = useNavigate();
     const referralLink = `moonstore.com/signup?ref=${seller?.referralCode}`;
     const storeLink = `moonstore.com/${seller?.slug}`;
 
@@ -14,10 +16,20 @@ function DashboardPage() {
     const [error, setError] = useState(null);
     const [copied, setCopied] = useState(false);
     const [copiedReferral, setCopiedReferral] = useState(false);
+    const [showWelcomePopup, setShowWelcomePopup] = useState(false);
+
+    const isInactive = !seller?.isActive;
 
     // fetch products when page loads
     useEffect(() => {
+        if (isInactive) {
+            setShowWelcomePopup(true);
+        }
+    }, [isInactive]); // means run this only when use is not active
+
         const loadProducts = async () => {
+            setError(null);
+            setLoading(true);
             const data = await getProducts();
 
             if (data.error) {
@@ -29,6 +41,7 @@ function DashboardPage() {
             setProducts(data);
             setLoading(false);
         };
+        useEffect(() => {
         loadProducts();
     }, []);
 
@@ -46,6 +59,7 @@ function DashboardPage() {
 
     // copy store link
     const handleCopyLink = () => {
+        if (isInactive) return;
         navigator.clipboard.writeText(storeLink);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
@@ -53,6 +67,7 @@ function DashboardPage() {
 
     // copy referral link
     const handleCopyReferral = () => {
+        if (isInactive) return;
         navigator.clipboard.writeText(referralLink);
         setCopiedReferral(true);
         setTimeout(() => setCopiedReferral(false), 2000);
@@ -60,11 +75,53 @@ function DashboardPage() {
 
     // visit store in new tab
     const visitStore = () => {
+        if (isInactive) return;
         window.open(`https://${storeLink}`, "_blank");
+    };
+
+    //activate button
+     const handleActivateNow = () => {
+        setShowWelcomePopup(false);
+        navigate("/dashboard/settings");
     };
 
     return (
         <div className={styles.container}>
+
+         {/* welcome popup for inactive sellers */}
+            {showWelcomePopup ? (
+                <div className={styles.popupOverlay}>
+                    <div className={styles.popup}>
+                        <button
+                            className={styles.popupClose}
+                            onClick={() => setShowWelcomePopup(false)}
+                        >
+                            ✕
+                        </button>
+                        <div className={styles.popupIcon}>MoonStore</div>
+                        <h2 className={styles.popupTitle}>
+                            Welcome to MoonStore, {seller?.businessName}!
+                        </h2>
+                        <p className={styles.popupText}>
+                            Your account is set up and ready. To go live and start
+                            receiving orders, activate your store by choosing a plan.
+                        </p>
+                        <div className={styles.popupSteps}>
+                            <p className={styles.popupStep}>1. Go to Settings</p>
+                            <p className={styles.popupStep}>2. Tap Activate Store</p>
+                            <p className={styles.popupStep}>3. Choose a plan and pay</p>
+                            <p className={styles.popupStep}>4. Your store goes live instantly</p>
+                        </div>
+                        <button
+                            className={styles.popupActivateBtn}
+                            onClick={handleActivateNow}
+                        >
+                            Activate My Store
+                        </button>
+                    </div>
+                </div>
+            ) : null}
+
 
             {/* welcome row */}
             <div className={styles.welcomeContainer}>
@@ -88,8 +145,28 @@ function DashboardPage() {
                 </button>
             </div>
 
+             {/* inactive notice bar */}
+            {isInactive ? (
+                <div className={styles.inactiveBar}>
+                    Your store is inactive. Activate to unlock all features.
+                    <button
+                        className={styles.inactiveBarBtn}
+                        onClick={() => navigate("/dashboard/settings")}
+                    >
+                        Activate Now
+                    </button>
+                </div>
+            ) : null}
+
             {/* error message */}
-            {error && <p className={styles.error}>{error}</p>}
+            {error ? (
+          <div className={styles.errorRow}>
+           <p className={styles.error}>{error}</p>
+           <button className={styles.retryBtn} onClick={loadProducts}>
+            Try Again
+           </button>
+           </div>
+            ) : null}
 
             {/* loading state */}
             {loading ? (

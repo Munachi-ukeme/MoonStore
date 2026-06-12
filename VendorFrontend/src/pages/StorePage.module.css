@@ -41,8 +41,14 @@
     margin-bottom: 8px;
 }
 
-.errorText {
-    font-size: 13px;
-    color: #9ca3af;
-    line-height: 1.5;
+.retryBtn {
+  margin-top: 10px;
+  padding: 10px 20px;
+  background: #6c47ff;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
 }
