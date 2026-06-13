@@ -12,6 +12,7 @@ import styles from "./StorePage.module.css";
 import StoreBottomNav from "../buyerComponent/StoreBottomNav";
 import EmailCapturePopup from "../buyerComponent/EmailCapturePopup";
 import { getSavedEmail, wasPopupDismissed } from "../utils/session";
+import OrderTray from "../buyerComponent/OrderTray";
 
 function StorePage() {
     const { slug } = useParams();
@@ -157,6 +158,7 @@ function StorePage() {
 
              {/* footer */}
              <Footer store={store} />
+             <OrderTray slug={slug} />
              <StoreBottomNav sellerId={store?._id} slug={store?.slug} />
 
              <EmailCapturePopup

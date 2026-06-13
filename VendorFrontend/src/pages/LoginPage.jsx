@@ -91,6 +91,16 @@ function LoginPage() {
                     </button>
                 </p>
 
+                <p className={styles.buyerLink}>
+                    I'm a buyer{" "}
+                    <button
+                        className={styles.linkBtn}
+                        onClick={() => navigate("/")}
+                    >
+                        Login
+                    </button>
+                </p>
+
                 </form>
 
             </div>

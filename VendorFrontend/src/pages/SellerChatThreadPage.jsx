@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef,useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   getSellerChatMessages,
@@ -17,11 +17,11 @@ const SellerChatThreadPage = () => {
   const [sending, setSending] = useState(false);
   const [generatingLink, setGeneratingLink] = useState(false);
   const [linkError, setLinkError] = useState("");
+  const [fullscreenImage, setFullscreenImage] = useState(null);
   const [error, setError] = useState("");
   const bottomRef = useRef(null);
 
-  useEffect(() => {
-    const fetchThread = async () => {
+    const fetchThread = useCallback(async () => {
        setError("");
   setLoading(true);
       const data = await getSellerChatMessages(conversationId);
@@ -32,9 +32,11 @@ const SellerChatThreadPage = () => {
         setConversation(data.conversation);
       }
       setLoading(false);
-    };
-    fetchThread();
   }, [conversationId]);
+
+  useEffect(() => {
+  fetchThread();
+}, [fetchThread]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -76,6 +78,26 @@ const SellerChatThreadPage = () => {
     }
   };
 
+  const renderMessageContent = (content) => {
+    const parts = content.split(/(\[img\].*?\[\/img\])/g);
+    return parts.map((part, index) => {
+        const imgMatch = part.match(/\[img\](.*?)\[\/img\]/);
+        if (imgMatch) {
+            const url = imgMatch[1];
+            return (
+                <img
+                    key={index}
+                    src={url}
+                    alt="product"
+                    className={styles.thumbnailImg}
+                    onClick={() => setFullscreenImage(url)}
+                />
+            );
+        }
+        return <span key={index}>{part}</span>;
+    });
+};
+
   const renderMessage = (msg) => {
     if (msg.sender === "system") {
       // check if message contains a payment link
@@ -100,7 +122,7 @@ const SellerChatThreadPage = () => {
       }
       return (
         <div key={msg._id} className={styles.systemMessage}>
-          <span>{msg.content}</span>
+          {renderMessageContent(msg.content)}
         </div>
       );
     }
@@ -108,7 +130,7 @@ const SellerChatThreadPage = () => {
     if (msg.sender === "seller") {
       return (
         <div key={msg._id} className={`${styles.bubble} ${styles.sellerBubble}`}>
-          <p>{msg.content}</p>
+          <div>{renderMessageContent(msg.content)}</div>
           <span className={styles.time}>
             {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
           </span>
@@ -118,7 +140,7 @@ const SellerChatThreadPage = () => {
 
     return (
       <div key={msg._id} className={`${styles.bubble} ${styles.buyerBubble}`}>
-        <p>{msg.content}</p>
+        <div>{renderMessageContent(msg.content)}</div>
         <span className={styles.time}>
           {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
         </span>
@@ -154,7 +176,7 @@ const SellerChatThreadPage = () => {
         </button>
         <div className={styles.headerInfo}>
           <span className={styles.productName}>
-            {conversation?.productId?.name || "Order"}
+            {conversation?.productIds?.[0]?.name || "Order"}
           </span>
           <span className={styles.statusLabel}>
             {isPaid ? "Paid" : "Active"}
@@ -200,6 +222,24 @@ const SellerChatThreadPage = () => {
           This conversation will be automatically deleted in 7 days.
         </div>
       )}
+      {fullscreenImage ? (
+            <div
+                className={styles.fullscreenOverlay}
+                onClick={() => setFullscreenImage(null)}
+            >
+                <button
+                    className={styles.fullscreenClose}
+                    onClick={() => setFullscreenImage(null)}
+                >
+                    ✕
+                </button>
+                <img
+                    src={fullscreenImage}
+                    alt="product fullscreen"
+                    className={styles.fullscreenImg}
+                />
+            </div>
+        ) : null}
     </div>
   );
 };

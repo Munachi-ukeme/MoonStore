@@ -232,17 +232,25 @@ export const reportConversation = async (conversationId, sessionId, reason) => {
 
 
 
-export const startConversation = async (slug, productSlug, sessionId) => {
-  try {
-    const res = await fetchWithTimeout(`${BASE_URL}/chat/start`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ slug, productSlug, sessionId }),
-    });
-    return await res.json();
-  } catch {
-    return { error: "Failed to start conversation" };
-  }
+export const startConversation = async (slug, sessionId, items, buyerName, deliveryAddress, deliveryCity, deliveryPhone) => {
+    try {
+        const res = await fetchWithTimeout(`${BASE_URL}/chat/start`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                slug,
+                sessionId,
+                items,
+                buyerName,
+                deliveryAddress,
+                deliveryCity,
+                deliveryPhone,
+            }),
+        });
+        return await res.json();
+    } catch {
+        return { error: "Failed to start conversation" };
+    }
 };
 
 // SELLER SIDE

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { getConversationMessages, sendBuyerMessage, reportConversation } from "../api/api";
 import { getOrCreateSessionId } from "../utils/session";
@@ -16,11 +16,12 @@ const BuyerChatPage = () => {
   const [reportSending, setReportSending] = useState(false);
   const [reportSent, setReportSent] = useState(false);
   const [error, setError] = useState("");
+  const [fullscreenImage, setFullscreenImage] = useState(null);
   const bottomRef = useRef(null);
   const sessionId = getOrCreateSessionId();
 
-  useEffect(() => {
-    const fetchMessages = async () => {
+  
+    const fetchMessages = useCallback(async () => {
       setError("");
       setLoading(true);
       const data = await getConversationMessages(conversationId, sessionId);
@@ -31,9 +32,11 @@ const BuyerChatPage = () => {
         setConversation(data.conversation);
       }
       setLoading(false);
-    };
-    fetchMessages();
   }, [conversationId]);
+
+  useEffect(() => {
+  fetchMessages();
+}, [fetchMessages]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -68,6 +71,26 @@ const BuyerChatPage = () => {
     setReportSending(false);
   };
 
+  const renderMessageContent = (content) => {
+    const parts = content.split(/(\[img\].*?\[\/img\])/g);
+    return parts.map((part, index) => {
+        const imgMatch = part.match(/\[img\](.*?)\[\/img\]/);
+        if (imgMatch) {
+            const url = imgMatch[1];
+            return (
+                <img
+                    key={index}
+                    src={url}
+                    alt="product"
+                    className={styles.thumbnailImg}
+                    onClick={() => setFullscreenImage(url)}
+                />
+            );
+        }
+        return <span key={index}>{part}</span>;
+    });
+};
+
   const renderMessage = (msg) => {
     if (msg.sender === "system") {
       const isPaymentLink = msg.content.includes("https://");
@@ -92,7 +115,7 @@ const BuyerChatPage = () => {
       }
       return (
         <div key={msg._id} className={styles.systemMessage}>
-          <span>{msg.content}</span>
+          {renderMessageContent(msg.content)}
         </div>
       );
     }
@@ -100,7 +123,7 @@ const BuyerChatPage = () => {
     if (msg.sender === "buyer") {
       return (
         <div key={msg._id} className={`${styles.bubble} ${styles.buyerBubble}`}>
-          <p>{msg.content}</p>
+          <div>{renderMessageContent(msg.content)}</div>
           <span className={styles.time}>
             {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
           </span>
@@ -110,7 +133,7 @@ const BuyerChatPage = () => {
 
     return (
       <div key={msg._id} className={`${styles.bubble} ${styles.sellerBubble}`}>
-        <p>{msg.content}</p>
+        <div>{renderMessageContent(msg.content)}</div>
         <span className={styles.time}>
           {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
         </span>
@@ -203,6 +226,25 @@ const BuyerChatPage = () => {
           </div>
         </div>
       ) : null}
+
+      {fullscreenImage ? (
+            <div
+                className={styles.fullscreenOverlay}
+                onClick={() => setFullscreenImage(null)}
+            >
+                <button
+                    className={styles.fullscreenClose}
+                    onClick={() => setFullscreenImage(null)}
+                >
+                    ✕
+                </button>
+                <img
+                    src={fullscreenImage}
+                    alt="product fullscreen"
+                    className={styles.fullscreenImg}
+                />
+            </div>
+        ) : null}
     </div>
   );
 };

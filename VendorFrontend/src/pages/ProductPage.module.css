@@ -354,6 +354,35 @@
   cursor: pointer;
 }
 
+.savedAddress {
+    background: #f5f2ff;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+}
+
+.savedAddressText {
+    font-size: 13px;
+    color: #444;
+    margin: 0 0 4px 0;
+}
+
+.changeAddressBtn {
+    background: none;
+    border: none;
+    color: #6c47ff;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+    margin-top: 6px;
+    text-decoration: underline;
+}
+
+.addedBtn {
+    background: #22c55e;
+}
+
 /* ── desktop ── */
 @media (min-width: 768px) {
     .page {

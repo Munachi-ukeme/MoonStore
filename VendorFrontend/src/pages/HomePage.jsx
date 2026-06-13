@@ -86,18 +86,17 @@ const HomePage = () => {
         return (
             <div className={styles.tabContent}>
                 <div className={styles.contentTop}>
-                    <p className={styles.contentTitle}>Launch Your Store Today</p>
+                    <p className={styles.contentTitle}>Your own branded online store in 3 minutes.</p>
                     <p className={styles.contentText}>
-                        Get your own store link in minutes. Share it on social media. Buyers order directly. no marketplace, no
-                        competition, just your store.
+                        Buyers browse your products, chat with you and pay. All inside your store. No WhatsApp stress. No marketplace.
                     </p>
                 </div>
 
                 <div className={styles.perks}>
-                    <p className={styles.perk}>✓ Your own store link</p>
-                    <p className={styles.perk}>✓ Built-in order chat</p>
-                    <p className={styles.perk}>✓ Payments sent to your account daily</p>
-                    <p className={styles.perk}>✓ No tech skills needed</p>
+                    <p className={styles.perk}>✓ Your store. Your name. Your brand.</p>
+                    <p className={styles.perk}>✓ Buyers chat and pay inside your store</p>
+                    <p className={styles.perk}>✓ Money sent to your bank daily</p>
+                    <p className={styles.perk}>✓ No tech skills. No developer. No stress.</p>
                 </div>
 
                 <button

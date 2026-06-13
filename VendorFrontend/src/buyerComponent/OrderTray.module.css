@@ -1,0 +1,178 @@
+.tray {
+    position: fixed;
+    bottom: 56px; /* sits above StoreBottomNav */
+    left: 0;
+    right: 0;
+    z-index: 50;
+    max-width: 480px;
+    margin: 0 auto;
+}
+
+.collapsed {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #6c47ff;
+    color: #fff;
+    padding: 12px 16px;
+    cursor: pointer;
+}
+
+.collapsedText {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.orderNowBtn {
+    background: #fff;
+    color: #6c47ff;
+    border: none;
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.expanded {
+    background: #fff;
+    border-top: 2px solid #6c47ff;
+    padding: 16px;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.12);
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.expandedHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.expandedTitle {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+.collapseBtn {
+    background: none;
+    border: none;
+    font-size: 14px;
+    color: #888;
+    cursor: pointer;
+}
+
+.itemList {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.itemImage {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.itemInfo {
+    flex: 1;
+    min-width: 0;
+}
+
+.itemName {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 0 0 2px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.itemMeta {
+    font-size: 11px;
+    color: #888;
+    margin: 0 0 2px 0;
+}
+
+.itemPrice {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6c47ff;
+    margin: 0;
+}
+
+.removeBtn {
+    background: #f5f5f5;
+    border: none;
+    border-radius: 50%;
+    width: 26px;
+    height: 26px;
+    font-size: 11px;
+    color: #888;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.divider {
+    border: none;
+    border-top: 1px solid #f0f0f0;
+    margin: 10px 0;
+}
+
+.totalRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+.totalLabel {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.totalValue {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+.orderError {
+    font-size: 12px;
+    color: #ef4444;
+    margin: 0 0 10px 0;
+}
+
+.startOrderBtn {
+    width: 100%;
+    padding: 13px;
+    background: #6c47ff;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.startOrderBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
