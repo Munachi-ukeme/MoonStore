@@ -60,9 +60,17 @@ const SECURITY_NOTICE =
 // buyer clicks Order Now — creates the conversation and sends first messages
 const startConversation = async (req, res) => {
     try {
-        const { slug, productSlug, sessionId } = req.body;
+        const {
+            slug,
+            sessionId,
+            items,
+            buyerName,
+            deliveryAddress,
+            deliveryCity,
+            deliveryPhone,
+        } = req.body;
 
-        if (!slug || !productSlug || !sessionId) {
+        if (!slug || !sessionId || !items || !items.length) {
             return res.status(400).json({ message: "Missing required fields" });
         }
 
@@ -71,21 +79,75 @@ const startConversation = async (req, res) => {
             return res.status(404).json({ message: "Store not found" });
         }
 
-        const product = await Product.findOne({ slug: productSlug, sellerId: seller._id });
-        if (!product) {
-            return res.status(404).json({ message: "Product not found" });
+        // verify all products belong to this seller
+        const productSlugs = items.map((item) => item.productSlug);
+        const products = await Product.find({
+            slug: { $in: productSlugs },
+            sellerId: seller._id,
+        });
+
+        if (!products.length) {
+            return res.status(404).json({ message: "Products not found" });
         }
 
-        const orderMessage = `Hi! I want to order: ${product.name} — ₦${product.price.toLocaleString()}`;
+        // build a map for quick lookup
+        const productMap = {};
+        products.forEach((p) => {
+            productMap[p.slug] = p;
+        });
+
+        // calculate total amount
+        let totalAmount = 0;
+        items.forEach((item) => {
+            const product = productMap[item.productSlug];
+            if (product) {
+                totalAmount += product.price * item.quantity;
+            }
+        });
+
+        const productIds = products.map((p) => p._id);
 
         const conversation = await Conversation.create({
             buyerSessionId: sessionId,
             sellerId: seller._id,
-            productId: product._id,
-            amount: product.price,
+            productIds,
+            amount: totalAmount,
+            buyerName: buyerName || "",
+            deliveryAddress: deliveryAddress || "",
+            deliveryCity: deliveryCity || "",
+            deliveryPhone: deliveryPhone || "",
             buyerLastMessageAt: new Date(),
-            lastMessage: orderMessage,
+            lastMessage: "New order request",
         });
+
+        // build opening system message
+        let orderLines = "";
+        items.forEach((item) => {
+            const product = productMap[item.productSlug];
+            if (!product) return;
+            const itemTotal = product.price * item.quantity;
+            let line = `• ${product.name} x${item.quantity}`;
+            if (item.color) line += ` (${item.color})`;
+            if (item.size) line += ` — Size: ${item.size}`;
+            line += ` — ₦${itemTotal.toLocaleString()}`;
+            if (product.images && product.images.length > 0) {
+                line += `\n[img]${product.images[0]}[/img]`;
+            }
+            orderLines += line + "\n";
+        });
+
+        let orderMessage = `🛍️ New Order Request\n\n${orderLines}\nTotal: ₦${totalAmount.toLocaleString()}`;
+
+        if (deliveryAddress) {
+            orderMessage += `\n\n📦 Deliver to: ${deliveryAddress}`;
+            if (deliveryCity) orderMessage += `, ${deliveryCity}`;
+        }
+        if (deliveryPhone) {
+            orderMessage += `\n📞 Phone: ${deliveryPhone}`;
+        }
+        if (buyerName) {
+            orderMessage += `\n👤 Name: ${buyerName}`;
+        }
 
         await Message.create({
             conversationId: conversation._id,
@@ -99,14 +161,18 @@ const startConversation = async (req, res) => {
             content: orderMessage,
         });
 
+        // notify seller
+        const firstProduct = products[0];
         sendSellerNewChatEmail(
             seller.email,
             seller.businessName,
-            product.name
+            items.length > 1 ? `${items.length} products` : firstProduct.name
         ).catch((err) => console.error("Email error:", err.message));
 
         try {
-            getIO().to(seller._id.toString()).emit("new_conversation", { conversationId: conversation._id });
+            getIO().to(seller._id.toString()).emit("new_conversation", {
+                conversationId: conversation._id,
+            });
         } catch (err) {
             console.error("Socket emit error:", err.message);
         }
@@ -120,6 +186,8 @@ const startConversation = async (req, res) => {
     }
 };
 
+
+
 // ── GET /api/chat/:conversationId ──
 // fetch all messages in a conversation thread
 // buyer verified by sessionId — no JWT needed
@@ -129,7 +197,7 @@ const getMessages = async (req, res) => {
         const { sessionId } = req.query;
 
         const conversation = await Conversation.findById(conversationId)
-            .populate("productId", "name images price")
+            .populate("productIds", "name images price")
             .populate("sellerId", "businessName slug logo");
 
         if (!conversation) {
@@ -163,7 +231,7 @@ const getMessagesAsSeller = async (req, res) => {
         const { conversationId } = req.params;
 
         const conversation = await Conversation.findById(conversationId)
-            .populate("productId", "name images price")
+            .populate("productIds", "name images price")
             .populate("sellerId", "businessName slug logo");
 
         if (!conversation) {
@@ -292,7 +360,7 @@ const getSellerInbox = async (req, res) => {
         const conversations = await Conversation.find({
             sellerId: req.seller._id,
         })
-            .populate("productId", "name images")
+            .populate("productIds", "name images")
             .populate("buyerId", "email")
             .sort({ updatedAt: -1 }); // most recent first
 
@@ -347,14 +415,12 @@ const initializeOrderPayment = async (req, res) => {
         const { conversationId } = req.params;
 
         const conversation = await Conversation.findById(conversationId)
-            .populate("productId", "name price")
             .populate("sellerId", "email businessName slug paystackSubaccountCode");
 
         if (!conversation) {
             return res.status(404).json({ message: "Conversation not found" });
         }
 
-        // only the seller who owns this conversation can generate the link
         if (conversation.sellerId._id.toString() !== req.seller._id.toString()) {
             return res.status(403).json({ message: "Access denied" });
         }
@@ -364,7 +430,6 @@ const initializeOrderPayment = async (req, res) => {
         }
 
         const seller = conversation.sellerId;
-        const product = conversation.productId;
 
         if (!seller.paystackSubaccountCode) {
             return res.status(400).json({
@@ -383,13 +448,12 @@ const initializeOrderPayment = async (req, res) => {
             },
             body: JSON.stringify({
                 email: seller.email,
-                amount: product.price * 100, // price already grossed up, convert to kobo
+                amount: conversation.amount * 100, // use conversation.amount — already grossed up
                 subaccount: seller.paystackSubaccountCode,
                 bearer: "account",
                 metadata: {
                     sellerId: seller._id,
                     conversationId: conversation._id,
-                    productName: product.name,
                 },
                 callback_url: `${process.env.FRONTEND_URL}/${seller.slug}/chat/${conversationId}`,
             }),
@@ -403,14 +467,12 @@ const initializeOrderPayment = async (req, res) => {
 
         const paymentUrl = data.data.authorization_url;
 
-        // insert payment link as system message in the chat
         const systemMessage = await Message.create({
             conversationId: conversation._id,
             sender: "system",
             content: `💳 Payment link ready. Tap to pay:\n${paymentUrl}`,
         });
 
-        // update conversation last message
         conversation.lastMessage = "Payment link sent";
         await conversation.save();
 
@@ -425,7 +487,6 @@ const initializeOrderPayment = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
-
 
 module.exports = {
     startConversation,
