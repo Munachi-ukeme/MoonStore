@@ -95,7 +95,7 @@ const HomePage = () => {
                 <div className={styles.perks}>
                     <p className={styles.perk}>✓ Your store. Your name. Your brand.</p>
                     <p className={styles.perk}>✓ Buyers chat and pay inside your store</p>
-                    <p className={styles.perk}>✓ Money sent to your bank daily </p>
+                    <p className={styles.perk}>✓ Money sent to your bank daily</p>
                     <p className={styles.perk}>✓ No tech skills. No developer. No stress.</p>
                 </div>
 

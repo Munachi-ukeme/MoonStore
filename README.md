@@ -1,4 +1,4 @@
-# VendorStore
+# MoonStore
 
 A MERN stack storefront solution built for Nigerian Instagram and WhatsApp vendors. Instead of managing orders through chaotic DMs, sellers get a clean, professional online store where buyers can browse products, view prices, and order directly via WhatsApp.
 
@@ -15,7 +15,7 @@ A MERN stack storefront solution built for Nigerian Instagram and WhatsApp vendo
 
 - **Frontend** — React + Vite + CSS3
 - **Backend** — Node.js + Express
-- **Database** — Railway
+- **Database** — MongoDB atlas
 - **Image Upload** — Cloudinary
 - **Auth** — JWT + bcrypt
 - **Hosting** — Netlify (frontend) + Render (backend)
