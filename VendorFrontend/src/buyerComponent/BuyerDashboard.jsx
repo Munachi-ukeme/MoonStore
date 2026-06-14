@@ -77,7 +77,7 @@ const BuyerDashboard = () => {
         }
 
         return (
-            <div className={styles.list}> 
+            <div className={styles.list}>
                 {conversations.map((conv) => (
                     <div key={conv._id} className={styles.row}>
                         <div className={styles.rowInfo}>
