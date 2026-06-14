@@ -158,7 +158,7 @@ const deactivateSubaccount = async (subaccountCode) => {
         }
 
         console.log(`Subaccount deactivated: ${subaccountCode}`);
-    } catch (err) {
+    } catch (err){
         console.error("Subaccount deactivation failed:", err.message);
     }
 };
