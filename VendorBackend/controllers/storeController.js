@@ -35,15 +35,16 @@ if (!seller.isActive) {
     // 5. Return everything in one response
     res.json({
       store: {
+         _id: seller._id,
         businessName: seller.businessName,
         slug: seller.slug,
         logo: seller.logo,
         bannerImage: seller.bannerImage,
         tagline: seller.tagline,
         whatsappNumber: seller.whatsappNumber,
-        primaryColor: seller.primaryColor,
-        secondaryColor: seller.secondaryColor,
         plan: seller.plan,
+        address: seller.address,
+        phoneNumber: seller.phoneNumber,
       },
       categories,
       products,
@@ -179,8 +180,6 @@ const getProduct = async (req, res) => {
           address: seller.address,
           logo: seller.logo,
           bannerImage: seller.bannerImage,
-          primaryColor: seller.primaryColor,
-          secondaryColor: seller.secondaryColor,
           plan: seller.plan,
           slug: seller.slug,
           bankDetails: seller.bankDetails,

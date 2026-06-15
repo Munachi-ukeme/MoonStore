@@ -89,10 +89,10 @@ const getAnalyticsSummary = async (req, res) => {
     });
 
 // orders = product clicks = buyer tapped Order Now
-const orders = await Analytics.countDocuments({
-  sellerId,
-  type: "product_click",
-  createdAt: dateFilter,
+// orders = conversations started by buyers
+const orders = await Conversation.countDocuments({
+    sellerId,
+    createdAt: dateFilter,
 });
 
  // products sold = conversations marked paid in period
