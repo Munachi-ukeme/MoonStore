@@ -106,14 +106,14 @@ return(
 
 
             <NavLink
-            to="/dashboard/privacypolicy"
+            to="/privacypolicy"
             className={({ isActive }) =>
                 isActive ? `${styles.link} ${styles.activeLink}` : styles.link
             } onClick={handleLinkClick}> Privacy Policy </NavLink>
 
 
             <NavLink
-            to="/dashboard/termsofservice"
+            to="/termsofservice"
             className={({ isActive }) =>
                 isActive ? `${styles.link} ${styles.activeLink}` : styles.link
             } onClick={handleLinkClick}> Terms of Service </NavLink>

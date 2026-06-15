@@ -110,24 +110,6 @@ function App(){
   </ProtectedRoute>
 } />
 
-<Route path="/dashboard/privacypolicy" element={
-        <ProtectedRoute>
-          <DashboardLayout>
-            <PrivacyPolicy/>
-          </DashboardLayout>
-        </ProtectedRoute>
-        
-        }/>
-
-
-      <Route path="/dashboard/termsofservice" element={
-        <ProtectedRoute>
-          <DashboardLayout>
-            <TermsOfService />
-          </DashboardLayout>
-        </ProtectedRoute>
-        
-        }/>
 
 
       {/* buyer routes — dynamic last */}
