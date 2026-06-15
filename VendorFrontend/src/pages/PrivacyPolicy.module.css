@@ -57,3 +57,13 @@
     line-height: 1.7;
     margin-bottom: 10px;
 }
+.backBtn {
+    background: none;
+    border: none;
+    font-size: 14px;
+    color: #6c47ff;
+    cursor: pointer;
+    padding: 16px;
+    display: block;
+    font-weight: 600;
+}

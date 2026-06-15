@@ -1,8 +1,13 @@
 import styles from "./PrivacyPolicy.module.css";
+import { useNavigate } from "react-router-dom";
 
 function PrivacyPolicy(){
+    const navigate = useNavigate();
     return(
         <div className={styles.container}>
+            <button className={styles.backBtn} onClick={() => navigate(-1)}>
+                ← Back
+            </button>
             <div className={styles.content}>
                 <h1 className={styles.title}>Privacy Policy</h1>
                 <p className={styles.updated}>Last updated: May 2026</p>

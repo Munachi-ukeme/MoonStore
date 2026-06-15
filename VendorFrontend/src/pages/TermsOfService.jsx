@@ -1,9 +1,14 @@
 // pages/TermsOfServicePage.jsx
 import styles from "./TermsOfService.module.css";
+import { useNavigate } from "react-router-dom";
 
 function TermsOfServicePage() {
+    const navigate = useNavigate();
     return (
         <div className={styles.container}>
+            <button className={styles.backBtn} onClick={() => navigate(-1)}>
+                ← Back
+            </button>
             <div className={styles.content}>
                 <h1 className={styles.title}>Terms of Service</h1>
                 <p className={styles.updated}>Last updated: May 2026</p>
