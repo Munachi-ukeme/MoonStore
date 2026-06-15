@@ -1,77 +1,81 @@
-
 .footer {
-    background-color: #ffffff;
-    border-top: 1px solid #f3f0ff;
-    padding: 24px 16px;
+    background: #0f0a1e;
+    padding: 32px 20px 48px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
     margin-top: 24px;
 }
 
-.storeInfo {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-}
-
 .logo {
-    width: 48px;
-    height: 48px;
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
     object-fit: cover;
-    border: 1.5px solid #ede9fe;
+    border: 2px solid #6c47ff;
+    margin-bottom: 4px;
 }
 
 .businessName {
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 700;
-    color: #1e1b2e;
+    color: #ffffff;
     text-align: center;
+    margin: 0;
 }
 
 .tagline {
-    font-size: 11px;
-    color: #7c3aed;
+    font-size: 12px;
+    color: #a78bfa;
     text-align: center;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.divider {
+    width: 40px;
+    height: 1px;
+    background: #2d1f5e;
+    margin: 8px 0;
 }
 
 .contact {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
 }
 
 .contactLink {
-    font-size: 12px;
-    color: #7c3aed;
+    font-size: 13px;
+    color: #c4b5fd;
     text-decoration: none;
     font-weight: 500;
 }
 
 .contactLink:hover {
-    text-decoration: underline;
+    color: #ffffff;
 }
 
 .address {
     font-size: 12px;
-    color: #6b7280;
+    color: #8b7cb3;
     text-align: center;
-    line-height: 1.4;
+    line-height: 1.5;
+    margin: 0;
 }
 
 .legal {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
+    margin-top: 4px;
 }
 
 .legalLink {
     font-size: 11px;
-    color: #9ca3af;
+    color: #6b5fa0;
     background: none;
     border: none;
     cursor: pointer;
@@ -80,20 +84,21 @@
 }
 
 .legalLink:hover {
-    color: #7c3aed;
+    color: #a78bfa;
 }
 
 .dot {
     font-size: 11px;
-    color: #9ca3af;
+    color: #4a3f6b;
 }
 
 .poweredBy {
     font-size: 11px;
-    color: #9ca3af;
+    color: #4a3f6b;
+    margin: 4px 0 0 0;
 }
 
 .moonstore {
-    color: #7c3aed;
+    color: #6c47ff;
     font-weight: 700;
 }
