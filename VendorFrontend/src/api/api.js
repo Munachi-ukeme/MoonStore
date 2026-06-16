@@ -1,6 +1,6 @@
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:4000/api"; //backend address
 
-const fetchWithTimeout = async (url, options = {}, timeout = 13000) => {
+const fetchWithTimeout = async (url, options = {}, timeout = 20000) => {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
   try {
