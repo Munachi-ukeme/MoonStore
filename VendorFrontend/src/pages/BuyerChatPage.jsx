@@ -71,25 +71,35 @@ const BuyerChatPage = () => {
     setReportSending(false);
   };
 
-  const renderMessageContent = (content) => {
-    const parts = content.split(/(\[img\].*?\[\/img\])/g);
-    return parts.map((part, index) => {
-        const imgMatch = part.match(/\[img\](.*?)\[\/img\]/);
-        if (imgMatch) {
-            const url = imgMatch[1];
-            return (
-                <img
-                    key={index}
-                    src={url}
-                    alt="product"
-                    className={styles.thumbnailImg}
-                    onClick={() => setFullscreenImage(url)}
-                />
-            );
-        }
-        return <span key={index}>{part}</span>;
+const renderMessageContent = (content, msgId) => {
+  const parts = content.split(/(\[img\].*?\[\/img\])/g);
+  
+  return parts
+    .filter(part => part !== "") // 1. Remove empty strings completely
+    .map((part, index) => {
+      const imgMatch = part.match(/\[img\](.*?)\[\/img\]/);
+      
+      // Generate a stable key combining message ID and index
+      const itemKey = `${msgId}-part-${index}`; 
+
+      if (imgMatch) {
+        const url = imgMatch[1];
+        return (
+          <img
+            key={itemKey}
+            src={url}
+            alt="product"
+            className={styles.thumbnailImg}
+            onClick={() => setFullscreenImage(url)}
+          />
+        );
+      }
+      
+      // 2. Wrap text safely inside spans
+      return <span key={itemKey}>{part}</span>;
     });
 };
+
 
   const renderMessage = (msg) => {
     if (msg.sender === "system") {
@@ -115,7 +125,7 @@ const BuyerChatPage = () => {
       }
       return (
         <div key={msg._id} className={styles.systemMessage}>
-          {renderMessageContent(msg.content)}
+          {renderMessageContent(msg.content, msg._id)}
         </div>
       );
     }
@@ -123,7 +133,7 @@ const BuyerChatPage = () => {
     if (msg.sender === "buyer") {
       return (
         <div key={msg._id} className={`${styles.bubble} ${styles.buyerBubble}`}>
-          <div>{renderMessageContent(msg.content)}</div>
+          <div>{renderMessageContent(msg.content, msg._id)}</div>
           <span className={styles.time}>
             {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
           </span>
@@ -133,7 +143,7 @@ const BuyerChatPage = () => {
 
     return (
       <div key={msg._id} className={`${styles.bubble} ${styles.sellerBubble}`}>
-        <div>{renderMessageContent(msg.content)}</div>
+        <div>{renderMessageContent(msg.content, msg._id)}</div>
         <span className={styles.time}>
           {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
         </span>

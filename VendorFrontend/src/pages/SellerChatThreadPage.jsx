@@ -78,75 +78,86 @@ const SellerChatThreadPage = () => {
     }
   };
 
-  const renderMessageContent = (content) => {
+
+  const renderMessageContent = (content, msgId) => {
     const parts = content.split(/(\[img\].*?\[\/img\])/g);
-    return parts.map((part, index) => {
-        const imgMatch = part.match(/\[img\](.*?)\[\/img\]/);
-        if (imgMatch) {
-            const url = imgMatch[1];
-            return (
-                <img
-                    key={index}
-                    src={url}
-                    alt="product"
-                    className={styles.thumbnailImg}
-                    onClick={() => setFullscreenImage(url)}
-                />
-            );
-        }
-        return <span key={index}>{part}</span>;
-    });
+    return parts
+        .filter(part => part !== "") // 1. Clean up empty nodes
+        .map((part, index) => {
+            const imgMatch = part.match(/\[img\](.*?)\[\/img\]/);
+            const itemKey = `${msgId}-part-${index}`; // 2. Safe unique key
+
+            if (imgMatch) {
+                const url = imgMatch[1];
+                return (
+                    <img
+                        key={itemKey}
+                        src={url}
+                        alt="product"
+                        className={styles.thumbnailImg}
+                        onClick={() => setFullscreenImage(url)}
+                    />
+                );
+            }
+            return <span key={itemKey}>{part}</span>; // 3. Wrapped securely
+        });
 };
 
-  const renderMessage = (msg) => {
-    if (msg.sender === "system") {
-      // check if message contains a payment link
-      const isPaymentLink = msg.content.includes("https://");
-      if (isPaymentLink) {
-        const urlMatch = msg.content.match(/https:\/\/\S+/);
-        const url = urlMatch ? urlMatch[0] : null;
-        return (
-          <div key={msg._id} className={styles.systemMessage}>
-            <span>💳 Payment link ready for buyer</span>
-            {url ? ( <a
-                href={url}
-                target="_blank"
-                rel="noreferrer"
-                className={styles.paymentLinkBtn}
-              >
-                Open Payment Page
-              </a>
-            ) : null}
-          </div>
-        );
-      }
+
+const renderMessage = (msg) => {
+  if (msg.sender === "system") {
+    const isPaymentLink = msg.content.includes("https://");
+    if (isPaymentLink) {
+      const urlMatch = msg.content.match(/https:\/\/\S+/);
+      const url = urlMatch ? urlMatch[0] : null;
       return (
         <div key={msg._id} className={styles.systemMessage}>
-          {renderMessageContent(msg.content)}
+          <span>💳 Payment link ready for buyer</span>
+          {url ? ( 
+            <a
+              href={url}
+              target="_blank"
+              rel="noreferrer"
+              className={styles.paymentLinkBtn}
+            >
+              Open Payment Page
+            </a>
+          ) : null}
         </div>
       );
     }
-
-    if (msg.sender === "seller") {
-      return (
-        <div key={msg._id} className={`${styles.bubble} ${styles.sellerBubble}`}>
-          <div>{renderMessageContent(msg.content)}</div>
-          <span className={styles.time}>
-            {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-          </span>
-        </div>
-      );
-    }
-
     return (
-      <div key={msg._id} className={`${styles.bubble} ${styles.buyerBubble}`}>
-        <div>{renderMessageContent(msg.content)}</div>
+      <div key={msg._id} className={styles.systemMessage}>
+        {/* Pass msg._id here */}
+        {renderMessageContent(msg.content, msg._id)}
+      </div>
+    );
+  }
+
+  if (msg.sender === "seller") {
+    return (
+      <div key={msg._id} className={`${styles.bubble} ${styles.sellerBubble}`}>
+        {/* Pass msg._id here */}
+        <div>{renderMessageContent(msg.content, msg._id)}</div>
         <span className={styles.time}>
           {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
         </span>
       </div>
     );
-  };
+  }
+
+  return (
+    <div key={msg._id} className={`${styles.bubble} ${styles.buyerBubble}`}>
+      {/* Pass msg._id here */}
+      <div>{renderMessageContent(msg.content, msg._id)}</div>
+      <span className={styles.time}>
+        {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+      </span>
+    </div>
+  );
+};
+
+
 
   if (loading) return <div className={styles.loading}>Loading...</div>;
   if (error) {
