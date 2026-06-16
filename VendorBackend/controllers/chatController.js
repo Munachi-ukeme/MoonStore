@@ -52,7 +52,7 @@ const containsBankDetails = (content) => {
 
 const SECURITY_NOTICE =
     "🔒 Security Notice: MoonStore never asks for your personal bank details. " +
-    "Only pay to the official MoonStore subaccount your seller shares from their dashboard. " +
+    "Only pay to the official MoonStore payment link your seller send to you. " +
     "Never send money to a personal account. " +
     "Use the Report button if the seller asks you to pay outside this chat.";
 
@@ -136,17 +136,17 @@ const startConversation = async (req, res) => {
             orderLines += line + "\n";
         });
 
-        let orderMessage = `🛍️ New Order Request\n\n${orderLines}\nTotal: ₦${totalAmount.toLocaleString()}`;
+        let orderMessage = `New Order Request\n\n${orderLines}\nTotal: ₦${totalAmount.toLocaleString()}`;
 
         if (deliveryAddress) {
-            orderMessage += `\n\n📦 Deliver to: ${deliveryAddress}`;
+            orderMessage += `\n\n Deliver to: ${deliveryAddress}`;
             if (deliveryCity) orderMessage += `, ${deliveryCity}`;
         }
         if (deliveryPhone) {
-            orderMessage += `\n📞 Phone: ${deliveryPhone}`;
+            orderMessage += `\n Phone: ${deliveryPhone}`;
         }
         if (buyerName) {
-            orderMessage += `\n👤 Name: ${buyerName}`;
+            orderMessage += `\n Name: ${buyerName}`;
         }
 
         await Message.create({
@@ -295,7 +295,7 @@ const sendMessage = async (req, res) => {
           
             
            try {
-                getIO().to(conversationId).emit("new_message", message);
+                getIO().to(conversationId).emit("new_message", blockedMessage);
                 } catch (err) {
                 console.error("Socket emit error:", err.message);
                     }
@@ -349,7 +349,9 @@ const sendMessage = async (req, res) => {
 
         res.status(201).json({ message });
     } catch (err) {
-        res.status(500).json({ message: err.message });
+        console.error("Main controller error:", err);
+        
+        res.status(500).json({ error: err.message || "Internal server error" });
     }
 };
 
