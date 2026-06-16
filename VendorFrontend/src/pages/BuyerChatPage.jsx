@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { getConversationMessages, sendBuyerMessage, reportConversation } from "../api/api";
 import { getOrCreateSessionId } from "../utils/session";
 import styles from "./BuyerChatPage.module.css";
@@ -19,6 +19,8 @@ const BuyerChatPage = () => {
   const [fullscreenImage, setFullscreenImage] = useState(null);
   const bottomRef = useRef(null);
   const sessionId = getOrCreateSessionId();
+
+  const navigate = useNavigate();
 
   
     const fetchMessages = useCallback(async () => {
@@ -168,10 +170,9 @@ const renderMessageContent = (content, msgId) => {
   return (
     <div className={styles.page}>
 
-      <div className={styles.securityBanner}>
-        ⚠️ Only pay through the official payment link in this chat. Never send money to a personal account.
-      </div>
-
+      <button className={styles.backBtnAlt} onClick={() => navigate(`/${slug}`)}>
+                    ← Back to Store
+                </button>
       <div className={styles.header}>
         <span className={styles.storeName}>{slug}</span>
         {isPaid ? <span className={styles.paidBadge}>✓ Paid</span> : null}

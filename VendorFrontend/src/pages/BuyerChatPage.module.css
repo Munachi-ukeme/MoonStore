@@ -289,16 +289,6 @@
   font-size: 14px;
   color: #888;
 }
-.securityBanner {
-  background: #fff3cd;
-  color: #856404;
-  font-size: 11px;
-  padding: 8px 14px;
-  text-align: center;
-  border-bottom: 1px solid #ffc107;
-  flex-shrink: 0;
-}
-
 .payNowBtn {
   display: block;
   margin-top: 8px;
@@ -310,6 +300,16 @@
   font-size: 13px;
   font-weight: 600;
   text-align: center;
+}
+
+.backBtnAlt {
+    padding: 10px 20px;
+    border: 1.5px solid #d1d5db;
+    border-radius: 8px;
+    background: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    color: #374151;
 }
 
 .retryBtn {
