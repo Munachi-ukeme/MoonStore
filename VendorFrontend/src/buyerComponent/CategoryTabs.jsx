@@ -1,7 +1,7 @@
 import { useState } from "react";
 import styles from "./CategoryTabs.module.css";
 
-function CategoryTabs ({ categories, onSelectCategory}){
+function CategoryTabs ({ categories = [], onSelectCategory}){
     const [activeTab, setActiveTab] = useState("all");
 
     const handleTabClick = (categoryId) =>{

@@ -1,7 +1,7 @@
 import ProductCard from "./ProductCard";
 import styles from "./ProductGrid.module.css";
 
-function ProductGrid ({ products, slug}) {
+function ProductGrid ({ products = [], slug}) {
     if (products?.length === 0){
         return(
             <div className={styles.empty}>

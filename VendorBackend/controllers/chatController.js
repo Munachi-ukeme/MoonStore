@@ -194,7 +194,7 @@ const startConversation = async (req, res) => {
 const getMessages = async (req, res) => {
     try {
         const { conversationId } = req.params;
-        const { sessionId } = req.query;
+         const sessionId = req.headers["x-session-id"];
 
         const conversation = await Conversation.findById(conversationId)
             .populate("productIds", "name images price")

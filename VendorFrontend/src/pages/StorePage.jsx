@@ -152,11 +152,11 @@ function StorePage() {
             <HeroSection store={store} />
 
             {/* category tabs - horizontal scroll */}
-            <CategoryTabs categories={categories} onSelectCategory={handleSelectCategory} />
+            <CategoryTabs categories={Array.isArray(categories) ? categories : []} onSelectCategory={handleSelectCategory} />
 
             {/* product grid */}
-            <ProductGrid products={filteredProducts} slug={slug} />
-
+            <ProductGrid products={Array.isArray(filteredProducts) ? filteredProducts : []} slug={slug} />
+            
             {/* footer */}
             <Footer store={store} />
             <OrderTray slug={slug} />
