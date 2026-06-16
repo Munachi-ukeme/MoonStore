@@ -44,7 +44,7 @@ const BuyerOrdersPage = () => {
             return <p className={styles.errorText}>{error}</p>;
         }
 
-        if (conversations.length === 0) {
+        if (conversations?.length === 0) {
             return (
                 <div className={styles.emptyState}>
                     <p className={styles.emptyIcon}>🛍️</p>
@@ -64,7 +64,7 @@ const BuyerOrdersPage = () => {
 
         return (
             <div className={styles.list}>
-                {conversations.map((conv) => (
+                {conversations?.map((conv) => (
                     <button
                         key={conv._id}
                         className={styles.row}

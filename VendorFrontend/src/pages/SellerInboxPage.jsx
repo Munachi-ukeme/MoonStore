@@ -100,11 +100,11 @@ if (error) {
         </button>
       </div>
 
-      {filtered.length === 0 ? (
+      {filtered?.length === 0 ? (
         <div className={styles.empty}>No conversations yet.</div>
       ) : (
         <div className={styles.list}>
-          {filtered.map((c) => {
+          {filtered?.map((c) => {
             const unread = isUnread(c);
             return (
               <div
