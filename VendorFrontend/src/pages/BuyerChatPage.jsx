@@ -44,16 +44,32 @@ const BuyerChatPage = () => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSend = async () => {
+ const handleSend = async () => {
     if (!input.trim()) return;
+    const typedText = input.trim(); // Save text input locally before clearing state
     setSending(true);
-    const data = await sendBuyerMessage(conversationId, sessionId, input.trim());
+    
+    const data = await sendBuyerMessage(conversationId, sessionId, typedText);
+    
     if (!data.error) {
-      setMessages((prev) => [...prev, data.message]);
-      setInput("");
+        // Construct a defensive message fallback structure
+        const safeMessage = data.message || {
+            _id: data._id || `temp-${Date.now()}`,
+            sender: "buyer",
+            content: typedText, // 🟢 Fallback to local typed text if backend field is missing
+            createdAt: new Date().toISOString()
+        };
+
+        // Fallback specifically for the content text field inside an existing object
+        if (safeMessage && !safeMessage.content) {
+            safeMessage.content = typedText;
+        }
+
+        setMessages((prev) => [...prev, safeMessage]);
+        setInput("");
     }
     setSending(false);
-  };
+};
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -74,7 +90,7 @@ const BuyerChatPage = () => {
   };
 
 const renderMessageContent = (content, msgId) => {
-  const parts = content.split(/(\[img\].*?\[\/img\])/g);
+  const parts = content.split(/(\[img\].*?\[\/img\]|\\n|\n)/g);
   
   return parts
     .filter(part => part !== "") // 1. Remove empty strings completely
@@ -83,6 +99,9 @@ const renderMessageContent = (content, msgId) => {
       
       // Generate a stable key combining message ID and index
       const itemKey = `${msgId}-part-${index}`; 
+
+       // Check for image tag
+        const imgMatch = part.match(/\[img\](.*?)\[\/img\]/);
 
       if (imgMatch) {
         const url = imgMatch[1];
@@ -96,6 +115,10 @@ const renderMessageContent = (content, msgId) => {
           />
         );
       }
+
+      if (part === "\n" || part === "\\n") {
+                return <br key={itemKey} />; // Renders an actual HTML line break
+            }
       
       // 2. Wrap text safely inside spans
       return <span key={itemKey}>{part}</span>;

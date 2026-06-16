@@ -100,7 +100,7 @@ const OrderTray = ({ slug }) => {
             {!expanded ? (
                 <div className={styles.collapsed} onClick={() => setExpanded(true)}>
                     <span className={styles.collapsedText}>
-                        🛍️ {itemCount} {itemCount === 1 ? "item" : "items"} · ₦{total.toLocaleString()}
+                        {itemCount} {itemCount === 1 ? "item" : "items"} · ₦{total.toLocaleString()}
                     </span>
                     <button className={styles.orderNowBtn}>
                         Order →

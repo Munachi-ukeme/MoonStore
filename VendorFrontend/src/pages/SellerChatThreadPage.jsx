@@ -80,7 +80,7 @@ const SellerChatThreadPage = () => {
 
 
   const renderMessageContent = (content, msgId) => {
-    const parts = content.split(/(\[img\].*?\[\/img\])/g);
+    const parts = content.split(/(\[img\].*?\[\/img\]|\\n|\n)/g);
     return parts
         .filter(part => part !== "") // 1. Clean up empty nodes
         .map((part, index) => {
@@ -99,6 +99,11 @@ const SellerChatThreadPage = () => {
                     />
                 );
             }
+
+            if (part === "\n" || part === "\\n") {
+                return <br key={itemKey} />; // Renders an actual HTML line break
+            }
+
             return <span key={itemKey}>{part}</span>; // 3. Wrapped securely
         });
 };

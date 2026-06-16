@@ -78,7 +78,7 @@ const BuyerDashboard = () => {
 
         return (
             <div className={styles.list}>
-                {conversations.map((conv) => (
+                {conversations?.map((conv) => (
                     <div key={conv._id} className={styles.row}>
                         <div className={styles.rowInfo}>
                             <p className={styles.sellerName}>{conv.sellerId?.businessName}</p>
@@ -102,8 +102,8 @@ const BuyerDashboard = () => {
      return (
         <div className={styles.page}>
             <div className={styles.header}>
-                <button className={styles.backBtn} onClick={() => navigate("/")}>
-                    ← Home
+                <button className={styles.backBtn} onClick={() => navigate(-1)}>
+                    ← Back
                 </button>
                 <h1 className={styles.title}>My Orders</h1>
             </div>

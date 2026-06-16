@@ -50,7 +50,7 @@ const StoreBottomNav = ({ sellerId, slug }) => {
                 </button>
 
                  <button className={styles.navBtn} onClick={handleDashboardClick}>
-                    <span className={styles.navIcon}>📦</span>
+                    <span className={styles.navIcon}>📊</span>
                     <span className={styles.navLabel}>Dashboard</span>
                 </button>
             </div>

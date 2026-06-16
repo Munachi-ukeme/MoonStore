@@ -9,7 +9,7 @@
     padding: 14px 16px;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 16px;
     border-bottom: 1px solid #f0f0f0;
     position: sticky;
     top: 0;
@@ -28,7 +28,7 @@
 .title {
     font-size: 16px;
     font-weight: 700;
-    color: #111;
+    color: #7c3aed;
     margin: 0;
 }
 
