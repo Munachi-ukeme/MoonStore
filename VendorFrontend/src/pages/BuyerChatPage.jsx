@@ -171,7 +171,7 @@ const BuyerChatPage = () => {
       </div>
 
       <div className={styles.messages}>
-        {messages.map((msg) => renderMessage(msg))}
+        {messages?.map((msg) => renderMessage(msg))}
         <div ref={bottomRef} />
       </div>
 
