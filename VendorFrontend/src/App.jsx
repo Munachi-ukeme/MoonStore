@@ -100,7 +100,7 @@ function App(){
 } />
 
 
-<Route path="/chat/:conversationId" element={
+<Route path="/dashboard/chat/:conversationId" element={
   <ProtectedRoute>
     <ErrorBoundary>
       <DashboardLayout>
