@@ -27,12 +27,12 @@ const SellerInboxPage = () => {
     fetchInbox();
   }, []);
 
-  const filtered = conversations.filter((c) => {
+  const filtered = conversations?.filter((c) => {
     if (filter === "all") return true;
     if (filter === "active") return c.status === "active";
     if (filter === "paid") return c.status === "paid";
     return true;
-  });
+  }) || [];
 
    const openThread = (conversationId) => {
     navigate(`/dashboard/chat/${conversationId}`);
