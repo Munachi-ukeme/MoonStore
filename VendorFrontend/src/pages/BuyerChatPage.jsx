@@ -100,8 +100,7 @@ const renderMessageContent = (content, msgId) => {
       // Generate a stable key combining message ID and index
       const itemKey = `${msgId}-part-${index}`; 
 
-       // Check for image tag
-        const imgMatch = part.match(/\[img\](.*?)\[\/img\]/);
+       
 
       if (imgMatch) {
         const url = imgMatch[1];
