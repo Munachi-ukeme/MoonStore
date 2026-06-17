@@ -112,11 +112,11 @@ function App(){
 
 <Route path="/privacypolicy" element={
         <ProtectedRoute>
-          <ErrorBoundary>
+          
           <DashboardLayout>
             <PrivacyPolicy/>
           </DashboardLayout>
-          </ErrorBoundary>
+        
         </ProtectedRoute>
         
         }/>
@@ -124,11 +124,11 @@ function App(){
 
       <Route path="/termsofservice" element={
         <ProtectedRoute>
-          <ErrorBoundary>
+          
           <DashboardLayout>
             <TermsOfService />
           </DashboardLayout>
-          </ErrorBoundary>
+          
         </ProtectedRoute>
         
         }/>
