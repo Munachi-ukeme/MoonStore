@@ -9,7 +9,8 @@
     padding: 14px 16px;
     display: flex;
     align-items: center;
-    
+    justify-content: space-around;
+    gap: 12px;
     border-bottom: 1px solid #f0f0f0;
     position: sticky;
     top: 0;
