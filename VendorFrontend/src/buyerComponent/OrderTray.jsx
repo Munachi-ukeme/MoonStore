@@ -29,17 +29,12 @@ const OrderTray = ({ slug }) => {
         }
     }, [slug]);
 
+    // Combined into a single effect to handle initial mount and storage events
     useEffect(() => {
         loadTray();
-        // listen for storage changes so tray updates when item added
         window.addEventListener("storage", loadTray);
         return () => window.removeEventListener("storage", loadTray);
-    }, [loadTray]) ;
-
-    // also reload when component mounts fresh after navigation
-    useEffect(() => {
-        loadTray();
-    });
+    }, [loadTray]); 
 
     const handleRemoveItem = (index) => {
         try {
@@ -64,29 +59,37 @@ const OrderTray = ({ slug }) => {
         setOrdering(true);
         setOrderError("");
 
-        const sessionId = getOrCreateSessionId();
+        try {
+            const sessionId = getOrCreateSessionId();
 
-        const data = await startConversation(
-            slug,
-            sessionId,
-            tray.items,
-            tray.buyerName,
-            tray.deliveryAddress,
-            tray.deliveryCity,
-            tray.deliveryPhone,
-        );
+            const data = await startConversation(
+                slug,
+                sessionId,
+                tray.items,
+                tray.buyerName,
+                tray.deliveryAddress,
+                tray.deliveryCity,
+                tray.deliveryPhone,
+            );
 
-        setOrdering(false);
+            if (data?.error) {
+                setOrderError("Could not start order. Please try again.");
+                setTimeout(() => setOrderError(""), 3000);
+                setOrdering(false); // turn off loader on business error
+                return;
+            }
 
-        if (data.error) {
-            setOrderError("Could not start order. Please try again.");
+            // clear tray after successful order
+            localStorage.removeItem(TRAY_KEY(slug));
+            navigate(`/${slug}/chat/${data.conversation._id}`);
+
+        } catch (error) {
+            // Catch network crashes so the UI doesn't freeze permanently
+            console.error("Order failed:", error);
+            setOrderError("Network error. Please try again.");
             setTimeout(() => setOrderError(""), 3000);
-            return;
+            setOrdering(false); // Unlock buttons
         }
-
-        // clear tray after successful order
-        localStorage.removeItem(TRAY_KEY(slug));
-        navigate(`/${slug}/chat/${data.conversation._id}`);
     };
 
     if (!tray || !tray.items || tray.items.length === 0) return null;
@@ -162,7 +165,7 @@ const OrderTray = ({ slug }) => {
                         onClick={handleStartOrder}
                         disabled={ordering}
                     >
-                        {ordering ? "Starting order..." : "Start Order →"}
+                        {ordering ? "Sending order..." : "Send your Order →"}
                     </button>
                 </div>
             )}
