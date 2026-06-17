@@ -363,7 +363,6 @@ const getSellerInbox = async (req, res) => {
             sellerId: req.seller._id,
         })
             .populate("productIds", "name images")
-            .populate("buyerId", "email")
             .sort({ updatedAt: -1 }); // most recent first
 
         res.json({ conversations });
