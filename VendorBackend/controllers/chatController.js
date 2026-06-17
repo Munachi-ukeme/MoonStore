@@ -345,7 +345,7 @@ const sendMessage = async (req, res) => {
         await conversation.save();
 
     
-        io.to(conversationId).emit("new_message", message);
+        getIO().to(conversationId).emit("new_message", message);
 
         res.status(201).json({ message });
     } catch (err) {
