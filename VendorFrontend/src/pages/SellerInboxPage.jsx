@@ -113,7 +113,7 @@ if (error) {
                 onClick={() => openThread(c._id)}
               >
                  <div className={styles.avatar}>
-                  {c.productId?.name?.charAt(0).toUpperCase() || "?"}
+                  {c.productId?.name?.charAt(0).toUpperCase() || "🛍️"}
                 </div>
                 <div className={styles.info}>
                   <div className={styles.topRow}>
