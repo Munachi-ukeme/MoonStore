@@ -44,32 +44,52 @@ const BuyerChatPage = () => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
- const handleSend = async () => {
+  const handleSend = async () => {
     if (!input.trim()) return;
     const typedText = input.trim(); // Save text input locally before clearing state
     setSending(true);
+    setError(""); // Clear previous errors
     
-    const data = await sendBuyerMessage(conversationId, sessionId, typedText);
-    
-    if (!data.error) {
-        // Construct a defensive message fallback structure
-        const safeMessage = data.message || {
-            _id: data._id || `temp-${Date.now()}`,
-            sender: "buyer",
-            content: typedText, // 🟢 Fallback to local typed text if backend field is missing
-            createdAt: new Date().toISOString()
-        };
+    try {
+        const data = await sendBuyerMessage(conversationId, sessionId, typedText);
+        
+        // 1. Check if the API returned an explicit error flag or a validation error string
+        if (data?.error || typeof data?.message === "string") {
+            setError(data.error || data.message);
+            setSending(false);
+            return; // Stop immediately so it doesn't crash below
+        }
 
-        // Fallback specifically for the content text field inside an existing object
-        if (safeMessage && !safeMessage.content) {
+        // 2. Ensure data.message exists and is an object before using it
+        let safeMessage;
+        if (data && data.message && typeof data.message === "object") {
+            safeMessage = data.message;
+        } else {
+            // Fallback structure if the backend object structure is totally missing
+            safeMessage = {
+                _id: data?._id || `temp-${Date.now()}`,
+                sender: "buyer",
+                content: typedText,
+                createdAt: new Date().toISOString()
+            };
+        }
+
+        // 3. Safe fallback assignment for content
+        if (!safeMessage.content) {
             safeMessage.content = typedText;
         }
 
         setMessages((prev) => [...prev, safeMessage]);
         setInput("");
+        
+    } catch (err) {
+        console.error("Chat send error:", err);
+        setError("Failed to send message. Please try again.");
+    } finally {
+        setSending(false);
     }
-    setSending(false);
 };
+
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
