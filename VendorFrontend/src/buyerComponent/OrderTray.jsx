@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { startConversation } from "../api/api";
 import { getOrCreateSessionId } from "../utils/session";
@@ -13,7 +13,7 @@ const OrderTray = ({ slug }) => {
     const [ordering, setOrdering] = useState(false);
     const [orderError, setOrderError] = useState("");
 
-    const loadTray = () => {
+    const loadTray = useCallback(() => {
         try {
             const existing = localStorage.getItem(TRAY_KEY(slug));
             if (existing) {
@@ -27,14 +27,14 @@ const OrderTray = ({ slug }) => {
         } catch {
             setTray(null);
         }
-    };
+    }, [slug]);
 
     useEffect(() => {
         loadTray();
         // listen for storage changes so tray updates when item added
         window.addEventListener("storage", loadTray);
         return () => window.removeEventListener("storage", loadTray);
-    }, [slug]);
+    }, [loadTray]) ;
 
     // also reload when component mounts fresh after navigation
     useEffect(() => {
