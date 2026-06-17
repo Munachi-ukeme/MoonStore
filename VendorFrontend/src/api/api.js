@@ -197,7 +197,11 @@ export const sendBuyerMessage = async (conversationId, sessionId, content) => {
     const res = await fetchWithTimeout(`${BASE_URL}/chat/${conversationId}/message`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-session-id": sessionId },
-      body: JSON.stringify({ content }),
+      body: JSON.stringify({ 
+        content,  
+        sender: "buyer",      
+        sessionId: sessionId 
+       }),
     });
     return await res.json();
   } catch {
