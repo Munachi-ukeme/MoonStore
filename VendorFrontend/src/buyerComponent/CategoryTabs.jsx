@@ -21,7 +21,7 @@ function CategoryTabs ({ categories = [], onSelectCategory}){
                 </button>
 
                 {/* one tab per category */}
-                {categories?.categories?.map((cat) =>(
+                {categories?.map((cat) =>(
                     <button key={cat._id} className={activeTab === cat._id ? `${styles.tab} ${styles.activeTab}` : styles.tab}
                     onClick={() => handleTabClick(cat._id)}>
                         {cat.name}
