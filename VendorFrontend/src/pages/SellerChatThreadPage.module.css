@@ -34,6 +34,8 @@
   background: #6c47ff;
   color: #fff;
   flex-shrink: 0;
+  top: 0;
+  width: 100rem;
 }
 
 .backBtn {
