@@ -91,7 +91,7 @@ const getBuyerConversations = async (req, res) => {
             sessionId: { $in: sessionArray }
         })
             .populate("sellerId", "businessName slug logo")
-            .populate("productId", "name images")
+            .populate("productIds", "name images")
             .sort({ createdAt: -1 });
         return res.json({ conversations });
 
@@ -122,7 +122,7 @@ const getSellerConversations = async (req, res) => {
             sellerId: seller._id,
             buyerSessionId: sessionId,
         })
-            .populate("productId", "name images")
+            .populate("productIds", "name images")
             .populate("sellerId", "businessName slug logo")
             .sort({ updatedAt: -1 });
 
