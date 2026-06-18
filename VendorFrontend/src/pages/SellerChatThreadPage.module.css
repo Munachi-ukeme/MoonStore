@@ -41,6 +41,7 @@
   width: 100%;
   z-index: 100;
   box-shadow: 0 2px 8px rgba(108, 71, 255, 0.15);
+  margin-bottom: 10px;
 }
 
 .backBtn {
