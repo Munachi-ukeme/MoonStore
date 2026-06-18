@@ -34,8 +34,13 @@
   background: #6c47ff;
   color: #fff;
   flex-shrink: 0;
+  position: fixed;
   top: 0;
-  width: 100rem;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(108, 71, 255, 0.15);
 }
 
 .backBtn {
