@@ -76,6 +76,7 @@
   flex-direction: column;
   gap: 8px;
   padding-top: 72px;
+  padding-bottom: 25px;
 }
 
 .systemMessage {
