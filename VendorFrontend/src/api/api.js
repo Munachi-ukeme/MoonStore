@@ -17,11 +17,15 @@ const fetchWithTimeout = async (url, options = {}, timeout = 20000) => {
 };
 
 const getAuthHeaders = () =>{
+  try{
     const token = localStorage.getItem("token");
     return{
         "Content-Type": "application/json",
         ...(token && {Authorization: `Bearer ${token}`}),
     };
+   } catch (error){
+        return{ error: "Failed to fetch token"};
+    }
 };
 
 //seller signup 
@@ -304,10 +308,14 @@ export const sendSellerMessage = async (conversationId, content) => {
 // PRODUCTS (Protected)
 //Get all products belonging to the logged-in seller
 export const getProducts = async() =>{
+  try{
     const res = await fetchWithTimeout(`${BASE_URL}/products`, {
         headers: getAuthHeaders(),
     });
     return res.json();
+  } catch (error){
+        return{ error: "Failed to fetch products."};
+    }
 };
 
 // Creates a new product
@@ -315,6 +323,7 @@ export const getProducts = async() =>{
 // IMPORTANT: Do NOT set Content-Type manually when using FormData.
 // The browser sets it automatically with the correct format for file uploads.
 export const createProduct = async (formData) => {
+  try{
     const token = localStorage.getItem("token");
     const res = await fetchWithTimeout(`${BASE_URL}/products`, {
         method: "POST",
@@ -324,11 +333,15 @@ export const createProduct = async (formData) => {
         body: formData,
     });
     return res.json();
+  }catch (error){
+        return{ error: "Failed to create product."};
+    }
 };
 
 
 //Updates an existing product by ID
 export const updateProduct = async(id, formData) =>{
+  try{
     const token = localStorage.getItem("token");
     const res = await fetchWithTimeout(`${BASE_URL}/products/${id}`, {
         method: "PUT",
@@ -338,32 +351,47 @@ export const updateProduct = async(id, formData) =>{
         body: formData,
     });
     return res.json();
+  }catch (error){
+          return{ error: "Failed to update product."};
+    }
 };
 
 //Delete a product by ID
 export const deleteProduct = async (id) =>{
+  try{
     const res = await fetchWithTimeout(`${BASE_URL}/products/${id}`, {
         method: "DELETE",
         headers: getAuthHeaders(),
     });
     return res.json();
+  } catch (error){
+        return{ error: "Failed to delete product."};
+    }
 };
 
 //CATEGORIES (Protected)
 export const getCategories = async () =>{
+  try{
     const res = await fetchWithTimeout(`${BASE_URL}/categories`, {
         headers: getAuthHeaders(),
     });
     return res.json();
+  }catch (error){
+        return{ error: "Failed to fetch category."};
+    }
 };
 
 export const createCategory = async(name) =>{
+  try{
     const res = await fetchWithTimeout(`${BASE_URL}/categories`, {
         method: "POST",
         headers: getAuthHeaders(),
         body: JSON.stringify({name}),
     });
     return res.json();
+  }catch (error){
+        return{ error: "Failed to create category."};
+    }
 };
 
 export const updateCategory = async (id, name) =>{
@@ -380,17 +408,22 @@ export const updateCategory = async (id, name) =>{
 };
 
 export const deleteCategory = async(id) =>{
+  try{
     const res = await fetchWithTimeout(`${BASE_URL}/categories/${id}`, {
         method: "DELETE",
         headers: getAuthHeaders(),
     });
     return res.json();
+  }catch (error){
+        return{ error: "Failed to delete category."};
+    }
 };
 
 // STORE SETTINGS (Protected)
 
 //Updates store settings - uses FormData bacause logo/banner are image uploads
 export const updateStoreSettings = async(formData) =>{
+  try{
     const token = localStorage.getItem("token");
     const res = await fetchWithTimeout(`${BASE_URL}/store/settings`, {
         method: "PUT",
@@ -400,6 +433,9 @@ export const updateStoreSettings = async(formData) =>{
         body: formData,
     });
     return res.json();
+  }catch (error){
+        return{ error: "Failed to update store settings."};
+    }
 };
 
 export const changeSellerPassword = async (currentPassword, newPassword) => {
@@ -419,11 +455,15 @@ export const changeSellerPassword = async (currentPassword, newPassword) => {
 //SELLER ACCOUNT
 //Permently delete the seller's account
 export const deleteSellerAccount = async () =>{
+  try{
     const res = await fetchWithTimeout(`${BASE_URL}/seller/account`, {
         method: "DELETE",
         headers: getAuthHeaders(),
     });
     return res.json();
+  }catch (error){
+        return{ error: "Failed to delete seller account."};
+    }
 };
 
 export const trackStoreVisit = async ({ sellerId, sessionId, referrer }) => {

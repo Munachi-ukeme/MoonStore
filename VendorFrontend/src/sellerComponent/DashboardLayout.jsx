@@ -3,7 +3,7 @@ import styles from "./DashboardLayout.module.css";
 import { useState } from "react";
 import Topbar from "./Topbar";
 
-function DashboardLayout({ children }) {
+function DashboardLayout({ children, hideTopbar }) {
 
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -21,7 +21,8 @@ function DashboardLayout({ children }) {
             <div className={styles.main}>
                 
                     {/* topbar sits above all pafe content */}
-                    <Topbar onOpen={handleOpen}/>
+                    {/* Only render the Topbar if hideTopbar is not true */}
+                    {!hideTopbar &&<Topbar onOpen={handleOpen}/>}
 
                     <div className={styles.pageContent}>
                         {children}

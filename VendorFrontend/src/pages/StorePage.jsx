@@ -13,7 +13,7 @@ import EmailCapturePopup from "../buyerComponent/EmailCapturePopup";
 import OrderTray from "../buyerComponent/OrderTray";
 
 // moved outside component — stable references, no recreation on render
-const CACHE_TTL = 5 * 60 * 1000;
+const CACHE_TTL = 3 * 60 * 1000;
 const getCacheKey = (slug) => `moonstore_store_${slug}`;
 
 function StorePage() {

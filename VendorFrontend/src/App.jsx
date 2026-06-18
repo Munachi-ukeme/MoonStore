@@ -103,7 +103,7 @@ function App(){
 <Route path="/dashboard/chat/:conversationId" element={
   <ProtectedRoute>
     <ErrorBoundary>
-      <DashboardLayout>
+      <DashboardLayout hideTopbar={true}>
         <SellerChatThreadPage />
       </DashboardLayout>
     </ErrorBoundary>
