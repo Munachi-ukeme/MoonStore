@@ -213,7 +213,7 @@ const renderMessageContent = (content, msgId) => {
     <div className={styles.page}>
 
       <div className={styles.header}>
-        <button className={styles.backBtnAlt} onClick={() => navigate(-1)}>
+        <button className={styles.backBtnAlt} onClick={() => navigate(`/${slug}/orders`)}>
                     ←
                 </button>
         <span className={styles.storeName}>{slug}</span>
