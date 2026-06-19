@@ -212,10 +212,10 @@ const renderMessageContent = (content, msgId) => {
   return (
     <div className={styles.page}>
 
-      <button className={styles.backBtnAlt} onClick={() => navigate(`/${slug}`)}>
+      <div className={styles.header}>
+        <button className={styles.backBtnAlt} onClick={() => navigate(`/${slug}`)}>
                     ← Back to Store
                 </button>
-      <div className={styles.header}>
         <span className={styles.storeName}>{slug}</span>
         {isPaid ? <span className={styles.paidBadge}>✓ Paid</span> : null}
         <button className={styles.reportBtn} onClick={() => setShowReportModal(true)}>

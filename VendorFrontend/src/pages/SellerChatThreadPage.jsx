@@ -81,9 +81,9 @@ const SellerChatThreadPage = () => {
 
   const renderMessageContent = (content, msgId) => {
     if (!content) {
-    return <React.Fragment key={`${msgId}-empty`} />;
+    return <span key={`${msgId}-empty`} style={{ display: 'none' }} />;
   }
-  
+
     const parts = content.split(/(\[img\].*?\[\/img\]|\\n|\n)/g);
     return parts
         .filter(part => part !== "") // 1. Clean up empty nodes
@@ -241,13 +241,6 @@ const renderMessage = (msg) => {
 
         </div>
    
-
-
-      {isPaid && (
-        <div className={styles.paidFooter}>
-          This conversation will be automatically deleted in 7 days.
-        </div>
-      )}
       {fullscreenImage ? (
             <div
                 className={styles.fullscreenOverlay}

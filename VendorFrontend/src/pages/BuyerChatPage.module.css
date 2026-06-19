@@ -15,8 +15,23 @@
   background: #6c47ff;
   color: #fff;
   flex-shrink: 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(108, 71, 255, 0.15);
 }
-
+.backBtnAlt {
+    padding: 10px 20px;
+    border: 1.5px solid #d1d5db;
+    border-radius: 8px;
+    background: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    color: #374151;
+}
 .storeName {
   font-size: 15px;
   font-weight: 600;
@@ -302,15 +317,7 @@
   text-align: center;
 }
 
-.backBtnAlt {
-    padding: 10px 20px;
-    border: 1.5px solid #d1d5db;
-    border-radius: 8px;
-    background: #fff;
-    font-size: 14px;
-    cursor: pointer;
-    color: #374151;
-}
+
 
 .retryBtn {
   margin-top: 10px;
