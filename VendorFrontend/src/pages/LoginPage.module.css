@@ -136,3 +136,24 @@
     margin: 16px 0 0;
     margin-top: 10px;
 }
+
+passwordWrapper {
+    position: relative;
+}
+
+.passwordWrapper .input {
+    padding-right: 56px;
+}
+
+.eyeBtn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    font-size: 12px;
+    color: #6b7280;
+    cursor: pointer;
+    font-weight: 600;
+}

@@ -9,6 +9,7 @@ function LoginPage() {
     const [password, setPassword] = useState("")
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     const navigate = useNavigate();
 
@@ -60,6 +61,7 @@ function LoginPage() {
                         />
                     </div>
 
+                    <div className={styles.passwordWrapper}>
                     <div className={styles.field}>
                         <label className={styles.label}>Password:</label>
                         <input
@@ -69,6 +71,15 @@ function LoginPage() {
                         placeholder="Enter your password"
                         required
                         />
+                    </div>
+
+                    <button
+                            className={styles.eyeBtn}
+                            onClick={() => setShowPassword((prev) => !prev)}
+                            type="button"
+                        >
+                            {showPassword ? "Hide" : "Show"}
+                        </button>
                     </div>
 
                     <button
