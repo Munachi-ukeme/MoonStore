@@ -213,7 +213,7 @@ const renderMessageContent = (content, msgId) => {
     <div className={styles.page}>
 
       <div className={styles.header}>
-        <button className={styles.backBtnAlt} onClick={() => navigate(`/${slug}`)}>
+        <button className={styles.backBtnAlt} onClick={() => navigate(-1)}>
                     ←
                 </button>
         <span className={styles.storeName}>{slug}</span>
@@ -228,7 +228,7 @@ const renderMessageContent = (content, msgId) => {
         <div ref={bottomRef} />
       </div>
 
-      {!isPaid ? (
+     
         <div className={styles.inputBar}>
           <textarea
             className={styles.input}
@@ -242,11 +242,7 @@ const renderMessageContent = (content, msgId) => {
             {sending ? "..." : "Send"}
           </button>
         </div>
-      ) : (
-        <div className={styles.paidBar}>
-          This order has been confirmed as paid.
-        </div>
-      )}
+      
 
       {showReportModal ? (
         <div className={styles.modalOverlay}>
