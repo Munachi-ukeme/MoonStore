@@ -80,6 +80,10 @@ const SellerChatThreadPage = () => {
 
 
   const renderMessageContent = (content, msgId) => {
+    if (!content) {
+    return <React.Fragment key={`${msgId}-empty`} />;
+  }
+  
     const parts = content.split(/(\[img\].*?\[\/img\]|\\n|\n)/g);
     return parts
         .filter(part => part !== "") // 1. Clean up empty nodes
@@ -175,7 +179,7 @@ const renderMessage = (msg) => {
     </div>
   );
 }
-  const isPaid = conversation?.status === "paid";
+  const isPaid = conversation.status === "paid";
 
   return (
     <div className={styles.page}>
@@ -205,8 +209,10 @@ const renderMessage = (msg) => {
         <div ref={bottomRef} />
       </div>
 
-      {!isPaid && (
+      
         <div className={styles.bottomBar}>
+          {!isPaid && (
+            <>
           {linkError ? <p className={styles.linkError}>{linkError}</p> : null}
 
           <button
@@ -216,6 +222,8 @@ const renderMessage = (msg) => {
           >
             {generatingLink ? "Generating..." : "💳 Generate Payment Link"}
           </button>
+          </>
+          )}
 
           <div className={styles.inputRow}>
             <textarea
@@ -230,8 +238,10 @@ const renderMessage = (msg) => {
               {sending ? "..." : "Send"}
             </button>
           </div>
+
         </div>
-      )}
+   
+
 
       {isPaid && (
         <div className={styles.paidFooter}>
