@@ -214,7 +214,7 @@ const renderMessageContent = (content, msgId) => {
 
       <div className={styles.header}>
         <button className={styles.backBtnAlt} onClick={() => navigate(`/${slug}`)}>
-                    ← Back to Store
+                    ←
                 </button>
         <span className={styles.storeName}>{slug}</span>
         {isPaid ? <span className={styles.paidBadge}>✓ Paid</span> : null}
