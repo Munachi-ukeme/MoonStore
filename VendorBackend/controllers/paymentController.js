@@ -204,7 +204,7 @@ const paystackWebhook = async (req, res) => {
                     await Message.create({
                         conversationId: conversation._id,
                         sender: "system",
-                        content: "✅ Payment confirmed. Thank you for your order! This conversation will be deleted in 7 days.",
+                        content: "✅ Payment confirmed. This conversation will be deleted in 7 days.",
                     });
 
                     try {
