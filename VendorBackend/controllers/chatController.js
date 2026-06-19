@@ -51,10 +51,9 @@ const containsBankDetails = (content) => {
 };
 
 const SECURITY_NOTICE =
-    "🔒 Security Notice: MoonStore never asks for your personal bank details. " +
+    "🔒 Security Notice: MoonStore never allow payment to be made into personal accounts. " +
     "Only pay to the official MoonStore payment link your seller send to you. " +
-    "Never send money to a personal account. " +
-    "Use the Report button if the seller asks you to pay outside this chat.";
+    + "Use the Report button if the seller asks you to pay outside this chat.";
 
 // ── POST /api/chat/start ──
 // buyer clicks Order Now — creates the conversation and sends first messages
@@ -92,20 +91,20 @@ const startConversation = async (req, res) => {
 
         // build a map for quick lookup
         const productMap = {};
-        products.forEach((p) => {
+        products?.forEach((p) => {
             productMap[p.slug] = p;
         });
 
         // calculate total amount
         let totalAmount = 0;
-        items.forEach((item) => {
+        items?.forEach((item) => {
             const product = productMap[item.productSlug];
             if (product) {
                 totalAmount += product.price * item.quantity;
             }
         });
 
-        const productIds = products.map((p) => p._id);
+        const productIds = products?.map((p) => p._id);
 
         const conversation = await Conversation.create({
             buyerSessionId: sessionId,
@@ -122,7 +121,7 @@ const startConversation = async (req, res) => {
 
         // build opening system message
         let orderLines = "";
-        items.forEach((item) => {
+        items?.forEach((item) => {
             const product = productMap[item.productSlug];
             if (!product) return;
             const itemTotal = product.price * item.quantity;
@@ -171,14 +170,14 @@ const startConversation = async (req, res) => {
 
         try {
             getIO().to(seller._id.toString()).emit("new_conversation", {
-                conversationId: conversation._id,
+                conversationId: conversation?._id,
             });
         } catch (err) {
             console.error("Socket emit error:", err.message);
         }
 
         res.status(201).json({
-            conversation: { _id: conversation._id },
+            conversation: { _id: conversation?._id },
             message: "Conversation started",
         });
     } catch (err) {
