@@ -284,7 +284,7 @@ const sendMessage = async (req, res) => {
                 content:
                     "⚠️ That message was blocked. Sharing personal bank account details " +
                     "in chat is not allowed on MoonStore. " +
-                    "Sellers should share their official MoonStore subaccount details from their dashboard.",
+                    "Sellers should share their official MoonStore payment link",
             });
 
             // update last message preview
