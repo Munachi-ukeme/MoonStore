@@ -191,13 +191,13 @@ if (!errors.isEmpty()) {
     // 1. Check if seller exists
     const seller = await Seller.findOne({ email })
     if (!seller) {
-      return res.status(400).json({ message: "Invalid email or password" })
+      return res.status(400).json({ error: "Invalid email or password" })
     }
 
     // 2. Compare password with hashed password in database
     const isMatch = await bcrypt.compare(password, seller.password)
     if (!isMatch) {
-      return res.status(400).json({ message: "Invalid email or password" })
+      return res.status(400).json({ error: "Invalid email or password" })
     }
 
     // 3. Generate JWT token
@@ -233,7 +233,7 @@ if (!errors.isEmpty()) {
     })
 
 } catch (error) {
-    res.status(500).json({ message: error.message })
+    res.status(500).json({ error: error.message })
   }
 }
 
