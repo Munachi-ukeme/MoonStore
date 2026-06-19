@@ -286,7 +286,7 @@ export const getSellerChatMessages = async (conversationId) => {
   }
 };
 
-export const sendSellerMessage = async (conversationId, content) => {
+export const sendSellerMessage = async (conversationId, sessionId, content) => {
   try {
     const token = localStorage.getItem("token");
     const res = await fetchWithTimeout(`${BASE_URL}/chat/${conversationId}/message`, {
@@ -297,7 +297,7 @@ export const sendSellerMessage = async (conversationId, content) => {
       },
       body: JSON.stringify({ 
         content,
-        sender: "buyer",      
+        sender: "seller",      
         sessionId: sessionId 
       }),
     });
