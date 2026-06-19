@@ -295,7 +295,11 @@ export const sendSellerMessage = async (conversationId, content) => {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ content }),
+      body: JSON.stringify({ 
+        content,
+        sender: "buyer",      
+        sessionId: sessionId 
+      }),
     });
     return await res.json();
   } catch {
