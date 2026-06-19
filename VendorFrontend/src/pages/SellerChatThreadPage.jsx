@@ -45,7 +45,7 @@ const SellerChatThreadPage = () => {
   const handleSend = async () => {
     if (!input.trim()) return;
     setSending(true);
-    const data = await sendSellerMessage(conversationId, sessionId, input.trim());
+    const data = await sendSellerMessage(conversationId, input.trim());
     if (!data.error) {
       setMessages((prev) => [...prev, data.message]);
       setInput("");
