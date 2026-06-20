@@ -21,6 +21,9 @@ const storage = new CloudinaryStorage({
 })
 
 // Multer handles the file upload before sending to Cloudinary
-const upload = multer({ storage })
+const upload = multer({ 
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024} // no more than 5mb upload
+ })
 
 module.exports = { cloudinary, upload }
