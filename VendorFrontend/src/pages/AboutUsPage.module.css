@@ -1,35 +1,36 @@
-.container {
-    min-height: 100vh;
-    background-color: #ffffff;
-    padding: 24px;
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: sans-serif;
 }
 
-.backBtn {
-    background: none;
-    border: none;
-    font-size: 14px;
-    color: #6b46c1;
-    cursor: pointer;
-    margin-bottom: 24px;
-    padding: 8px 0;
+.container {
+    min-height: 100vh;
+    background-color: #f3f0ff;
+    padding: 10px 20px;
 }
 
 .content {
     max-width: 720px;
     margin: 0 auto;
+    background-color: #ffffff;
+    border-radius: 16px;
+    padding: 40px 32px;
+    box-shadow: 0 4px 16px rgba(109, 40, 217, 0.08);
 }
 
 .title {
-    font-size: 28px;
-    font-weight: 700;
-    color: #1a1a1a;
-    margin-bottom: 16px;
+    font-size: 23px;
+    font-weight: 800;
+    color: #7c3aed;
+    margin-bottom: 8px;
 }
 
 .intro {
-    font-size: 16px;
+    font-size: 15px;
+    color: #374151;
     line-height: 1.7;
-    color: #333333;
     margin-bottom: 32px;
 }
 
@@ -38,14 +39,26 @@
 }
 
 .sectionTitle {
-    font-size: 18px;
-    font-weight: 600;
-    color: #6b46c1;
+    font-size: 17px;
+    font-weight: 700;
+    color: #1e1b2e;
     margin-bottom: 10px;
 }
 
 .sectionText {
     font-size: 15px;
+    color: #374151;
     line-height: 1.7;
-    color: #444444;
+    margin-bottom: 10px;
+}
+
+.backBtn {
+    background: none;
+    border: none;
+    font-size: 14px;
+    color: #6c47ff;
+    cursor: pointer;
+    padding: 16px;
+    display: block;
+    font-weight: 600;
 }
