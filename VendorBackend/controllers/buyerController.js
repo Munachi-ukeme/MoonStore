@@ -7,7 +7,7 @@ const saveEmail = async (req, res) => {
         const { email, sessionId, sellerId } = req.body;
 
         if (!email || !sessionId || !sellerId) {
-            return res.status(400).json({ message: "Email, session ID and seller ID are required" });
+            return res.status(400).json({ error: "Email, session ID and seller ID are required" });
         }
 
         const normalizedEmail = email.toLowerCase().trim();
@@ -38,7 +38,7 @@ const saveEmail = async (req, res) => {
 
         res.json({ message: "Email saved successfully" });
     } catch (err) {
-        res.status(500).json({ message: "Server error" });
+        res.status(500).json({ error: "Server error" });
         console.error("Save email error:", err.message);
     }
 };
@@ -49,7 +49,7 @@ const buyerLogin = async (req, res) => {
         const { email } = req.body;
 
         if (!email) {
-            return res.status(400).json({ message: "Email is required" });
+            return res.status(400).json({ error: "Email is required" });
         }
 
         const normalizedEmail = email.toLowerCase().trim();
@@ -57,7 +57,7 @@ const buyerLogin = async (req, res) => {
 
         if (!buyer) {
             return res.status(404).json({
-                message: "No orders found for this email. Start shopping on any MoonStore store.",
+                error: "No orders found for this email. Start shopping on any MoonStore store.",
             });
         }
 
@@ -67,7 +67,7 @@ const buyerLogin = async (req, res) => {
             email: buyer.email,
         });
     } catch (err) {
-        res.status(500).json({ message: "Server error" });
+        res.status(500).json({ error: "Server error" });
     }
 };
 
@@ -97,7 +97,7 @@ const getBuyerConversations = async (req, res) => {
 
         res.json({ conversations: [] });
     } catch (err) {
-        res.status(500).json({ message: "Server error" });
+        res.status(500).json({ error: "Server error" });
     }
 };
 
@@ -115,7 +115,7 @@ const getSellerConversations = async (req, res) => {
 
       const seller = await Seller.findOne({ slug });
         if (!seller) {
-            return res.status(404).json({ message: "Store not found" });
+            return res.status(404).json({ error: "Store not found" });
         }
 
         const conversations = await Conversation.find({
@@ -128,7 +128,7 @@ const getSellerConversations = async (req, res) => {
 
         res.json({ conversations });
     } catch (err) {
-        res.status(500).json({ message: "Server error" });
+        res.status(500).json({ error: "Server error" });
     }
 };
 
