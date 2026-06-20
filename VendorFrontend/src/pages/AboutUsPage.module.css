@@ -1,0 +1,51 @@
+.container {
+    min-height: 100vh;
+    background-color: #ffffff;
+    padding: 24px;
+}
+
+.backBtn {
+    background: none;
+    border: none;
+    font-size: 14px;
+    color: #6b46c1;
+    cursor: pointer;
+    margin-bottom: 24px;
+    padding: 8px 0;
+}
+
+.content {
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+.title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 16px;
+}
+
+.intro {
+    font-size: 16px;
+    line-height: 1.7;
+    color: #333333;
+    margin-bottom: 32px;
+}
+
+.section {
+    margin-bottom: 28px;
+}
+
+.sectionTitle {
+    font-size: 18px;
+    font-weight: 600;
+    color: #6b46c1;
+    margin-bottom: 10px;
+}
+
+.sectionText {
+    font-size: 15px;
+    line-height: 1.7;
+    color: #444444;
+}

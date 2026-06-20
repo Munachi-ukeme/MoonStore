@@ -61,6 +61,14 @@ const Footer = ({ store }) => {
             <div className={styles.legal}>
                 <button
                     className={styles.legalLink}
+                    onClick={() => navigate("/aboutus")}
+                >
+                    About Us
+                </button>
+                <span className={styles.dot}>·</span>
+
+                <button
+                    className={styles.legalLink}
                     onClick={() => navigate("/privacypolicy")}
                 >
                     Privacy Policy

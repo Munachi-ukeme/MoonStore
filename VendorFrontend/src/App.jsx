@@ -21,6 +21,7 @@ import SellerInboxPage from "./pages/SellerInboxPage";
 import SellerChatThreadPage from "./pages/SellerChatThreadPage";
 import OfflineBanner from "./buyerComponent/OfflineBanner";
 import ErrorBoundary from "./sellerComponent/ErrorBoundary";
+import AboutUsPage from "./pages/AboutUsPage";
 
 function App(){
   return (
@@ -42,6 +43,7 @@ function App(){
       <Route path="/termsofservice" element={<ErrorBoundary><TermsOfService /></ErrorBoundary>} />
        <Route path="/my-orders" element={<ErrorBoundary><BuyerDashboard /></ErrorBoundary>} />
       <Route path="/restore" element={<ErrorBoundary><SessionRestore /></ErrorBoundary>} />
+      <Route path="/aboutus" element={<ErrorBoundary><AboutUsPage /></ErrorBoundary>} />
       
 
       {/* Protected seller routes - wrapped in protectedRoute*/}
@@ -109,6 +111,17 @@ function App(){
     </ErrorBoundary>
   </ProtectedRoute>
 } />
+
+<Route path="/aboutus" element={
+        <ProtectedRoute>
+          
+          <DashboardLayout>
+            <AboutUsPage />
+          </DashboardLayout>
+          
+        </ProtectedRoute>
+        
+        }/>
 
 <Route path="/privacypolicy" element={
         <ProtectedRoute>

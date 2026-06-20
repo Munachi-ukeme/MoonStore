@@ -106,6 +106,13 @@ return(
 
 
             <NavLink
+            to="/aboutus"
+            className={({ isActive }) =>
+                isActive ? `${styles.link} ${styles.activeLink}` : styles.link
+            } onClick={handleLinkClick}> About Us </NavLink>
+
+
+            <NavLink
             to="/privacypolicy"
             className={({ isActive }) =>
                 isActive ? `${styles.link} ${styles.activeLink}` : styles.link
