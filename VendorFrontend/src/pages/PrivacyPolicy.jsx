@@ -23,8 +23,8 @@ function PrivacyPolicy(){
                     <h2 className={styles.sectionTitle}>1. Who We Are</h2>
                     <p className={styles.sectionText}>
                         MoonStore is an online storefront platform that helps
-                        African Instagram and WhatsApp vendors showcase their
-                        products and receive orders directly on WhatsApp.
+                        African vendors showcase their
+                        products and receive orders directly in their store chat inbox.
                         MoonStore is not a marketplace. Each seller has their
                         own independent store.
                     </p>
@@ -39,14 +39,14 @@ function PrivacyPolicy(){
                         store your product listings and category information.
                     </p>
                     <p className={styles.sectionText}>
-                        For buyers we do not require you to create an account.
-                        When you click Order Now your browser opens WhatsApp
-                        directly. We do not collect or store your personal
-                        information as a buyer.
+                        For buyers, we do not require you to create an account.
+When you click the "Order Now" button, your order
+details are sent directly to the seller inside MoonStore's
+built-in chat.
                     </p>
                     <p className={styles.sectionText}>
-                        We collect basic analytics data such as store visits
-                        and product clicks to help sellers understand their
+                        We collect basic analytics data such as total sales amount, pending settlement, store visits
+                        product clicks and product sold to help sellers understand their
                         store performance. This data is anonymous and not
                         linked to individual buyers.
                     </p>
@@ -88,10 +88,9 @@ function PrivacyPolicy(){
                     <p className={styles.sectionText}>
                         MoonStore uses Cloudinary for image storage and
                         MongoDB for database management. These services have
-                        their own privacy policies. Orders are processed
-                        through WhatsApp which is governed by Meta's privacy
-                        policy. MoonStore does not process payments directly, no card or banking details pass through our platform.
-                    </p>
+                        their own privacy policies. Orders are processed within MoonStore's own secure chat
+                        system. MoonStore does not store your card or banking details directly — payments are handled through our
+                        licensed payment partner, Paystack, and settled automatically to the seller's bank account.</p>
                 </div>
 
 

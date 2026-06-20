@@ -24,10 +24,10 @@ function TermsOfServicePage() {
                     <p className={styles.sectionText}>
                         MoonStore is an online storefront platform that gives
                         African vendors their own branded store page where
-                        buyers can browse products and place orders via
-                        WhatsApp. MoonStore is not a marketplace. We do not
-                        sell products ourselves. We provide the tools for
-                        sellers to sell.
+                        buyers can browse products, chat with the seller and
+                        place orders directly inside the store. MoonStore is
+                        not a marketplace. We do not sell products ourselves.
+                        We provide the tools for sellers to sell.
                     </p>
                 </div>
 
@@ -58,10 +58,12 @@ function TermsOfServicePage() {
                         disputes between sellers and buyers.
                     </p>
                     <p className={styles.sectionText}>
-                        You are responsible for fulfilling orders that come
-                        through your store. MoonStore connects buyers to your
-                        WhatsApp, what happens after that is between you and
-                        your buyer.
+                        You are responsible for fulfilling orders placed
+                        through your store. All buyer communication and order
+                        confirmation happens inside MoonStore's built-in chat.
+                        What happens after an order is placed — packaging,
+                        dispatch and delivery — is your responsibility as the
+                        seller.
                     </p>
                     <p className={styles.sectionText}>
                         Product images and descriptions must be accurate.
@@ -80,6 +82,14 @@ function TermsOfServicePage() {
                         has been activated and set up.
                     </p>
                     <p className={styles.sectionText}>
+                        A platform service fee of 1.5% applies to every order
+                        processed through your store. This fee covers payment
+                        processing, automatic settlement and the security of
+                        every transaction. Payments are processed through our
+                        licensed payment partner, Paystack, and settled
+                        directly to your bank account daily.
+                    </p>
+                    <p className={styles.sectionText}>
                         Your store will be deactivated if your subscription
                         expires and is not renewed. Your data is not deleted
                         immediately, you have a grace period to renew before
@@ -91,9 +101,11 @@ function TermsOfServicePage() {
                     <h2 className={styles.sectionTitle}>5. Referral Programme</h2>
                     <p className={styles.sectionText}>
                         MoonStore offers a referral programme where existing
-                        sellers earn ₦3,000 for every new seller they refer
-                        who successfully pays their first subscription.
-                        Commission is paid via bank transfer after
+                        sellers earn a commission for every new seller they
+                        refer who successfully pays their first subscription.
+                        Commission amounts are displayed in your seller
+                        dashboard and may be updated by MoonStore from time
+                        to time. Commission is paid via bank transfer after
                         the referred seller's first payment is confirmed.
                         Commission is not paid for referrals that do not
                         complete payment.
@@ -126,7 +138,7 @@ function TermsOfServicePage() {
                     <p className={styles.sectionText}>
                         MoonStore reserves the right to modify these terms
                         at any time. Sellers will be notified of significant
-                        changes via WhatsApp. Continued use of the platform
+                        changes via email. Continued use of the platform
                         after changes means you accept the updated terms.
                     </p>
                     <p className={styles.sectionText}>
@@ -142,10 +154,11 @@ function TermsOfServicePage() {
                     <p className={styles.sectionText}>
                         MoonStore is a platform provider. We are not
                         responsible for the quality of products sold by
-                        sellers, disputes between sellers and buyers,
-                        delivery failures, or any losses arising from
-                        transactions conducted through WhatsApp after a
-                        buyer clicks Order Now.
+                        sellers, disputes between sellers and buyers, or
+                        delivery failures. While all communication and
+                        payment happen securely within MoonStore, fulfillment
+                        of the order itself remains the seller's
+                        responsibility.
                     </p>
                 </div>
 
