@@ -102,13 +102,32 @@ const orders = await Conversation.countDocuments({
       paidAt: dateFilter,
     });
 
-    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    // pending payments = total amount paid today, awaiting Paystack daily settlement
+const startOfToday = new Date();
+startOfToday.setHours(0, 0, 0, 0);
 
-    const pendingPayments = await Conversation.countDocuments({
-       sellerId,
-       status: "paid",
-       paidAt: { $gte: twentyFourHoursAgo },
-    });
+const endOfToday = new Date();
+endOfToday.setHours(23, 59, 59, 999);
+
+const pendingAggregate = await Conversation.aggregate([
+    {
+        $match: {
+            sellerId: new mongoose.Types.ObjectId(sellerId),
+            status: "paid",
+            paidAt: { $gte: startOfToday, $lte: endOfToday },
+        },
+    },
+    {
+        $group: {
+            _id: null,
+            total: { $sum: "$amount" },
+        },
+    },
+]);
+
+const pendingPayments = pendingAggregate[0]?.total || 0;
+
+
 
     const salesAggregate = await Conversation.aggregate([
     {
