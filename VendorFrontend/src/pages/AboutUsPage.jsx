@@ -1,4 +1,4 @@
-import styles from "./AboutUs.module.css";
+import styles from "./AboutUsPage.module.css";
 import { useNavigate } from "react-router-dom";
 
 function AboutUsPage() {
@@ -12,7 +12,7 @@ function AboutUsPage() {
                 <h1 className={styles.title}>About MoonStore</h1>
 
                 <p className={styles.intro}>
-                    MoonStore was built for one reason — to give every
+                    MoonStore was built for one reason, to give every
                     Instagram and WhatsApp vendor in Africa their own
                     branded online store. Not a marketplace. Not a shared
                     app. Just your store, with your name on it.
