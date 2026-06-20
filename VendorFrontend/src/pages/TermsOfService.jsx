@@ -6,8 +6,8 @@ function TermsOfServicePage() {
     const navigate = useNavigate();
     return (
         <div className={styles.container}>
-            <button className={styles.backBtn} onClick={() => navigate(-1)}>
-                ← Back
+            <button className={styles.backBtn} onClick={() => navigate("dashboard")}>
+                ←
             </button>
             <div className={styles.content}>
                 <h1 className={styles.title}>Terms of Service</h1>
