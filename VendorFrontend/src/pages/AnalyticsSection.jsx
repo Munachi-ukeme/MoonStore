@@ -41,8 +41,8 @@ const AnalyticsSection = () => {
          },
 
         {
-          label: "Pending Payments",
-          value: data.pendingPayments,
+          label: "Pending Settlement",
+          value: `₦${data.pendingPayments.toLocaleString()}`,
         },
 
         {
