@@ -61,12 +61,15 @@ function LoginPage() {
                         />
                     </div>
 
-                    <div className={styles.passwordWrapper}>
+                    
                     <div className={styles.field}>
                         <label className={styles.label}>Password:</label>
+                        <div className={styles.passwordWrapper}>
                         <input
-                        type="password"
+                        type={showPassword ? "text" : "password"}
+                        
                         className={styles.input}
+                        value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="Enter your password"
                         required
@@ -79,7 +82,6 @@ function LoginPage() {
                             {showPassword ? "Hide" : "Show"}
                         </button> 
                     </div>
-
                     </div>
 
                     <button
