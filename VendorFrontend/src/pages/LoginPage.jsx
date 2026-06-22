@@ -77,7 +77,7 @@ function LoginPage() {
                             type="button"
                         >
                             {showPassword ? "Hide" : "Show"}
-                        </button>
+                        </button> 
                     </div>
 
                     </div>
