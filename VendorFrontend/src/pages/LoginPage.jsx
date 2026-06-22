@@ -71,15 +71,15 @@ function LoginPage() {
                         placeholder="Enter your password"
                         required
                         />
-                    </div>
-
-                    <button
+                        <button
                             className={styles.eyeBtn}
                             onClick={() => setShowPassword((prev) => !prev)}
                             type="button"
                         >
                             {showPassword ? "Hide" : "Show"}
                         </button>
+                    </div>
+
                     </div>
 
                     <button
