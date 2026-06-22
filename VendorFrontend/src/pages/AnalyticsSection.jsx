@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { getAnalyticsSummary } from "../api/api";
 import styles from "./AnalyticsSection.module.css";
 
@@ -18,8 +18,8 @@ const AnalyticsSection = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const load = async () => {
+
+  const fetchAnalytics = useCallback(async () => {
       setLoading(true);
       setError(null);
       const result = await getAnalyticsSummary(period);
@@ -28,10 +28,12 @@ const AnalyticsSection = () => {
       } else {
          setData(result);
       }
-      setLoading(false);
-    };
-    load();
+    setLoading(false);
   }, [period]);
+
+  useEffect(() => {
+    fetchAnalytics();
+}, [fetchAnalytics]);
 
    const cards = data
     ? [
@@ -83,7 +85,7 @@ const AnalyticsSection = () => {
       {error ? (
   <div className={styles.errorRow}>
     <p className={styles.errorText}>{error}</p>
-    <button className={styles.retryBtn} onClick={load}>
+    <button className={styles.retryBtn} onClick={fetchAnalytics}>
       Try Again
     </button>
   </div>
