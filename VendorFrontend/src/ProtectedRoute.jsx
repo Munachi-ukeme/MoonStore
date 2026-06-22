@@ -5,10 +5,15 @@ import { useAuth} from "./context/AuthContext"; // this is a custom hook that al
 
 function ProtectedRoute({ children}) {
 
-    const { isAuthenticated} = useAuth(); //This is true if a seller is logged in, false if not
+    const { isAuthenticated, loading} = useAuth(); //This is true if a seller is logged in, false if not
+
+    if (loading) {
+        return <div>Verifying session...</div>; 
+    }
+
 
     if ( !isAuthenticated) {
-        return <Navigate to="/login" />; // if not authenticated, redirect to login page
+        return <Navigate to="/" replace />; // if not authenticated, redirect to login page
     }
 
     // if seller is logged in, render whatever page was requested

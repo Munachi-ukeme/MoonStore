@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import styles from "./Footer.module.css";
 
 const Footer = ({ store }) => {
@@ -59,27 +59,27 @@ const Footer = ({ store }) => {
 
             {/* legal */}
             <div className={styles.legal}>
-                <button
+                <Link
                     className={styles.legalLink}
-                    onClick={() => navigate("/aboutus")}
+                    to="/aboutus"
                 >
                     About Us
-                </button>
+                </Link>
                 <span className={styles.dot}>·</span>
 
-                <button
+                <Link
                     className={styles.legalLink}
-                    onClick={() => navigate("/privacypolicy")}
+                    to="/privacypolicy"
                 >
                     Privacy Policy
-                </button>
+                </Link>
                 <span className={styles.dot}>·</span>
-                <button
+                <Link
                     className={styles.legalLink}
-                    onClick={() => navigate("/termsofservice")}
+                    to="/termsofservice"
                 >
                     Terms of Service
-                </button>
+                </Link>
             </div>
 
             {/* powered by */}

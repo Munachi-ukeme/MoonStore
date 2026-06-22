@@ -294,6 +294,17 @@ const renderMessageContent = (content, msgId) => {
                 />
             </div>
         ) : null}
+
+        {isPaid ? (
+          <a
+        href={`https://wa.me/2348152905325?text=${encodeURIComponent("Feedback on my MoonStore order: ")}`}
+        target="_blank"
+        rel="noreferrer"
+        className={styles.feedbackBtn}
+    >
+        💬 Leave Feedback
+    </a>
+) : null}
     </div>
   );
 };

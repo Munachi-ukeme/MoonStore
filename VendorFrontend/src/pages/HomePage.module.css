@@ -195,9 +195,51 @@
 
 /* ── footer ── */
 .footer {
+    padding: 32px 20px 48px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+
+.legal {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 4px;
+}
+
+.legalLink {
     font-size: 11px;
-    color: #6d28d9;
-    margin-top: auto;
+    color: #6b5fa0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.legalLink:hover {
+    color: #a78bfa;
+}
+
+.dot {
+    font-size: 11px;
+    color: #4a3f6b;
+}
+
+.poweredBy {
+    font-size: 11px;
+    color: #4a3f6b;
+    margin: 4px 0 0 0;
+}
+
+.moonstore {
+    color: #6c47ff;
+    font-weight: 700;
 }
 
 /* ── desktop ── */

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { buyerLogin } from "../api/api";
 import { saveBuyerEmailLocally } from "../utils/session";
 import styles from "./HomePage.module.css";
@@ -121,7 +121,7 @@ const HomePage = () => {
             {/* brand */}
             <div className={styles.brand}>
                 <h1 className={styles.logo}>MoonStore</h1>
-                <p className={styles.tagline}>Africa's vendor platform</p>
+                <p className={styles.tagline}> Your Store. Your Rules.</p>
             </div>
 
             {/* toggle tabs */}
@@ -153,10 +153,40 @@ const HomePage = () => {
                 {activeTab === "buyer" ? renderBuyerTab() : renderSellerTab()}
             </div>
 
-            <p className={styles.footer}>
-                MoonStore · Your Store. Your Rules.
-            </p>
+        
+            <div className={styles.footer}>
+            <div className={styles.legal}>
+                            <Link
+                                className={styles.legalLink}
+                                to="/aboutus"
+                            >
+                                About Us
+                            </Link>
+                            <span className={styles.dot}>·</span>
+            
+                            <Link
+                                className={styles.legalLink}
+                                to="/privacypolicy"
+                            >
+                                Privacy Policy
+                            </Link>
+                            <span className={styles.dot}>·</span>
+                            <Link
+                                className={styles.legalLink}
+                                to="/termsofservice"
+                            >
+                                Terms of Service
+                            </Link>
+                        </div>
+            
+                        {/* powered by */}
+                        <p className={styles.poweredBy}>
+                            Powered by <span className={styles.moonstore}>MoonStore</span>
+                        </p>
+                        </div>
         </div>
+
+        
     );
 };
 

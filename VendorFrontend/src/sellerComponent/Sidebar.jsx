@@ -10,7 +10,7 @@ function Sidebar({ isOpen, onClose}){
 
     const handleLogout =() =>{
         logout();
-        navigate("/login");
+        navigate("/login", { replace: true });
     };
 
     const handleLinkClick = ()=>{
@@ -124,6 +124,15 @@ return(
             className={({ isActive }) =>
                 isActive ? `${styles.link} ${styles.activeLink}` : styles.link
             } onClick={handleLinkClick}> Terms of Service </NavLink>
+
+              <a
+               href={`https://wa.me/2348152905325?text=${encodeURIComponent(`Feedback from ${seller?.businessName}: `)}`}
+               target="_blank"
+               rel="noreferrer"
+               className={styles.feedbackBtn}
+               >
+               Share Feedback
+               </a>
 
 
         </nav>
