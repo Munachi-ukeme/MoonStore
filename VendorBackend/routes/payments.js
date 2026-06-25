@@ -4,7 +4,8 @@ const {
     getBanks,
     verifyAccount,
     initializePayment,
-    paystackWebhook
+    paystackWebhook,
+    verifyAndSyncSubscription
 } = require("../controllers/paymentController");
 const { protect } = require("../middleware/authmiddleware");
 
@@ -20,5 +21,8 @@ router.post("/webhook", paystackWebhook);
 
 // Triggered from seller dashboard to pay or renew subscription memberships
 router.post("/initialize", protect, initializePayment);
+
+// Endpoint for frontend background check
+router.get("/sync-subscription", protect, verifyAndSyncSubscription);
 
 module.exports = router;

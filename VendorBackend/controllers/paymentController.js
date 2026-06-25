@@ -224,10 +224,32 @@ const paystackWebhook = async (req, res) => {
     return res.sendStatus(200);
 };
 
+const verifyAndSyncSubscription = async (req, res) => {
+    try {
+        const Seller = require("../models/Seller");
+        
+        // Fetch the seller using the logged-in request credentials
+        const seller = await Seller.findById(req.seller.id).select("-password");
+
+        if (!seller) {
+            return res.status(404).json({ message: "Seller not found" });
+        }
+
+        // Return the fresh data to overwrite the stale frontend context/localStorage
+        res.json({ 
+            message: "Subscription status synced", 
+            seller 
+        });
+    } catch (err) {
+        res.status(500).json({ message: "Server error during sync" });
+    }
+};
+
 module.exports = {
     getBanks,
     verifyAccount,
     initializePayment,
     paystackWebhook,
-    createSubaccount
+    createSubaccount,
+    verifyAndSyncSubscription
 };
