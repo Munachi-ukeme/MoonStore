@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+ 
+# Block dashboard and private routes
+Disallow: /dashboard
+Disallow: /dashboard/
+Disallow: /my-orders
+Disallow: /restore
+ 
+# Sitemaps
+Sitemap: https://moonstore.ng/sitemap-static.xml
+Sitemap: https://moonstore.ng/sitemap-stores.xml
