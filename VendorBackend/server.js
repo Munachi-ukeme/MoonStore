@@ -74,7 +74,7 @@ const paymentRoutes = require("./routes/payments");
 const buyerRoutes = require("./routes/buyer");
 const chatRoutes = require("./routes/chat");
 const analyticsRoutes = require("./routes/analyticsRoutes");
-const sitemapRoute = require("./routes/sitemap");
+const sitemapRoute = require("./routes/sitemaproute");
 
 
 app.use("/api/auth", authRoutes);
