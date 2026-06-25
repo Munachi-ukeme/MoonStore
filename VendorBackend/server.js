@@ -34,7 +34,7 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization","x-session-id", "admin-key",],
 }));
 
-app.set('trust proxy', 1); ma
+app.set('trust proxy', 1);
 
 // 3. General rate limiter - applies to all routes
 // limits each IP to 100 requests per 15 minutes
