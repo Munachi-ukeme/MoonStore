@@ -100,7 +100,7 @@ export const loginSeller = async(email, password) =>{
         });
         return res.json();
     }catch (err) {
-    return { error: err.message || "Something went wrong." };
+    return { error: err.error || "Something went wrong." };
   }
 };
 
@@ -112,7 +112,7 @@ export const getStore = async (slug) => {
     const res = await fetchWithTimeout(`${BASE_URL}/store/${slug}`);
     return res.json();
     } catch (err) {
-    return { error: err.message || "Something went wrong." };
+    return { error: err.error || "Something went wrong." };
   }
 };
 
@@ -149,7 +149,7 @@ export const buyerLogin = async (email) => {
             body: JSON.stringify({ email }),
         });
         const json = await res.json();
-        if (!res.ok) return { error: json.message || "Login failed" };
+        if (!res.ok) return { error: json.error || "Login failed" };
         return json;
     } catch (err) {
         return { error: "Something went wrong. Please try again." };
@@ -164,7 +164,7 @@ export const getBuyerConversations = async (sessionIds) => {
         const query = sessionIds.join(",");
         const res = await fetchWithTimeout(`${BASE_URL}/buyer/conversations?sessionIds=${query}`);
         const json = await res.json();
-        if (!res.ok) return { error: json.message || "Could not load orders" };
+        if (!res.ok) return { error: json.error || "Could not load orders" };
         return json;
     } catch (err) {
         return { error: "Could not load orders. Please try again." };
@@ -178,7 +178,7 @@ export const getSellerConversations = async (slug, sessionId) => {
             `${BASE_URL}/buyer/conversations/seller/${slug}?sessionId=${sessionId}`
         );
         const json = await res.json();
-        if (!res.ok) return { error: json.message || "Could not load orders" };
+        if (!res.ok) return { error: json.error || "Could not load orders" };
         return json;
     } catch (err) {
         return { error: "Could not load orders. Please try again." };

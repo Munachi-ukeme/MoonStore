@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { getProducts } from "../api/api";
 import styles from "./DashboardPage.module.css";
 import AnalyticsSection from "./AnalyticsSection";
 
 function DashboardPage() {
-    const { seller } = useAuth();
+    const { seller, updateSeller } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation(); 
+
     const referralLink = `moonstore.com/signup?ref=${seller?.referralCode}`;
     const storeLink = `moonstore.com/${seller?.slug}`;
 
@@ -19,6 +21,41 @@ function DashboardPage() {
     const [showWelcomePopup, setShowWelcomePopup] = useState(false);
 
     const isInactive = !seller?.isActive;
+
+    // PAYSTACK SUBSCRIPTION SYNC EFFECT
+useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const hasPaystackRef = queryParams.get("reference");
+
+    if (hasPaystackRef) {
+        const fetchFreshUserSession = async () => {
+            try {
+                const response = await fetch("/api/payments/sync-subscription", {
+                    headers: {
+                        
+                        "Authorization": `Bearer ${localStorage.getItem("token")}` 
+                    }
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    
+                    updateSeller(data.seller);
+                    
+                    window.history.replaceState({}, document.title, "/dashboard");
+                    
+                    console.log("Welcome to your new plan!");
+                }
+            } catch (err) {
+                console.error("Failed syncing subscription", err);
+            }
+        };
+
+        fetchFreshUserSession();
+    }
+}, [location, updateSeller]);
+
+ 
 
     // fetch products when page loads
     useEffect(() => {
