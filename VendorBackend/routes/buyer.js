@@ -13,7 +13,7 @@ const buyerLoginLimiter = rateLimit({
 });
 
 router.post("/save-email", saveEmail);
-router.post("/buyer-login", buyerLoginLimiter, buyerLogin);
+router.post("/login", buyerLoginLimiter, buyerLogin);
 router.get("/conversations", getBuyerConversations);
 router.get("/conversations/seller/:slug", getSellerConversations);
 
