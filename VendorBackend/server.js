@@ -34,6 +34,8 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization","x-session-id", "admin-key",],
 }));
 
+app.set('trust proxy', 1); ma
+
 // 3. General rate limiter - applies to all routes
 // limits each IP to 100 requests per 15 minutes
 const generalLimiter = rateLimit({
@@ -72,6 +74,7 @@ const paymentRoutes = require("./routes/payments");
 const buyerRoutes = require("./routes/buyer");
 const chatRoutes = require("./routes/chat");
 const analyticsRoutes = require("./routes/analyticsRoutes");
+const sitemapRoute = require("./routes/sitemap");
 
 
 app.use("/api/auth", authRoutes);
@@ -84,6 +87,7 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/buyer", buyerRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/analytics", analyticsRoutes);
+app.use("/", sitemapRoute);
 
 
 
