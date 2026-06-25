@@ -156,7 +156,7 @@ const deactivateSubaccount = async (subaccountCode) => {
             const errorData = await response.json().catch(() => ({}));
             throw new Error(`Paystack error ${response.status}: ${errorData.message || "Unknown error"}`);
         }
-
+ 
         console.log(`Subaccount deactivated: ${subaccountCode}`);
     } catch (err){
         console.error("Subaccount deactivation failed:", err.message);
