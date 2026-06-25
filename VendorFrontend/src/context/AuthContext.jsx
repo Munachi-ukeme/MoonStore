@@ -61,6 +61,6 @@ export const AuthProvider = ({ children }) =>{
   );
 };
 
-export const useAuth = () =>{
+export const useAuth = () =>{ 
     return useContext(AuthContext); // This is how other components will access the auth context
 }
