@@ -1,15 +1,18 @@
 const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
-    family: 4,
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-    },
+  host: "74.125.130.108",
+  port: 465,
+  secure: true,
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+  tls: {
+    servername: "smtp.gmail.com",
+  },
 });
+
 
 // fires when buyer place an order — notifies seller
 const sendSellerNewChatEmail = async (sellerEmail, sellerBusinessName, productName) => {
