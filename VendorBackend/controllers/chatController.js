@@ -4,6 +4,8 @@ const Seller = require("../models/Seller");
 const Product = require("../models/Product");
 const { sendSellerNewChatEmail } = require("../utils/mailer");
 const { getIO } = require("../utils/socket");
+const MAX_IMAGE_SIZE_BYTES = 300 * 1024; // 300KB limit after Base64
+
 
 // ── Nigerian bank names to block in chat messages ──
 // if any of these appear in a message, it is blocked
@@ -274,10 +276,21 @@ const sendMessage = async (req, res) => {
             }
         }
 
-        // ── bank details blocker ──
-        // runs BEFORE the message is saved
-        // if blocked, we save a system message explaining why instead
-        if (containsBankDetails(content)) {
+        // check if content is a Base64 image
+        const isImage = content.startsWith("[img]data:image");
+
+
+        // if image — check size
+        if (isImage) {
+            const base64Data = content.replace(/\[img\]|\[\/img\]/g, "");
+            const sizeInBytes = Buffer.byteLength(base64Data, "base64");
+            if (sizeInBytes > MAX_IMAGE_SIZE_BYTES) {
+                return res.status(400).json({ message: "Image too large. Maximum size is 300KB." });
+            }
+        }
+
+        // bank details blocker — skip for images
+        if (!isImage && containsBankDetails(content)) {
             const blockedMessage = await Message.create({
                 conversationId,
                 sender: "system",
@@ -312,9 +325,7 @@ const sendMessage = async (req, res) => {
             content,
         });
 
-        // update conversation's last message preview and timestamps
-        conversation.lastMessage = content;
-
+       conversation.lastMessage = isImage ? "📷 Image" : content;
         if (sender === "buyer") {
             conversation.buyerLastMessageAt = new Date();
         }
