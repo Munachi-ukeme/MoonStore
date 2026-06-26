@@ -88,7 +88,7 @@ const BuyerDashboard = () => {
                             {renderBadge(conv.status)}
                             <button
                                 className={styles.viewBtn}
-                                onClick={() => navigate(`/${conv.sellerId?.slug}`)}
+                                onClick={() => navigate(`/${conv.sellerId?.slug}/chat/${conv._id}`)}
                             >
                                 View Chat
                             </button>
