@@ -12,24 +12,20 @@ const saveEmail = async (req, res) => {
 
         const normalizedEmail = email.toLowerCase().trim();
 
-        // check if buyer already exists
         let buyer = await Buyer.findOne({ email: normalizedEmail });
 
         if (buyer) {
-            // link new session ID if not already saved
             if (!buyer.sessionIds.includes(sessionId)) {
                 buyer.sessionIds.push(sessionId);
                 await buyer.save();
             }
         } else {
-            // create new buyer
             buyer = await Buyer.create({
                 email: normalizedEmail,
                 sessionIds: [sessionId],
             });
         }
 
-        // add email to seller's buyer list if not already there
         const seller = await Seller.findById(sellerId);
         if (seller && !seller.buyerEmails.includes(normalizedEmail)) {
             seller.buyerEmails.push(normalizedEmail);
@@ -43,7 +39,6 @@ const saveEmail = async (req, res) => {
     }
 };
 
-// POST /api/buyer/login
 const buyerLogin = async (req, res) => {
     try {
         const { email } = req.body;
@@ -71,10 +66,6 @@ const buyerLogin = async (req, res) => {
     }
 };
 
-
-// GET /api/buyer/conversations?sessionIds=abc,def,ghi
-// the Conversation model query is commented out until chat is built
-// returning empty array for now so the dashboard loads without errors
 const getBuyerConversations = async (req, res) => {
     try {
         const { sessionIds } = req.query;
@@ -83,27 +74,21 @@ const getBuyerConversations = async (req, res) => {
             return res.json({ conversations: [] });
         }
 
-        // split comma-separated string back into an array
         const sessionArray = sessionIds.split(",");
 
-       
         const conversations = await Conversation.find({
-            sessionId: { $in: sessionArray }
+            buyerSessionId: { $in: sessionArray }
         })
             .populate("sellerId", "businessName slug logo")
             .populate("productIds", "name images")
             .sort({ createdAt: -1 });
-        return res.json({ conversations });
 
-        res.json({ conversations: [] });
+        return res.json({ conversations });
     } catch (err) {
         res.status(500).json({ error: "Server error" });
-    }
+    } 
 };
 
-// GET /api/buyer/conversations/seller/:slug
-// returns conversations for this buyer + this specific seller
-// sessionId identifies the buyer without requiring login
 const getSellerConversations = async (req, res) => {
     try {
         const { slug } = req.params;
@@ -113,7 +98,7 @@ const getSellerConversations = async (req, res) => {
             return res.json({ conversations: [] });
         }
 
-      const seller = await Seller.findOne({ slug });
+        const seller = await Seller.findOne({ slug });
         if (!seller) {
             return res.status(404).json({ error: "Store not found" });
         }
@@ -131,7 +116,5 @@ const getSellerConversations = async (req, res) => {
         res.status(500).json({ error: "Server error" });
     }
 };
-
-module.exports = { saveEmail, buyerLogin, getBuyerConversations, getSellerConversations };
 
 module.exports = { saveEmail, buyerLogin, getBuyerConversations, getSellerConversations };
