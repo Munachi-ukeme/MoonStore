@@ -27,7 +27,7 @@
     padding: 0;
     border: none;
     background: transparent;
-    font-size: 20px;
+    font-size: 25px;
     cursor: pointer;
     color: #fff;
     line-height: 1;
@@ -384,4 +384,30 @@
     max-height: 90vh;
     object-fit: contain;
     border-radius: 8px;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.feedbackBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: #6d28d9;
+  color: #fff;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+
+.feedbackBtn:hover {
+  background: #5b21b6;
 }

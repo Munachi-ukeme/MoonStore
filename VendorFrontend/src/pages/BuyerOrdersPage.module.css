@@ -20,11 +20,11 @@
 .backBtn {
     background: transparent;
     border: none;
-    font-size: 20px;
+    font-size: 25px;
     color: #6b7280;
     cursor: pointer;
     padding: 0;
-    font-weight: 500;
+    font-weight: 600;
 }
 
 .title {
