@@ -86,7 +86,7 @@ const getBuyerConversations = async (req, res) => {
         return res.json({ conversations });
     } catch (err) {
         res.status(500).json({ error: "Server error" });
-    } 
+    }
 };
 
 const getSellerConversations = async (req, res) => {
