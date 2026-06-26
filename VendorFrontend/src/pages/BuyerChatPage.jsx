@@ -281,7 +281,7 @@ const renderMessageContent = (content, msgId) => {
                 className={styles.fullscreenOverlay}
                 onClick={() => setFullscreenImage(null)}
             >
-                <button
+                <button 
                     className={styles.fullscreenClose}
                     onClick={() => setFullscreenImage(null)}
                 >
