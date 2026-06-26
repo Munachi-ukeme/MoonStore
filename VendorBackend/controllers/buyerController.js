@@ -89,7 +89,7 @@ const getBuyerConversations = async (req, res) => {
     }
 };
 
-const getSellerConversations = async (req, res) => {
+const getSellerConversations = async (req, res) => { 
     try {
         const { slug } = req.params;
         const { sessionId } = req.query;
