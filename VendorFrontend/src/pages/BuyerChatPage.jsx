@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { getConversationMessages, sendBuyerMessage, reportConversation } from "../api/api";
+import { getConversationMessages, sendBuyerMessage, reportConversation, sendImageMessage } from "../api/api";
 import { getOrCreateSessionId } from "../utils/session";
 import styles from "./BuyerChatPage.module.css";
 
@@ -17,6 +17,8 @@ const BuyerChatPage = () => {
   const [reportSent, setReportSent] = useState(false);
   const [error, setError] = useState("");
   const [fullscreenImage, setFullscreenImage] = useState(null);
+  const [imageError, setImageError] = useState("");
+const fileInputRef = useRef(null);
   const bottomRef = useRef(null);
   const location = useLocation();
 const sessionId = location.state?.sessionId || getOrCreateSessionId();
@@ -109,6 +111,74 @@ const sessionId = location.state?.sessionId || getOrCreateSessionId();
     }
     setReportSending(false);
   };
+
+  const compressImage = (file) => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (e) => {
+            const img = new Image();
+            img.src = e.target.result;
+            img.onload = () => {
+                const canvas = document.createElement("canvas");
+                let { width, height } = img;
+                const MAX_DIM = 800;
+                if (width > MAX_DIM || height > MAX_DIM) {
+                    if (width > height) {
+                        height = Math.round((height * MAX_DIM) / width);
+                        width = MAX_DIM;
+                    } else {
+                        width = Math.round((width * MAX_DIM) / height);
+                        height = MAX_DIM;
+                    }
+                }
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(img, 0, 0, width, height);
+                const base64 = canvas.toDataURL("image/jpeg", 0.7);
+                const sizeInBytes = Math.round((base64.length * 3) / 4);
+                if (sizeInBytes > 300 * 1024) {
+                    reject("Image is too large. Please use a smaller image.");
+                } else {
+                    resolve(base64);
+                }
+            };
+            img.onerror = () => reject("Failed to load image.");
+        };
+        reader.onerror = () => reject("Failed to read file.");
+    });
+};
+
+const handleImagePick = () => {
+    setImageError("");
+    fileInputRef.current.click();
+};
+
+const handleImageChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+        setImageError("Only image files are allowed.");
+        return;
+    }
+    setSending(true);
+    setImageError("");
+    try {
+        const base64 = await compressImage(file);
+        const wrapped = `[img]${base64}[/img]`;
+        const data = await sendImageMessage(conversationId, sessionId, wrapped, "buyer");
+        if (data.error) {
+            setImageError(data.error);
+        } else {
+            setMessages((prev) => [...prev, data.message]);
+        }
+    } catch (err) {
+        setImageError(typeof err === "string" ? err : "Failed to send image.");
+    }
+    setSending(false);
+    e.target.value = "";
+};
 
 const renderMessageContent = (content, msgId) => {
   const parts = content.split(/(\[img\].*?\[\/img\]|\\n|\n)/g);
@@ -243,18 +313,36 @@ const renderMessageContent = (content, msgId) => {
 
      
         <div className={styles.inputBar}>
-          <textarea
+    {imageError ? <p className={styles.imageError}>{imageError}</p> : null}
+    <input
+        type="file"
+        accept="image/*"
+        ref={fileInputRef}
+        onChange={handleImageChange}
+        className={styles.hiddenFileInput}
+    />
+    <div className={styles.inputRow}>
+        <button
+            className={styles.imageBtn}
+            onClick={handleImagePick}
+            disabled={sending}
+            title="Send image"
+        >
+            📷
+        </button>
+        <textarea
             className={styles.input}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Type a message..."
             rows={1}
-          />
-          <button className={styles.sendBtn} onClick={handleSend} disabled={sending}>
+        />
+        <button className={styles.sendBtn} onClick={handleSend} disabled={sending}>
             {sending ? "..." : "Send"}
-          </button>
-        </div>
+        </button>
+    </div>
+</div>
       
 
       {showReportModal ? (

@@ -137,23 +137,32 @@
     margin-top: 10px;
 }
 
-passwordWrapper {
+.passwordWrapper {
     position: relative;
+    display: flex;
+    align-items: center;
 }
 
 .passwordWrapper .input {
-    padding-right: 56px;
+    width: 100%;
+    padding-right: 70px;
 }
 
 .eyeBtn {
     position: absolute;
-    transform: translateY(45%);
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
     background: none;
     border: none;
     font-size: 12px;
     color: #6b7280;
     cursor: pointer;
     font-weight: 600;
-    right: 70px; 
-    padding: 4px;
+    padding: 4px 8px;
+    white-space: nowrap;
+}
+
+.eyeBtn:hover {
+    color: #6d28d9;
 }
