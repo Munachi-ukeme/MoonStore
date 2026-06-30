@@ -110,8 +110,8 @@ const SignupPage = () =>{
         if (!formDetails.password || formDetails.password.length < 6) return "Password must be at least 6 characters";
         if (!formDetails.whatsappNumber.trim()) return "WhatsApp number is required";
         
-       if (formDetails.whatsappNumber.length !== 10) {
-    return "WhatsApp number must be exactly 10 digits";
+       if (formDetails.whatsappNumber.length !== 13) {
+    return "WhatsApp number must be exactly 13 digits";
 }
     };
 
