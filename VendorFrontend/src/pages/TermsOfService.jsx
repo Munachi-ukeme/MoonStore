@@ -96,6 +96,25 @@ function TermsOfServicePage() {
                         permanent deletion.
                     </p>
                 </div>
+                <div className={styles.section}>
+                    <h2 className={styles.sectionTitle}>5. Refunds & Disputes</h2>
+                    <p className={styles.sectionText}>
+                        MoonStore is a platform that connects buyers with independent sellers. We are not a party to any transaction between buyers and sellers and are not responsible for refunds, returns, or disputes.
+
+                    </p>
+                    <p className={styles.sectionText}>
+                        If you are unhappy with a purchase, your first step is to contact the seller directly through your chat. Most sellers are willing to resolve issues quickly.
+                        If a seller is unresponsive or you believe you have been defrauded, use the Report button inside your chat. Our team will review the conversation and take action where necessary, including suspending the seller's store.
+
+                    </p>
+                    <p className={styles.sectionText}>
+                        Refunds are at the sole discretion of the seller. MoonStore does not hold or control seller funds and cannot issue refunds on a seller's behalf. If you paid via Paystack and the seller is uncooperative, you may contact Paystack support directly to initiate a dispute.
+                        MoonStore's platform fee of 1.5% deducted at the time of payment is non-refundable under any circumstances.
+                        By shopping on any MoonStore store, you acknowledge and agree to these terms.
+                    </p>
+                </div>
+
+
 
                 <div className={styles.section}>
                     <h2 className={styles.sectionTitle}>5. Referral Programme</h2>
