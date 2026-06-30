@@ -230,6 +230,7 @@ const SignupPage = () =>{
                         name="whatsappNumber"
                         placeholder="e.g. 2348012345678"
                         value={formDetails.whatsappNumber}
+                        maxLength={10}
                         onChange={handleChange}
                     />
                     <p className={styles.hint}>Include country code. No + sign. e.g. 2348012345678</p>
