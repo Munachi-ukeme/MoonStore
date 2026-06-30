@@ -109,7 +109,10 @@ const SignupPage = () =>{
         if (!formDetails.email.trim()) return "Email is required";
         if (!formDetails.password || formDetails.password.length < 6) return "Password must be at least 6 characters";
         if (!formDetails.whatsappNumber.trim()) return "WhatsApp number is required";
-        return null;
+        
+       if (formDetails.whatsappNumber.length !== 10) {
+    return "WhatsApp number must be exactly 10 digits";
+}
     };
 
      const validateStep2 = () => {
@@ -230,7 +233,7 @@ const SignupPage = () =>{
                         name="whatsappNumber"
                         placeholder="e.g. 2348012345678"
                         value={formDetails.whatsappNumber}
-                        maxLength={10}
+                        
                         onChange={handleChange}
                     />
                     <p className={styles.hint}>Include country code. No + sign. e.g. 2348012345678</p>
