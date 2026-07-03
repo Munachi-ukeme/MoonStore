@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react"; // Added useCallback
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getSellerInbox } from "../api/api";
@@ -12,20 +12,23 @@ const SellerInboxPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    const fetchInbox = async () => {
-       setError("");
-  setLoading(true);
-      const data = await getSellerInbox();
-      if (data.error) {
-        setError("Could not load inbox.");
-      } else {
-        setConversations(data.conversations);
-      }
-      setLoading(false);
-    };
-    fetchInbox();
+  // 1. Move function here so JSX and useEffect can both access it
+  const fetchInbox = useCallback(async () => {
+    setError("");
+    setLoading(true);
+    const data = await getSellerInbox();
+    if (data.error) {
+      setError("Could not load inbox.");
+    } else {
+      setConversations(data.conversations);
+    }
+    setLoading(false);
   }, []);
+
+  // 2. Trigger the fetch on component mount
+  useEffect(() => {
+    fetchInbox();
+  }, [fetchInbox]);
 
   const filtered = conversations?.filter((c) => {
     if (filter === "all") return true;
@@ -34,7 +37,7 @@ const SellerInboxPage = () => {
     return true;
   }) || [];
 
-   const openThread = (conversationId) => {
+  const openThread = (conversationId) => {
     navigate(`/dashboard/chat/${conversationId}`);
   };
 
@@ -53,7 +56,7 @@ const SellerInboxPage = () => {
     return date.toLocaleDateString();
   };
 
-   const isUnread = (c) => {
+  const isUnread = (c) => {
     if (c.status === "paid") return false;
     if (!c.buyerLastMessageAt) return false;
     if (!c.sellerLastReadAt) return true;
@@ -61,17 +64,18 @@ const SellerInboxPage = () => {
   };
 
   if (loading) return <div className={styles.loading}>Loading inbox...</div>;
-if (error) {
-  return (
-    <div className={styles.error}>
-      <p>{error}</p>
-      <button className={styles.retryBtn} onClick={fetchInbox}>
-        Try Again
-      </button>
-    </div>
-  );
-}
 
+  // 3. This button will now work perfectly without crashing
+  if (error) {
+    return (
+      <div className={styles.error}>
+        <p>{error}</p>
+        <button className={styles.retryBtn} onClick={fetchInbox}>
+          Try Again
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.page}>
@@ -112,7 +116,7 @@ if (error) {
                 className={`${styles.item} ${unread ? styles.unread : ""}`}
                 onClick={() => openThread(c._id)}
               >
-                 <div className={styles.avatar}>
+                <div className={styles.avatar}>
                   {c.productId?.name?.charAt(0).toUpperCase() || "🛍️"}
                 </div>
                 <div className={styles.info}>
