@@ -472,9 +472,11 @@ const initializeOrderPayment = async (req, res) => {
 
         const data = await response.json();
 
+        console.log("Paystack response:", JSON.stringify(data));
+
         if (!data.status) {
             return res.status(400).json({ message: "Could not generate payment link" });
-        }
+        } 
 
         const paymentUrl = data.data.authorization_url;
 
