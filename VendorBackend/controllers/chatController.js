@@ -123,19 +123,45 @@ const startConversation = async (req, res) => {
 
         // build opening system message
         let orderLines = "";
-        items?.forEach((item) => {
-            const product = productMap[item.productSlug];
-            if (!product) return;
-            const itemTotal = product.price * item.quantity;
-            let line = `• ${product.name} x${item.quantity}`;
-            if (item.color) line += ` (${item.color})`;
-            if (item.size) line += ` — Size: ${item.size}`;
-            line += ` — ₦${itemTotal.toLocaleString()}`;
-            if (product.images && product.images.length > 0) {
-                line += `\n[img]${product.images[0]}[/img]`;
-            }
-            orderLines += line + "\n";
-        });
+    items?.forEach((item) => {
+      const product = productMap[item.productSlug];
+      if (!product) return;
+
+      const itemTotal = product.price * item.quantity;
+      let line = `• ${product.name} x${item.quantity}`;
+
+      // 1. Process multiple colors (array) or fallback to single color (string)
+      let chosenColors = "";
+      if (Array.isArray(item.colors)) {
+        chosenColors = item.colors.filter(Boolean).join(", ");
+      } else if (typeof item.color === "string" && item.color.trim() !== "") {
+        chosenColors = item.color.trim();
+      }
+
+      // 2. Process multiple sizes (array) or fallback to single size (string)
+      let chosenSizes = "";
+      if (Array.isArray(item.sizes)) {
+        chosenSizes = item.sizes.filter(Boolean).join(", ");
+      } else if (typeof item.size === "string" && item.size.trim() !== "") {
+        chosenSizes = item.size.trim();
+      }
+
+      // 3. Append to the message line only if choices exist
+      if (chosenColors) {
+        line += ` (${chosenColors})`;
+      }
+      if (chosenSizes) {
+        line += ` — Size: ${chosenSizes}`;
+      }
+
+      line += ` — ₦${itemTotal.toLocaleString()}`;
+
+      if (product.images && product.images.length > 0) {
+        line += `\n[img]${product.images[0]}[/img]`;
+      }
+
+      orderLines += line + "\n";
+    });
 
         let orderMessage = `New Order Request\n\n${orderLines}\nTotal: ₦${totalAmount.toLocaleString()}`;
 
