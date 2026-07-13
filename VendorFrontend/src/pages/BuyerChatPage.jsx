@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { IoSend } from "react-icons/io5";
+import { GrAttachment } from "react-icons/gr";
 import { getConversationMessages, sendBuyerMessage, reportConversation, sendImageMessage } from "../api/api";
 import { getOrCreateSessionId } from "../utils/session";
 import styles from "./BuyerChatPage.module.css";
@@ -14,6 +16,8 @@ const BuyerChatPage = () => {
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportReason, setReportReason] = useState("");
   const [reportSending, setReportSending] = useState(false);
+  const [imagePreview, setImagePreview] = useState(null);
+const [pendingImage, setPendingImage] = useState(null);
   const [reportSent, setReportSent] = useState(false);
   const [error, setError] = useState("");
   const [fullscreenImage, setFullscreenImage] = useState(null);
@@ -47,52 +51,77 @@ const sessionId = location.state?.sessionId || getOrCreateSessionId();
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSend = async () => {
-    if (!input.trim()) return;
-    const typedText = input.trim(); // Save text input locally before clearing state
-    setSending(true);
-    setError(""); // Clear previous errors
-    
-    try {
-        const data = await sendBuyerMessage(conversationId, sessionId, typedText);
-        
-        // 1. Check if the API returned an explicit error flag or a validation error string
-        if (data?.error || typeof data?.message === "string") {
-            setError(data.error || data.message);
-            setSending(false);
-            return; // Stop immediately so it doesn't crash below
-        }
+const handleSendImage = async (role = "buyer") => {
+  // 1. Guard against empty execution
+  if (!pendingImage) return;
 
-        // 2. Ensure data.message exists and is an object before using it
-        let safeMessage;
-        if (data && data.message && typeof data.message === "object") {
-            safeMessage = data.message;
-        } else {
-            // Fallback structure if the backend object structure is totally missing
-            safeMessage = {
-                _id: data?._id || `temp-${Date.now()}`,
-                sender: "buyer",
-                content: typedText,
-                createdAt: new Date().toISOString()
-            };
-        }
+  // 2. Network Guard: Check browser connection before hitting the server
+  if (!navigator.onLine) {
+    setImageError("No internet connection. Please check your network and try again.");
+    return;
+  }
 
-        // 3. Safe fallback assignment for content
-        if (!safeMessage.content) {
-            safeMessage.content = typedText;
-        }
+  // 3. Preserve the data locally in case of failure or fallback needs
+  const rawImageBase64 = pendingImage;
+  const wrapped = `[img]${rawImageBase64}[/img]`;
 
-        setMessages((prev) => [...prev, safeMessage]);
-        setInput("");
-        
-    } catch (err) {
-        console.error("Chat send error:", err);
-        setError("Failed to send message. Please try again.");
-    } finally {
-        setSending(false);
+  setSending(true);
+  setImageError(""); // Clear previous errors to reset UI state
+
+  try {
+    // 4. Hit API with dynamic role (handles both BuyerChatPage and SellerChatThreadPage)
+    const data = await sendImageMessage(conversationId, sessionId, wrapped, "buyer");
+
+    // 5. Strict Error Evaluation (Catches explicit errors, validation failures, or server-side blocking)
+    if (data?.error || data?.message?.blocked || typeof data?.message === "string") {
+      setImageError(data?.error || data?.message?.blocked || data?.message || "Image could not be sent.");
+      setSending(false); // Stop loader instantly
+      return;            
     }
-};
 
+    // 6. Deep Structural Fallback (Guarantees your .map loop won't crash if database returns bad structure)
+    let safeMessage;
+    if (data && data.message && typeof data.message === "object") {
+      safeMessage = data.message;
+    } else {
+      safeMessage = {
+        _id: data?._id || `temp-img-${Date.now()}`,
+        sender: role,
+        content: wrapped,
+        createdAt: new Date().toISOString()
+      };
+    }
+
+    // 7. Content Fallback Assignment
+    if (!safeMessage.content) {
+      safeMessage.content = wrapped;
+    }
+
+    // 8. Success Operations: Update message stream and clear local staging states
+    setMessages((prev) => [...prev, safeMessage]);
+    setImagePreview(null);
+    setPendingImage(null);
+
+  } catch (err) {
+    console.error("Critical Image Upload or Network Error:", err);
+
+    // 9. Intelligent Network Error Trap
+    const isNetworkError = 
+      err instanceof TypeError || 
+      (err?.message && err.message.toLowerCase().includes("fetch")) || 
+      !navigator.onLine;
+
+    if (isNetworkError) {
+      setImageError("Network connection failed. Please check your internet and try again.");
+    } else {
+      setImageError(typeof err === "string" ? err : "Failed to send image. Please try again.");
+    }
+    
+  } finally {
+    // 10. Guaranteed Shutdown: Turn off loader regardless of success, server failure, or network crash
+    setSending(false);
+  }
+};
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -156,29 +185,23 @@ const handleImagePick = () => {
 };
 
 const handleImageChange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-        setImageError("Only image files are allowed.");
-        return;
-    }
-    setSending(true);
-    setImageError("");
-    try {
-        const base64 = await compressImage(file);
-        const wrapped = `[img]${base64}[/img]`;
-        const data = await sendImageMessage(conversationId, sessionId, wrapped, "buyer");
-        if (data.error) {
-            setImageError(data.error);
-        } else {
-            setMessages((prev) => [...prev, data.message]);
-        }
-    } catch (err) {
-        setImageError(typeof err === "string" ? err : "Failed to send image.");
-    }
-    setSending(false);
-    e.target.value = "";
+  const file = e.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith("image/")) {
+    setImageError("Only image files are allowed.");
+    return;
+  }
+  setImageError("");
+  try {
+    const base64 = await compressImage(file);
+    setImagePreview(base64);
+    setPendingImage(base64);
+  } catch (err) {
+    setImageError(typeof err === "string" ? err : "Failed to load image.");
+  }
+  e.target.value = "";
 };
+
 
 const renderMessageContent = (content, msgId) => {
   const parts = content.split(/(\[img\].*?\[\/img\]|\\n|\n)/g);
@@ -312,38 +335,51 @@ const renderMessageContent = (content, msgId) => {
       </div>
 
      
-        <div className={styles.inputBar}>
-    {imageError ? <p className={styles.imageError}>{imageError}</p> : null}
-    <input
-        type="file"
-        accept="image/*"
-        ref={fileInputRef}
-        onChange={handleImageChange}
-        className={styles.hiddenFileInput}
-    />
-    <div className={styles.inputRow}>
-        <button
-            className={styles.imageBtn}
-            onClick={handleImagePick}
-            disabled={sending}
-            title="Send image"
-        >
-            📷
-        </button>
-        <textarea
-            className={styles.input}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Type a message..."
-            rows={1}
-        />
-        <button className={styles.sendBtn} onClick={handleSend} disabled={sending}>
-            {sending ? "..." : "Send"}
-        </button>
+    <div className={styles.inputBar}>
+  {imageError ? <p className={styles.imageError}>{imageError}</p> : null}
+
+  {imagePreview ? (
+    <div className={styles.imagePreviewBox}>
+      <img src={imagePreview} alt="preview" className={styles.previewThumb} />
+      <span className={styles.previewLabel}>Ready to send</span>
+      <button className={styles.cancelPreviewBtn} onClick={() => {
+        setImagePreview(null);
+        setPendingImage(null);
+      }}>✕</button>
     </div>
-</div>
-      
+  ) : null}
+
+  <div className={styles.inputRow}>
+    <input
+      type="file"
+      accept="image/*"
+      ref={fileInputRef}
+      onChange={handleImageChange}
+      className={styles.hiddenFileInput}
+    />
+    <div className={styles.inputWrapper}>
+      <button
+        className={styles.imageBtn}
+        onClick={handleImagePick}
+        disabled={sending}
+        title="Send image"
+      >
+        <GrAttachment size={18} color="#888" />
+      </button>
+      <textarea
+        className={styles.input}
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder="Type a message..."
+        rows={1}
+      />
+    </div>
+    <button className={styles.sendBtn} onClick={imagePreview ? handleSendImage : handleSend} disabled={sending}>
+      <IoSend size={18} color="#fff" />
+    </button>
+  </div>
+</div>    
 
       {showReportModal ? (
         <div className={styles.modalOverlay}>

@@ -15,11 +15,12 @@ const ProductPage = () => {
     const [store, setStore] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [selectedColor, setSelectedColor] = useState("");
-    const [selectedSize, setSelectedSize] = useState("");
+    const [selectedColors, setSelectedColors] = useState([]);
+const [selectedSizes, setSelectedSizes] = useState([]);
     const [quantity, setQuantity] = useState(1);
     const [currentImage, setCurrentImage] = useState(0);
     const [copied, setCopied] = useState(false);
+    
 
     // delivery fields
     const [buyerName, setBuyerName] = useState("");
@@ -119,21 +120,21 @@ const ProductPage = () => {
         if (quantity > 1) setQuantity((prev) => prev - 1);
     };
 
-    const handleColorSelect = (color) => {
-        if (color === selectedColor) {
-            setSelectedColor("");
-        } else {
-            setSelectedColor(color);
-        }
-    };
+   const handleColorSelect = (color) => {
+    if (selectedColors.includes(color)) {
+        setSelectedColors(selectedColors.filter((c) => c !== color));
+    } else {
+        setSelectedColors([...selectedColors, color]);
+    }
+};
 
-    const handleSizeSelect = (size) => {
-        if (size === selectedSize) {
-            setSelectedSize("");
-        } else {
-            setSelectedSize(size);
-        }
-    };
+const handleSizeSelect = (size) => {
+    if (selectedSizes.includes(size)) {
+        setSelectedSizes(selectedSizes.filter((s) => s !== size));
+    } else {
+        setSelectedSizes([...selectedSizes, size]);
+    }
+};
 
     const handleCopyLink = () => {
         navigator.clipboard.writeText(window.location.href);
@@ -165,14 +166,14 @@ const ProductPage = () => {
 
             // add item to tray
             tray.items.push({
-                productSlug: product.slug,
-                productName: product.name,
-                price: product.price,
-                quantity,
-                color: selectedColor || null,
-                size: selectedSize || null,
-                image: product.images && product.images.length > 0 ? product.images[0] : null,
-            });
+    productSlug: product.slug,
+    productName: product.name,
+    price: product.price,
+    quantity,
+    colors: selectedColors.length > 0 ? selectedColors : null,
+    sizes: selectedSizes.length > 0 ? selectedSizes : null,
+    image: product.images && product.images.length > 0 ? product.images[0] : null,
+});
 
             localStorage.setItem(TRAY_KEY(slug), JSON.stringify(tray));
 
@@ -275,47 +276,49 @@ const ProductPage = () => {
 
                     {/* colors */}
                     {product.colors && product.colors.length > 0 ? (
-                        <div className={styles.selectorSection}>
-                            <p className={styles.selectorLabel}>Color</p>
-                            <div className={styles.options}>
-                                {product.colors.map((color) => (
-                                    <button
-                                        key={color}
-                                        className={
-                                            color === selectedColor
-                                                ? `${styles.optionBtn} ${styles.activeOption}`
-                                                : styles.optionBtn
-                                        }
-                                        onClick={() => handleColorSelect(color)}
-                                    >
-                                        {color}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    ) : null}
+    <div className={styles.selectorSection}>
+        <p className={styles.selectorLabel}>Color</p>
+        <p className={styles.deliveryHint}>You can pick more than one colors</p>
+        <div className={styles.options}>
+            {product.colors.map((color) => (
+                <button
+                    key={color}
+                    className={
+                        selectedColors.includes(color)
+                            ? `${styles.optionBtn} ${styles.activeOption}`
+                            : styles.optionBtn
+                    }
+                    onClick={() => handleColorSelect(color)}
+                >
+                    {color}
+                </button>
+            ))}
+        </div>
+    </div>
+) : null}
 
                     {/* sizes */}
                     {product.sizes && product.sizes.length > 0 ? (
-                        <div className={styles.selectorSection}>
-                            <p className={styles.selectorLabel}>Size</p>
-                            <div className={styles.options}>
-                                {product.sizes.map((size) => (
-                                    <button
-                                        key={size}
-                                        className={
-                                            size === selectedSize
-                                                ? `${styles.optionBtn} ${styles.activeOption}`
-                                                : styles.optionBtn
-                                        }
-                                        onClick={() => handleSizeSelect(size)}
-                                    >
-                                        {size}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                    ) : null}
+    <div className={styles.selectorSection}>
+        <p className={styles.selectorLabel}>Size</p>
+        <p className={styles.deliveryHint}>You can pick more than one sizes</p>
+        <div className={styles.options}>
+            {product.sizes.map((size) => (
+                <button
+                    key={size}
+                    className={
+                        selectedSizes.includes(size)
+                            ? `${styles.optionBtn} ${styles.activeOption}`
+                            : styles.optionBtn
+                    }
+                    onClick={() => handleSizeSelect(size)}
+                >
+                    {size}
+                </button>
+            ))}
+        </div>
+    </div>
+) : null}
 
                     {/* delivery section */}
                     <div className={styles.deliverySection}>
@@ -392,7 +395,7 @@ const ProductPage = () => {
                         onClick={handleAddToOrder}
                         disabled={!product.inStock || addedToTray}
                     >
-                        {addedToTray ? "✓ Added!" : "Add to Order"}
+                        {addedToTray ? "✓ Added!" : "Add to Cart"}
                     </button>
 
                     <button className={styles.copyBtn} onClick={handleCopyLink}>

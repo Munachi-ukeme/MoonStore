@@ -130,11 +130,11 @@ const OrderTray = ({ slug }) => {
                                 ) : null}
                                 <div className={styles.itemInfo}>
                                     <p className={styles.itemName}>{item.productName}</p>
-                                    <p className={styles.itemMeta}>
-                                        x{item.quantity}
-                                        {item.color ? ` · ${item.color}` : ""}
-                                        {item.size ? ` · Size: ${item.size}` : ""}
-                                    </p>
+                                   <p className={styles.itemMeta}>
+    x{item.quantity}
+    {item.colors && item.colors.length > 0 ? ` · ${item.colors.join(", ")}` : ""}
+    {item.sizes && item.sizes.length > 0 ? ` · Size: ${item.sizes.join(", ")}` : ""}
+</p>
                                     <p className={styles.itemPrice}>
                                         ₦{(item.price * item.quantity).toLocaleString()}
                                     </p>

@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { IoSend } from "react-icons/io5";
+import { GrAttachment } from "react-icons/gr";
 import { useParams, useNavigate } from "react-router-dom";
 import {
     getSellerChatMessages,
@@ -54,6 +56,8 @@ const SellerChatThreadPage = () => {
     const [messages, setMessages] = useState([]);
     const [conversation, setConversation] = useState(null);
     const [input, setInput] = useState("");
+    const [imagePreview, setImagePreview] = useState(null);
+const [pendingImage, setPendingImage] = useState(null);
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
     const [generatingLink, setGeneratingLink] = useState(false);
@@ -85,16 +89,79 @@ const SellerChatThreadPage = () => {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
-    const handleSend = async () => {
-        if (!input.trim()) return;
-        setSending(true);
-        const data = await sendSellerMessage(conversationId, input.trim());
-        if (!data.error) {
-            setMessages((prev) => [...prev, data.message]);
-            setInput("");
-        }
-        setSending(false);
-    };
+   
+const handleSendImage = async (role = "buyer") => {
+  // 1. Guard against empty execution
+  if (!pendingImage) return;
+
+  // 2. Network Guard: Check browser connection before hitting the server
+  if (!navigator.onLine) {
+    setImageError("No internet connection. Please check your network and try again.");
+    return;
+  }
+
+  // 3. Preserve the data locally in case of failure or fallback needs
+  const rawImageBase64 = pendingImage;
+  const wrapped = `[img]${rawImageBase64}[/img]`;
+
+  setSending(true);
+  setImageError(""); // Clear previous errors to reset UI state
+
+  try {
+    // 4. Hit API with dynamic role (handles both BuyerChatPage and SellerChatThreadPage)
+    const data = await sendImageMessage(conversationId, sessionId, wrapped, "seller");
+
+    // 5. Strict Error Evaluation (Catches explicit errors, validation failures, or server-side blocking)
+    if (data?.error || data?.message?.blocked || typeof data?.message === "string") {
+      setImageError(data?.error || data?.message?.blocked || data?.message || "Image could not be sent.");
+      setSending(false); // Stop loader instantly
+      return;            // Stop execution immediately to prevent crashing the UI below
+    }
+
+    // 6. Deep Structural Fallback (Guarantees your .map loop won't crash if database returns bad structure)
+    let safeMessage;
+    if (data && data.message && typeof data.message === "object") {
+      safeMessage = data.message;
+    } else {
+      safeMessage = {
+        _id: data?._id || `temp-img-${Date.now()}`,
+        sender: role,
+        content: wrapped,
+        createdAt: new Date().toISOString()
+      };
+    }
+
+    // 7. Content Fallback Assignment
+    if (!safeMessage.content) {
+      safeMessage.content = wrapped;
+    }
+
+    // 8. Success Operations: Update message stream and clear local staging states
+    setMessages((prev) => [...prev, safeMessage]);
+    setImagePreview(null);
+    setPendingImage(null);
+
+  } catch (err) {
+    console.error("Critical Image Upload or Network Error:", err);
+
+    // 9. Intelligent Network Error Trap
+    const isNetworkError = 
+      err instanceof TypeError || 
+      (err?.message && err.message.toLowerCase().includes("fetch")) || 
+      !navigator.onLine;
+
+    if (isNetworkError) {
+      setImageError("Network connection failed. Please check your internet and try again.");
+    } else {
+      setImageError(typeof err === "string" ? err : "Failed to send image. Please try again.");
+    }
+    
+  } finally {
+    // 10. Guaranteed Shutdown: Turn off loader regardless of success, server failure, or network crash
+    setSending(false);
+  }
+};
+
 
     const handleKeyDown = (e) => {
         if (e.key === "Enter" && !e.shiftKey) {
@@ -108,34 +175,23 @@ const SellerChatThreadPage = () => {
         fileInputRef.current.click();
     };
 
-    const handleImageChange = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        if (!file.type.startsWith("image/")) {
-            setImageError("Only image files are allowed.");
-            return;
-        }
-
-        setSending(true);
-        setImageError("");
-
-        try {
-            const base64 = await compressImage(file);
-            const wrapped = `[img]${base64}[/img]`;
-            const data = await sendImageMessage(conversationId, null, wrapped, "seller");
-            if (data.error || data.message?.blocked) {
-                setImageError(data.error || "Image could not be sent.");
-            } else {
-                setMessages((prev) => [...prev, data.message]);
-            }
-        } catch (err) {
-            setImageError(typeof err === "string" ? err : "Failed to send image.");
-        }
-
-        setSending(false);
-        e.target.value = "";
-    };
+   const handleImageChange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith("image/")) {
+    setImageError("Only image files are allowed.");
+    return;
+  }
+  setImageError("");
+  try {
+    const base64 = await compressImage(file);
+    setImagePreview(base64);
+    setPendingImage(base64);
+  } catch (err) {
+    setImageError(typeof err === "string" ? err : "Failed to load image.");
+  }
+  e.target.value = "";
+};
 
     const handleGeneratePaymentLink = async () => {
         setGeneratingLink(true);
@@ -256,51 +312,64 @@ const SellerChatThreadPage = () => {
                 <div ref={bottomRef} />
             </div>
 
-            <div className={styles.bottomBar}>
-                {!isPaid ? (
-                    <>
-                        {linkError ? <p className={styles.linkError}>{linkError}</p> : null}
-                        <button
-                            className={styles.generateBtn}
-                            onClick={handleGeneratePaymentLink}
-                            disabled={generatingLink}
-                        >
-                            {generatingLink ? "Generating..." : "💳 Generate Payment Link"}
-                        </button>
-                    </>
-                ) : null}
+      <div className={styles.bottomBar}>
+  {!isPaid ? (
+    <>
+      {linkError ? <p className={styles.linkError}>{linkError}</p> : null}
+      <button
+        className={styles.generateBtn}
+        onClick={handleGeneratePaymentLink}
+        disabled={generatingLink}
+      >
+        {generatingLink ? "Generating..." : "💳 Generate Payment Link"}
+      </button>
+    </>
+  ) : null}
 
-                {imageError ? <p className={styles.imageError}>{imageError}</p> : null}
+  {imageError ? <p className={styles.imageError}>{imageError}</p> : null}
 
-                <div className={styles.inputRow}>
-                    <input
-                        type="file"
-                        accept="image/*"
-                        ref={fileInputRef}
-                        onChange={handleImageChange}
-                        className={styles.hiddenFileInput}
-                    />
-                    <button
-                        className={styles.imageBtn}
-                        onClick={handleImagePick}
-                        disabled={sending}
-                        title="Send image"
-                    >
-                        📷
-                    </button>
-                    <textarea
-                        className={styles.input}
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        placeholder="Type a message..."
-                        rows={1}
-                    />
-                    <button className={styles.sendBtn} onClick={handleSend} disabled={sending}>
-                        {sending ? "..." : "Send"}
-                    </button>
-                </div>
-            </div>
+  {imagePreview ? (
+    <div className={styles.imagePreviewBox}>
+      <img src={imagePreview} alt="preview" className={styles.previewThumb} />
+      <span className={styles.previewLabel}>Ready to send</span>
+      <button className={styles.cancelPreviewBtn} onClick={() => {
+        setImagePreview(null);
+        setPendingImage(null);
+      }}>✕</button>
+    </div>
+  ) : null}
+
+  <div className={styles.inputRow}>
+    <input
+      type="file"
+      accept="image/*"
+      ref={fileInputRef}
+      onChange={handleImageChange}
+      className={styles.hiddenFileInput}
+    />
+    <div className={styles.inputWrapper}>
+      <button
+        className={styles.imageBtn}
+        onClick={handleImagePick}
+        disabled={sending}
+        title="Send image"
+      >
+        <IoSend size={18} color="#fff" />
+      </button>
+      <textarea
+        className={styles.input}
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        onKeyDown={handleKeyDown}
+        placeholder="Type a message..."
+        rows={1}
+      />
+    </div>
+    <button className={styles.sendBtn} onClick={imagePreview ? handleSendImage : handleSend} disabled={sending}>
+      <GrAttachment size={18} color="#888" />
+    </button>
+  </div>
+</div>      
 
             {fullscreenImage ? (
                 <div className={styles.fullscreenOverlay} onClick={() => setFullscreenImage(null)}>
