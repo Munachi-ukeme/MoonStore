@@ -61,7 +61,6 @@ const sessionId = location.state?.sessionId || getOrCreateSessionId();
   }
 
   const wrapped = `[img]${pendingImage}[/img]`;
-  setSending(true);
   setImageError("");
 
   try {
@@ -69,7 +68,6 @@ const sessionId = location.state?.sessionId || getOrCreateSessionId();
 
     if (data?.error || data?.message?.blocked || typeof data?.message === "string") {
       setImageError(data?.error || data?.message || "Image could not be sent.");
-      setSending(false);
       return;
     }
 
@@ -103,8 +101,6 @@ const sessionId = location.state?.sessionId || getOrCreateSessionId();
     } else {
       setImageError(typeof err === "string" ? err : "Failed to send image. Please try again.");
     }
-  } finally {
-    setSending(false);
   }
 };
 
@@ -112,7 +108,6 @@ const sessionId = location.state?.sessionId || getOrCreateSessionId();
 const handleSend = async () => {
     if (!input.trim()) return;
     const typedText = input.trim();
-    setSending(true);
     setError("");
 
     try {
@@ -120,7 +115,6 @@ const handleSend = async () => {
 
         if (data?.error || typeof data?.message === "string") {
             setError(data.error || data.message);
-            setSending(false);
             return;
         }
 
@@ -146,17 +140,32 @@ const handleSend = async () => {
     } catch (err) {
         console.error("Chat send error:", err);
         setError("Failed to send message. Please try again.");
-    } finally {
-        setSending(false);
     }
 };
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
+
+const handleSendAll = async () => {
+  if (!input.trim() && !pendingImage) return;
+  setSending(true);
+
+  try {
+    if (pendingImage) {
+      await handleSendImage();
     }
-  };
+    if (input.trim()) {
+      await handleSend();
+    }
+  } finally {
+    setSending(false);
+  }
+};
+
+  const handleKeyDown = (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    handleSendAll();
+  }
+};
 
   const handleReport = async () => {
     if (!reportReason.trim()) return;
@@ -403,7 +412,7 @@ const renderMessageContent = (content, msgId) => {
         rows={1}
       />
     </div>
-    <button className={styles.sendBtn} onClick={imagePreview ? handleSendImage : handleSend} disabled={sending}>
+    <button className={styles.sendBtn} onClick={handleSendAll} disabled={sending}>
       <IoSend size={18} color="#fff" />
     </button>
   </div>
