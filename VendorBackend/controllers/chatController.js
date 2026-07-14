@@ -54,7 +54,8 @@ const containsBankDetails = (content) => {
 
 const SECURITY_NOTICE =
     "🔒 Security Notice: MoonStore never allow payment to be made into personal accounts. " +
-    "Only pay to the official MoonStore payment link your seller send to you. " + "Use the Report button if the seller asks you to pay outside this chat.";
+    "Only pay to the official MoonStore payment link your seller send to you. " + 
+    "Use the Report button if the seller asks you to pay outside this chat.";
 
 // ── POST /api/chat/start ──
 // buyer clicks Order Now — creates the conversation and sends first messages
