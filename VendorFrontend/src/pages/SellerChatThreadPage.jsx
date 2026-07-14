@@ -259,30 +259,42 @@ const handleSendAll = async () => {
         }
     };
 
-    const renderMessageContent = (content, msgId) => {
-        if (!content) return <span key={`${msgId}-empty`} style={{ display: "none" }} />;
-        const parts = content.split(/(\[img\].*?\[\/img\]|\\n|\n)/g);
-        return parts
-            .filter((part) => part !== "")
-            .map((part, index) => {
-                const imgMatch = part.match(/\[img\](.*?)\[\/img\]/);
-                const itemKey = `${msgId}-part-${index}`;
-                if (imgMatch) {
-                    const url = imgMatch[1];
-                    return (
-                        <img
-                            key={itemKey}
-                            src={url}
-                            alt="sent image"
-                            className={styles.thumbnailImg}
-                            onClick={() => setFullscreenImage(url)}
-                        />
-                    );
-                }
-                if (part === "\n" || part === "\\n") return <br key={itemKey} />;
-                return <span key={itemKey}>{part}</span>;
-            });
-    };
+   const renderMessageContent = (content, msgId) => {
+  if (!content) return <span key={`${msgId}-empty`} style={{ display: "none" }} />;
+
+  let decodedContent = content;
+  try {
+    decodedContent = decodeURIComponent(content);
+  } catch (e) {
+    decodedContent = content;
+  }
+
+  const parts = decodedContent.split(/(\[img\].*?\[\/img\]|\\n|\n)/g);
+
+  return parts
+    .filter((part) => part !== "")
+    .map((part, index) => {
+      const imgMatch = part.match(/\[img\](.*?)\[\/img\]/);
+      const itemKey = `${msgId}-part-${index}`;
+
+      if (imgMatch) {
+        const url = imgMatch[1];
+        return (
+          <img 
+            key={itemKey} 
+            src={url} 
+            alt="sent image" 
+            className={styles.thumbnailImg} 
+            onClick={() => setFullscreenImage(url)} 
+          />
+        );
+      }
+
+      if (part === "\n" || part === "\\n") return <br key={itemKey} />;
+
+      return <span key={itemKey}>{part}</span>;
+    });
+};
 
     const renderMessage = (msg) => {
         if (msg.sender === "system") {
@@ -404,7 +416,7 @@ const handleSendAll = async () => {
         disabled={sending}
         title="Send image"
       >
-        <IoSend size={18} color="#fff" />
+        <GrAttachment size={18} color="#888" />
       </button>
       <textarea
         className={styles.input}
@@ -416,7 +428,7 @@ const handleSendAll = async () => {
       />
     </div>
     <button className={styles.sendBtn} onClick={handleSendAll} disabled={sending}>
-      <GrAttachment size={18} color="#888" />
+      <IoSend size={18} color="#fff" />
     </button>
   </div>
 </div>      

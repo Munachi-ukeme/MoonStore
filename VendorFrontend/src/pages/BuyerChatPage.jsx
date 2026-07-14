@@ -262,36 +262,42 @@ const handleImageChange = async (e) => {
 
 
 const renderMessageContent = (content, msgId) => {
-  const parts = content.split(/(\[img\].*?\[\/img\]|\\n|\n)/g);
-  
+  if (!content) return null;
+
+  let decodedContent = content;
+  try {
+    decodedContent = decodeURIComponent(content);
+  } catch (e) {
+    decodedContent = content; 
+  }
+
+  const parts = decodedContent.split(/(\[img\].*?\[\/img\]|\\n|\n)/g);
+
   return parts
-    .filter(part => part !== "") // 1. Remove empty strings completely
+    .filter(part => part !== "") 
     .map((part, index) => {
       const imgMatch = part.match(/\[img\](.*?)\[\/img\]/);
       
       // Generate a stable key combining message ID and index
-      const itemKey = `${msgId}-part-${index}`; 
-
-       
+      const itemKey = `${msgId}-part-${index}`;
 
       if (imgMatch) {
         const url = imgMatch[1];
         return (
-          <img
-            key={itemKey}
-            src={url}
-            alt="product"
-            className={styles.thumbnailImg}
-            onClick={() => setFullscreenImage(url)}
+          <img 
+            key={itemKey} 
+            src={url} 
+            alt="product" 
+            className={styles.thumbnailImg} 
+            onClick={() => setFullscreenImage(url)} 
           />
         );
       }
 
       if (part === "\n" || part === "\\n") {
-                return <br key={itemKey} />; // Renders an actual HTML line break
-            }
-      
-      // 2. Wrap text safely inside spans
+        return <br key={itemKey} />;
+      }
+
       return <span key={itemKey}>{part}</span>;
     });
 };
