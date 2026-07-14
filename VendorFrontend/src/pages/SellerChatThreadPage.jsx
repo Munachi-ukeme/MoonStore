@@ -23,6 +23,7 @@ const compressImage = (file) => {
                 const canvas = document.createElement("canvas");
                 let { width, height } = img;
                 const MAX_DIM = 800;
+
                 if (width > MAX_DIM || height > MAX_DIM) {
                     if (width > height) {
                         height = Math.round((height * MAX_DIM) / width);
@@ -32,17 +33,27 @@ const compressImage = (file) => {
                         height = MAX_DIM;
                     }
                 }
+
                 canvas.width = width;
                 canvas.height = height;
                 const ctx = canvas.getContext("2d");
                 ctx.drawImage(img, 0, 0, width, height);
-                const base64 = canvas.toDataURL("image/jpeg", 0.7);
-                const sizeInBytes = Math.round((base64.length * 3) / 4);
-                if (sizeInBytes > MAX_IMAGE_BYTES) {
-                    reject("Image is too large even after compression. Please use a smaller image.");
-                } else {
-                    resolve(base64);
+
+                // try compressing at decreasing quality levels
+                const qualities = [0.7, 0.5, 0.3, 0.15];
+
+                for (let i = 0; i < qualities.length; i++) {
+                    const base64 = canvas.toDataURL("image/jpeg", qualities[i]);
+                    const sizeInBytes = Math.round((base64.length * 3) / 4);
+
+                    if (sizeInBytes <= MAX_IMAGE_BYTES) {
+                        resolve(base64);
+                        return;
+                    }
                 }
+
+                // if still too large after all quality levels — reject
+                reject("Image is too large even after compression. Please use a smaller photo.");
             };
             img.onerror = () => reject("Failed to load image.");
         };
@@ -102,12 +113,19 @@ const handleSendImage = async () => {
   setImageError("");
 
   try {
-    const data = await sendImageMessage(conversationId, null, wrapped, "seller");
+    const result = await sendImageMessage(conversationId, null, wrapped, "seller");
 
-    if (data?.error || data?.message?.blocked || typeof data?.message === "string") {
-      setImageError(data?.error || data?.message || "Image could not be sent.");
-      return;
-    }
+    if (result?.status === 413) {
+  setImageError("Image is too large. Please choose a smaller image.");
+  return;
+}
+
+if (result?.error || result?.message?.blocked || typeof result?.message === "string") {
+  setImageError(result?.error || result?.message || "Image could not be sent.");
+  return;
+}
+
+const data = result;
 
     let safeMessage;
     if (data && data.message && typeof data.message === "object") {

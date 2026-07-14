@@ -6,6 +6,57 @@ import { getConversationMessages, sendBuyerMessage, reportConversation, sendImag
 import { getOrCreateSessionId } from "../utils/session";
 import styles from "./BuyerChatPage.module.css";
 
+const MAX_IMAGE_BYTES = 300 * 1024;
+
+const compressImage = (file) => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (e) => {
+            const img = new Image();
+            img.src = e.target.result;
+            img.onload = () => {
+                const canvas = document.createElement("canvas");
+                let { width, height } = img;
+                const MAX_DIM = 800;
+
+                if (width > MAX_DIM || height > MAX_DIM) {
+                    if (width > height) {
+                        height = Math.round((height * MAX_DIM) / width);
+                        width = MAX_DIM;
+                    } else {
+                        width = Math.round((width * MAX_DIM) / height);
+                        height = MAX_DIM;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(img, 0, 0, width, height);
+
+                // try compressing at decreasing quality levels
+                const qualities = [0.7, 0.5, 0.3, 0.15];
+
+                for (let i = 0; i < qualities.length; i++) {
+                    const base64 = canvas.toDataURL("image/jpeg", qualities[i]);
+                    const sizeInBytes = Math.round((base64.length * 3) / 4);
+
+                    if (sizeInBytes <= MAX_IMAGE_BYTES) {
+                        resolve(base64);
+                        return;
+                    }
+                }
+
+                // if still too large after all quality levels — reject
+                reject("Image is too large even after compression. Please use a smaller photo.");
+            };
+            img.onerror = () => reject("Failed to load image.");
+        };
+        reader.onerror = () => reject("Failed to read file.");
+    });
+};
+
 const BuyerChatPage = () => {
   const { slug, conversationId } = useParams();
   const [messages, setMessages] = useState([]);
@@ -64,12 +115,19 @@ const sessionId = location.state?.sessionId || getOrCreateSessionId();
   setImageError("");
 
   try {
-    const data = await sendImageMessage(conversationId, sessionId, wrapped, "buyer");
+   const result = await sendImageMessage(conversationId, sessionId, wrapped, "buyer");
 
-    if (data?.error || data?.message?.blocked || typeof data?.message === "string") {
-      setImageError(data?.error || data?.message || "Image could not be sent.");
-      return;
-    }
+if (result?.status === 413) {
+  setImageError("Image is too large. Please choose a smaller image.");
+  return;
+}
+
+if (result?.error || result?.message?.blocked || typeof result?.message === "string") {
+  setImageError(result?.error || result?.message || "Image could not be sent.");
+  return;
+}
+
+const data = result; 
 
     let safeMessage;
     if (data && data.message && typeof data.message === "object") {
@@ -178,44 +236,7 @@ const handleSendAll = async () => {
     setReportSending(false);
   };
 
-  const compressImage = (file) => {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = (e) => {
-            const img = new Image();
-            img.src = e.target.result;
-            img.onload = () => {
-                const canvas = document.createElement("canvas");
-                let { width, height } = img;
-                const MAX_DIM = 800;
-                if (width > MAX_DIM || height > MAX_DIM) {
-                    if (width > height) {
-                        height = Math.round((height * MAX_DIM) / width);
-                        width = MAX_DIM;
-                    } else {
-                        width = Math.round((width * MAX_DIM) / height);
-                        height = MAX_DIM;
-                    }
-                }
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext("2d");
-                ctx.drawImage(img, 0, 0, width, height);
-                const base64 = canvas.toDataURL("image/jpeg", 0.7);
-                const sizeInBytes = Math.round((base64.length * 3) / 4);
-                if (sizeInBytes > 300 * 1024) {
-                    reject("Image is too large. Please use a smaller image.");
-                } else {
-                    resolve(base64);
-                }
-            };
-            img.onerror = () => reject("Failed to load image.");
-        };
-        reader.onerror = () => reject("Failed to read file.");
-    });
-};
-
+  
 const handleImagePick = () => {
     setImageError("");
     fileInputRef.current.click();

@@ -225,20 +225,21 @@ export const getConversationMessages = async (conversationId, sessionId) => {
 };
 
 export const sendImageMessage = async (conversationId, sessionId, base64Content, sender) => {
-    try {
-        const res = await fetchWithTimeout(`${BASE_URL}/chat/${conversationId}/message`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                content: base64Content,
-                sender,
-                sessionId,
-            }),
-        });
-        return await res.json();
-    } catch {
-        return { error: "Failed to send image" };
-    }
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/chat/${conversationId}/message`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        content: base64Content,
+        sender,
+        sessionId,
+      }),
+    });
+    if (res.status === 413) return { status: 413 };
+    return await res.json();
+  } catch {
+    return { error: "Failed to send image" };
+  }
 };
 
 export const reportConversation = async (conversationId, sessionId, reason) => {
