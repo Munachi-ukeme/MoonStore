@@ -51,64 +51,51 @@ const sessionId = location.state?.sessionId || getOrCreateSessionId();
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-const handleSendImage = async (role = "buyer") => {
-  // 1. Guard against empty execution
+
+  const handleSendImage = async () => {
   if (!pendingImage) return;
 
-  // 2. Network Guard: Check browser connection before hitting the server
   if (!navigator.onLine) {
     setImageError("No internet connection. Please check your network and try again.");
     return;
   }
 
-  // 3. Preserve the data locally in case of failure or fallback needs
-  const rawImageBase64 = pendingImage;
-  const wrapped = `[img]${rawImageBase64}[/img]`;
-
+  const wrapped = `[img]${pendingImage}[/img]`;
   setSending(true);
-  setImageError(""); // Clear previous errors to reset UI state
+  setImageError("");
 
   try {
-    // 4. Hit API with dynamic role (handles both BuyerChatPage and SellerChatThreadPage)
     const data = await sendImageMessage(conversationId, sessionId, wrapped, "buyer");
 
-    // 5. Strict Error Evaluation (Catches explicit errors, validation failures, or server-side blocking)
     if (data?.error || data?.message?.blocked || typeof data?.message === "string") {
-      setImageError(data?.error || data?.message?.blocked || data?.message || "Image could not be sent.");
-      setSending(false); // Stop loader instantly
-      return;            
+      setImageError(data?.error || data?.message || "Image could not be sent.");
+      setSending(false);
+      return;
     }
 
-    // 6. Deep Structural Fallback (Guarantees your .map loop won't crash if database returns bad structure)
     let safeMessage;
     if (data && data.message && typeof data.message === "object") {
       safeMessage = data.message;
     } else {
       safeMessage = {
         _id: data?._id || `temp-img-${Date.now()}`,
-        sender: role,
+        sender: "buyer",
         content: wrapped,
         createdAt: new Date().toISOString()
       };
     }
 
-    // 7. Content Fallback Assignment
-    if (!safeMessage.content) {
-      safeMessage.content = wrapped;
-    }
+    if (!safeMessage.content) safeMessage.content = wrapped;
 
-    // 8. Success Operations: Update message stream and clear local staging states
     setMessages((prev) => [...prev, safeMessage]);
     setImagePreview(null);
     setPendingImage(null);
 
   } catch (err) {
-    console.error("Critical Image Upload or Network Error:", err);
-
-    // 9. Intelligent Network Error Trap
-    const isNetworkError = 
-      err instanceof TypeError || 
-      (err?.message && err.message.toLowerCase().includes("fetch")) || 
+    console.error("Image send error:", err);
+    const isNetworkError =
+      err instanceof TypeError ||
+      (err?.message && err.message.toLowerCase().includes("fetch")) ||
       !navigator.onLine;
 
     if (isNetworkError) {
@@ -116,11 +103,52 @@ const handleSendImage = async (role = "buyer") => {
     } else {
       setImageError(typeof err === "string" ? err : "Failed to send image. Please try again.");
     }
-    
   } finally {
-    // 10. Guaranteed Shutdown: Turn off loader regardless of success, server failure, or network crash
     setSending(false);
   }
+};
+
+
+const handleSend = async () => {
+    if (!input.trim()) return;
+    const typedText = input.trim();
+    setSending(true);
+    setError("");
+
+    try {
+        const data = await sendBuyerMessage(conversationId, sessionId, typedText);
+
+        if (data?.error || typeof data?.message === "string") {
+            setError(data.error || data.message);
+            setSending(false);
+            return;
+        }
+
+        let safeMessage;
+        if (data && data.message && typeof data.message === "object") {
+            safeMessage = data.message;
+        } else {
+            safeMessage = {
+                _id: `temp-${Date.now()}`,
+                sender: "buyer",
+                content: typedText,
+                createdAt: new Date().toISOString()
+            };
+        }
+
+        if (!safeMessage.content) {
+            safeMessage.content = typedText;
+        }
+
+        setMessages((prev) => [...prev, safeMessage]);
+        setInput("");
+
+    } catch (err) {
+        console.error("Chat send error:", err);
+        setError("Failed to send message. Please try again.");
+    } finally {
+        setSending(false);
+    }
 };
 
   const handleKeyDown = (e) => {
