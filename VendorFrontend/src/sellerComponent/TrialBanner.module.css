@@ -1,0 +1,44 @@
+.banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    font-size: 13px;
+    flex-shrink: 0;
+    gap: 12px;
+}
+
+.active {
+    background: #f5f3ff;
+    border-bottom: 1px solid #ddd6fe;
+    color: #5b21b6;
+}
+
+.expired {
+    background: #fef2f2;
+    border-bottom: 1px solid #fecaca;
+    color: #991b1b;
+}
+
+.text {
+    flex: 1;
+    line-height: 1.4;
+}
+
+.subscribeBtn {
+    padding: 7px 16px;
+    background: #6c47ff;
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: background 0.2s;
+}
+
+.subscribeBtn:hover {
+    background: #5538e0;
+}

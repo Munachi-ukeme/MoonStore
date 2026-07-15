@@ -2,6 +2,7 @@ import Sidebar from "./Sidebar";
 import styles from "./DashboardLayout.module.css";
 import { useState } from "react";
 import Topbar from "./Topbar";
+import TrialBanner from "../sellerComponent/TrialBanner";
 
 function DashboardLayout({ children, hideTopbar }) {
 
@@ -23,7 +24,7 @@ function DashboardLayout({ children, hideTopbar }) {
                     {/* topbar sits above all pafe content */}
                     {/* Only render the Topbar if hideTopbar is not true */}
                     {!hideTopbar &&<Topbar onOpen={handleOpen}/>}
-
+                    <TrialBanner />
                     <div className={styles.pageContent}>
                         {children}
                     </div>
