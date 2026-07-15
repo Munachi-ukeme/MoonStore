@@ -1,10 +1,9 @@
-import { useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import styles from "./TrialBanner.module.css";
 
 const TrialBanner = () => {
-    const { seller } = useAuth;
+    const { seller } = useAuth();
     const navigate = useNavigate();
 
     if (!seller) return null;
