@@ -41,7 +41,7 @@ export const AuthProvider = ({ children }) =>{
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("seller");
-    setSeller(null);
+    setSeller(null); 
   };
 
     // updates seller data in state and localStorage without full logout
