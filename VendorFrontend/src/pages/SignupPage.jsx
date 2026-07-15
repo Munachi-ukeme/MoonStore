@@ -5,6 +5,8 @@ import styles from "./SignupPage.module.css";
 
 const SignupPage = () =>{
     const navigate = useNavigate();
+    const { login } = useAuth();
+
 
     const [step, setStep] = useState(1);
     const [banks, setBanks] = useState([]);
@@ -166,12 +168,12 @@ const SignupPage = () =>{
             setLoading(false);
             return;
         }
-        // save token and seller to localStorage
-        localStorage.setItem("token", result.token);
-        localStorage.setItem("seller", JSON.stringify(result.seller));
+        
+login(result.token, result.seller); 
 
-        setLoading(false);
-        navigate("/dashboard");
+setLoading(false);
+navigate("/dashboard");
+
     };
 
 
