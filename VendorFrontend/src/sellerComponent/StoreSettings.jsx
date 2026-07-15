@@ -217,6 +217,7 @@ const StoreSettings = () => {
   const isPremium = seller?.plan === "premium";
   const isActive = seller?.isActive;
   const isReactivating = !!seller?.subscriptionEnd;
+ const isOnTrial = !!(seller?.trialEnd && !seller?.subscriptionEnd);
 
   // menu list
   if (!activeSection) {
@@ -267,18 +268,22 @@ const StoreSettings = () => {
            ) : null}
 
 
-          {!isPremium && isActive ? (
-            <div className={styles.menuItem} onClick={() => setActiveSection("upgrade")}>
-              <div className={styles.menuLeft}>
-                <span className={styles.menuIcon}>⭐</span>
-                <div>
-                  <p className={styles.menuTitle}>Upgrade Plan</p>
-                  <p className={styles.menuSub}>Get more products and features</p>
-                </div>
-              </div>
-              <span className={styles.chevron}>›</span>
+         {!isPremium && isActive ? (
+    <div className={styles.menuItem} onClick={() => setActiveSection("upgrade")}>
+        <div className={styles.menuLeft}>
+            <span className={styles.menuIcon}>⭐</span>
+            <div>
+                <p className={styles.menuTitle}>
+                    {isOnTrial ? "Subscribe" : "Upgrade Plan"}
+                </p>
+                <p className={styles.menuSub}>
+                    {isOnTrial ? "Pick a plan to keep your store live" : "Get more products and features"}
+                </p>
             </div>
-          ) : null}
+        </div>
+        <span className={styles.chevron}>›</span>
+    </div>
+) : null}
 
 
           {!isActive ? (
@@ -446,7 +451,7 @@ const StoreSettings = () => {
         <div className={styles.feeNotice}>
           <p className={styles.feeTitle}>1.5% platform service fee per order processed</p>
           <p className={styles.feeBody}>
-            Every payment your buyer makes goes through MoonStore's secure payment infrastructure — collected, split automatically and settled to your bank account daily. The 1.5% is what keeps that infrastructure running for you.
+            Every payment your buyer makes goes through MoonStore's secure payment infrastructure, collected, split automatically and settled to your bank account daily. The 1.5% is what keeps that infrastructure running for you.
           </p>
         </div>
 
@@ -454,7 +459,7 @@ const StoreSettings = () => {
 
         <div className={styles.plans}>
           {plans.map((plan) => {
-            const isCurrent = seller?.plan === plan.key;
+            const isCurrent = seller?.plan === plan.key && !isOnTrial;
             return (
               <div
                 key={plan.key}
