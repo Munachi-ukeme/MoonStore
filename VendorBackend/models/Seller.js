@@ -78,6 +78,12 @@ const sellerSchema = new mongoose.Schema(
       default: null, // null until i activate their subscription
     },
 
+
+    trialEnd: {
+    type: Date,
+    default: null,
+    },
+
     //referral field
     referralCode: {
         type: String,

@@ -87,16 +87,20 @@ if (!errors.isEmpty()) {
 
 
     // 7. Create new seller
+    const trialEnd = new Date();
+trialEnd.setDate(trialEnd.getDate() + 7);
     const seller = await Seller.create({
       businessName,
       email,
       password: hashedPassword,
       whatsappNumber,
       slug,
-      plan: "basic", // defaults to basic if not specified
+      plan: "basic",
       bankDetails,
       referralCode,
-      referredBy: validReferredBy
+      referredBy: validReferredBy,
+      isActive: true,
+      trialEnd,
     })
 
     if (
@@ -158,6 +162,8 @@ if (!errors.isEmpty()) {
         slug: seller.slug,
         plan: seller.plan,
         isActive: seller.isActive,
+        trialEnd: seller.trialEnd,
+        subscriptionEnd: seller.subscriptionEnd,
         referralCode: seller.referralCode,
         referredBy: seller.referredBy,
         commissionBalance: seller.commissionBalance,
@@ -224,6 +230,8 @@ if (!errors.isEmpty()) {
         address: seller.address,
         logo: seller.logo,
         bannerImage: seller.bannerImage,
+        trialEnd: seller.trialEnd,
+        subscriptionEnd: seller.subscriptionEnd,
         referralCode: seller.referralCode,        
         commissionBalance: seller.commissionBalance,
         totalEarned: seller.totalEarned,
