@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import styles from "./TrialBanner.module.css";
 
 const TrialBanner = () => {
-    const { seller } = useContext(AuthContext);
+    const { seller } = useAuth;
     const navigate = useNavigate();
 
     if (!seller) return null;
