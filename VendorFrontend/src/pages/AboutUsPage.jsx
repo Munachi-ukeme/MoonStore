@@ -12,52 +12,76 @@ function AboutUsPage() {
                 <h1 className={styles.title}>About MoonStore</h1>
 
                 <p className={styles.intro}>
-                    MoonStore was built for one reason, to give every
-                    Instagram and WhatsApp vendor in Africa their own
-                    branded online store. Not a marketplace. Not a shared
-                    app. Just your store, with your name on it.
+                    MoonStore was built on a simple but powerful belief,
+                    that every business owner in Africa, big or small,
+                    deserves a professional online store. Not a
+                    marketplace. Not a shared app. Your own store, with
+                    your name on it, working for you every hour of
+                    every day.
                 </p>
+
+                <div className={styles.section}>
+                    <h2 className={styles.sectionTitle}>Our Vision</h2>
+                    <p className={styles.sectionText}>
+                        A future where every African business owner,
+                        big or small, literate or not runs their
+                        business through a professional online store,
+                        and Africa leads its own digital commerce
+                        revolution instead of watching from the outside.
+                        Technology is moving fast. We refuse to let
+                        Africa be left behind.
+                    </p>
+                </div>
+
+                <div className={styles.section}>
+                    <h2 className={styles.sectionTitle}>Our Mission</h2>
+                    <p className={styles.sectionText}>
+                        To make online stores accessible to every African
+                        vendor regardless of size, technical knowledge or
+                        budget, so that owning a professional storefront
+                        is not a luxury reserved for big businesses but a
+                        foundation available to everyone who has something
+                        to sell.
+                    </p>
+                </div>
 
                 <div className={styles.section}>
                     <h2 className={styles.sectionTitle}>Why We Exist</h2>
                     <p className={styles.sectionText}>
-                        Every day, thousands of vendors sell through
-                        screenshots, DMs and disappearing status updates.
-                        Buyers get lost in the back and forth. Sales slip
-                        away in silence. We built MoonStore to close that
-                        gap — a store that's always open, where buyers can
-                        browse, chat and pay, all in one place.
+                        Every day, thousands of vendors across Africa sell
+                        through screenshots, DMs and disappearing status
+                        updates. Buyers get lost in the back and forth.
+                        Sales slip away in silence. Good products go
+                        unnoticed because the system around them is broken.
+                        We built MoonStore to fix that, a store that is
+                        always open, where buyers browse, chat and pay
+                        all in one place, and every message in your inbox
+                        is a buyer who is ready to order.
                     </p>
                 </div>
 
                 <div className={styles.section}>
-                    <h2 className={styles.sectionTitle}>What Makes Us Different</h2>
+                    <h2 className={styles.sectionTitle}>Built For Everyone</h2>
                     <p className={styles.sectionText}>
-                        MoonStore is not a marketplace where you compete
-                        with hundreds of other sellers. It's your own
-                        branded storefront. Buyers chat with you directly
-                        inside your store and pay securely — no Paystack
-                        setup needed on your end, no external links, no
-                        confusion.
-                    </p>
-                </div>
-
-                <div className={styles.section}>
-                    <h2 className={styles.sectionTitle}>Built With You In Mind</h2>
-                    <p className={styles.sectionText}>
-                        We built MoonStore for vendors with zero tech
-                        background. No code, no confusing dashboards, no
-                        developer needed. You focus on selling — we handle
-                        everything running quietly underneath.
+                        MoonStore was not built for tech-savvy vendors or
+                        established brands. It was built for the vendor
+                        just starting out, the one who has been selling
+                        through DMs for years and is exhausted, and the
+                        one who never believed a proper online store was
+                        available to someone at her level. No code. No
+                        confusing setup. No developer needed. If you have
+                        something to sell, MoonStore was built for you.
                     </p>
                 </div>
 
                 <div className={styles.section}>
                     <h2 className={styles.sectionTitle}>Our Promise</h2>
                     <p className={styles.sectionText}>
-                        Your store. Your rules. We're committed to building
-                        a platform that grows with you — from your first
-                        sale to your thousandth.
+                        Your store. Your rules. We are committed to
+                        building a platform that grows with every vendor
+                        who trusts us, from your first sale to your
+                        thousandth, and from Nigeria to every corner
+                        of Africa.
                     </p>
                 </div>
             </div>
