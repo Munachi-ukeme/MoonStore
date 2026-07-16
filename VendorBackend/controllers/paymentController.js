@@ -1,5 +1,5 @@
 const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY;
-const PAYSTACK_BASE = "https://api.paystack.co";
+const PAYSTACK_BASE = process.env.PAYSTACK_BASE_KEY;
 
 // this create subaccounts for every seller on paystack
 const createSubaccount = async (businessName, accountNumber, bankCode) => {
