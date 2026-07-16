@@ -17,6 +17,46 @@
     margin-bottom: 16px;
 }
 
+.tipCard {
+    background: #f5f3ff;
+    border: 1px solid #ddd6fe;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+}
+
+.tipTop {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.tipIcon {
+    font-size: 16px;
+}
+
+.tipClose {
+    background: none;
+    border: none;
+    font-size: 14px;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.tipClose:hover {
+    color: #6b7280;
+}
+
+.tipText {
+    font-size: 13px;
+    color: #5b21b6;
+    line-height: 1.6;
+    margin: 0;
+}
+
 /* add product button */
 .addButton{
     padding: 8px 16px;

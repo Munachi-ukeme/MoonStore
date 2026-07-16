@@ -1,48 +1,47 @@
 import { useState } from "react";
-import { deleteProduct, updateProduct} from "../api/api";
+import { deleteProduct, updateProduct } from "../api/api";
 import styles from "./ProductTable.module.css";
 
-function ProductTable({ products, categories, onEdit, onDeleted, onStockToggle}) {
+function ProductTable({ products, categories, onEdit, onDeleted, onStockToggle, sellerSlug }) {
     const [showDeleteWarning, setShowDeleteWarning] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [copiedId, setCopiedId] = useState(null);
 
-    //truncate description to 50 characters
-    const truncateDescription = (text) =>{
-        if (!text) {
-            return "No description"
-        }
-
-        if (text.length > 50) {
-            return text.substring(0, 50) + "...";
-        }
+    const truncateDescription = (text) => {
+        if (!text) return "No description";
+        if (text.length > 50) return text.substring(0, 50) + "...";
         return text;
     };
 
-    //find category name by id
-    const getCategoryName = (categoryId) =>{
+    const getCategoryName = (categoryId) => {
         const category = categories.find((cat) => cat._id === categoryId);
-        if (category) {
-            return category.name;
-        }
+        if (category) return category.name;
         return "Uncategorized";
     };
 
-    const handleDeleteClick = (product) =>{
-        setSelectedProduct(product);
-        setShowDeleteWarning(true)
+    const handleCopyLink = (product) => {
+        const link = `https://moonstore.ng/${sellerSlug}/${product.slug}`;
+        navigator.clipboard.writeText(link);
+        setCopiedId(product._id);
+        setTimeout(() => setCopiedId(null), 2000);
     };
 
-    const handleConfirmDelete = async() =>{
+    const handleDeleteClick = (product) => {
+        setSelectedProduct(product);
+        setShowDeleteWarning(true);
+    };
+
+    const handleConfirmDelete = async () => {
         setDeleteLoading(true);
         setError(null);
         const data = await deleteProduct(selectedProduct._id);
         setDeleteLoading(false);
 
         if (data.error) {
-            setError(data.error)
-            setShowDeleteWarning(false)
+            setError(data.error);
+            setShowDeleteWarning(false);
             return;
         }
 
@@ -51,50 +50,50 @@ function ProductTable({ products, categories, onEdit, onDeleted, onStockToggle})
         onDeleted(selectedProduct._id);
     };
 
-    const handleCancelDelete = () =>{
+    const handleCancelDelete = () => {
         setShowDeleteWarning(false);
         setSelectedProduct(null);
     };
 
-    const handleStockToggle = async(product) =>{
+    const handleStockToggle = async (product) => {
         const formData = new FormData();
         formData.append("inStock", !product.inStock);
-
         const data = await updateProduct(product._id, formData);
-
-        if(data.error) {
+        if (data.error) {
             setError(data.error);
             return;
         }
-
         onStockToggle(product._id, !product.inStock);
-    }
+    };
 
-    return(
+    return (
         <div className={styles.container}>
-            {/* error message */}
-            {error && <p className={styles.error}>{error}</p>}
+            {error ? <p className={styles.error}>{error}</p> : null}
 
-            {/* empty state */}
             {products.length === 0 ? (
                 <p className={styles.empty}>You have not added any product yet.</p>
             ) : null}
 
-            {/* product list */}
-            {products.length > 0 ?(
+            {products.length > 0 ? (
                 <div className={styles.cards}>
-
-                    {products.map((product) =>(
+                    {products.map((product) => (
                         <div key={product._id} className={styles.card}>
 
-                            {/* top section - image and name */}
+                            {/* copy link button — top right */}
+                            <button
+                                className={styles.copyLinkBtn}
+                                onClick={() => handleCopyLink(product)}
+                            >
+                                {copiedId === product._id ? "✓ Copied!" : "Copy Link"}
+                            </button>
+
                             <div className={styles.cardTop}>
                                 {product.images && product.images[0] ? (
                                     <img
-                                    src={product.images[0]}
-                                    alt={product.name}
-                                    className={styles.productImage}
-                                    />                                    
+                                        src={product.images[0]}
+                                        alt={product.name}
+                                        className={styles.productImage}
+                                    />
                                 ) : null}
 
                                 <div className={styles.productInfo}>
@@ -105,27 +104,19 @@ function ProductTable({ products, categories, onEdit, onDeleted, onStockToggle})
                                 </div>
                             </div>
 
-                            {/* bottom section-  stock and action */}
                             <div className={styles.cardBottom}>
-                                <button 
-                                className={product.inStock ? styles.inStock : styles.soldOut}
-                                onClick={() => handleStockToggle(product)}
+                                <button
+                                    className={product.inStock ? styles.inStock : styles.soldOut}
+                                    onClick={() => handleStockToggle(product)}
                                 >
                                     {product.inStock ? "In Stock" : "Sold Out"}
                                 </button>
 
                                 <div className={styles.actions}>
-                                    <button
-                                    className={styles.editButton}
-                                    onClick={() => onEdit(product)}
-                                    >
+                                    <button className={styles.editButton} onClick={() => onEdit(product)}>
                                         Edit
                                     </button>
-                                    
-                                    <button
-                                    className={styles.deleteButton}
-                                    onClick={() => handleDeleteClick(product)}
-                                    >
+                                    <button className={styles.deleteButton} onClick={() => handleDeleteClick(product)}>
                                         Delete
                                     </button>
                                 </div>
@@ -135,28 +126,22 @@ function ProductTable({ products, categories, onEdit, onDeleted, onStockToggle})
                 </div>
             ) : null}
 
-            {/* delete warning popup */}
             {showDeleteWarning ? (
                 <div className={styles.overlay}>
                     <div className={styles.popup}>
                         <h3 className={styles.popupTitle}>Delete Product</h3>
                         <p className={styles.popupText}>
                             You are about to delete{" "}
-                            <strong>{selectedProduct?.name}</strong>. This cannot be undone
+                            <strong>{selectedProduct?.name}</strong>. This cannot be undone.
                         </p>
-
                         <div className={styles.popupButtons}>
-                            <button
-                            className={styles.cancelButton}
-                            onClick={handleCancelDelete}
-                            >
+                            <button className={styles.cancelButton} onClick={handleCancelDelete}>
                                 Cancel
                             </button>
-
                             <button
-                            className={styles.confirmDeleteButton}
-                            onClick={handleConfirmDelete}
-                            disabled={deleteLoading}
+                                className={styles.confirmDeleteButton}
+                                onClick={handleConfirmDelete}
+                                disabled={deleteLoading}
                             >
                                 {deleteLoading ? "Deleting..." : "Yes, Delete"}
                             </button>
@@ -166,7 +151,6 @@ function ProductTable({ products, categories, onEdit, onDeleted, onStockToggle})
             ) : null}
         </div>
     );
-
 }
 
 export default ProductTable;
