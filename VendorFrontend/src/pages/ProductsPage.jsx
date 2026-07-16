@@ -94,7 +94,7 @@ function ProductsPage() {
                         <button className={styles.tipClose} onClick={handleDismissTip}>✕</button>
                     </div>
                     <p className={styles.tipText}>
-                        <strong>Pro tip:</strong> Add your product link alongside every product you post on Instagram, WhatsApp, or any social media. When buyers tap the link, they can order directly from your store — and they'll get used to ordering online instead of through WhatsApp chat.
+                        <strong>Pro tip:</strong> Add your product link alongside every product you post on Instagram, WhatsApp, or any social media. When buyers tap the link, they can order directly from your store and they'll get used to ordering online instead of through WhatsApp chat.
                     </p>
                 </div>
             ) : null}
