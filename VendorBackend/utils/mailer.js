@@ -5,7 +5,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 const sendSellerNewChatEmail = async (sellerEmail, sellerBusinessName, productName) => {
   try {
     await resend.emails.send({
-      from: "MoonStore <onboarding@resend.dev>",
+      from: "MoonStore <noreply@moonstore.ng>",
       to: sellerEmail,
       subject: `New order on ${sellerBusinessName}`,
       html: `

@@ -15,7 +15,7 @@ const getStoresSitemap = async (req, res) => {
  
         return `
   <url>
-    <loc>https://moonstore.com/${seller.slug}</loc>
+    <loc>https://moonstore.ng/${seller.slug}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
