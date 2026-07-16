@@ -28,7 +28,7 @@ app.use(helmet());
 // blocks any other domain from calling moonstore backend
 
 app.use(cors({
-  origin: process.env.FRONTEND_URL,
+  origin: [process.env.FRONTEND_URL, 'https://www.moonstore.ng'],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization","x-session-id", "admin-key",],

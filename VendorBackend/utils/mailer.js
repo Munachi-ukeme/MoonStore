@@ -17,7 +17,7 @@ const sendSellerNewChatEmail = async (sellerEmail, sellerBusinessName, productNa
             style="display:inline-block;padding:10px 20px;background:#6d28d9;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;">
             View Conversation
           </a>
-          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore — Your store, your rules.</p>
+          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore, Your store, your rules.</p>
         </div>
       `,
     });
