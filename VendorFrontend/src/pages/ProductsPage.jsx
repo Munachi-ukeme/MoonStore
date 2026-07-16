@@ -13,9 +13,25 @@ function ProductsPage() {
     const [editingProduct, setEditingProduct] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [tipDismissed, setTipDismissed] = useState(() => {
-        return localStorage.getItem("moonstore_tip_dismissed") === "true";
-    });
+   const [tipDismissed, setTipDismissed] = useState(() => {
+  if (typeof window !== "undefined") {
+    const dismissedAt = localStorage.getItem("moonstore_tip_dismissed_at");
+    
+    if (!dismissedAt) return false; 
+    const twentyFourHours = 24 * 60 * 60 * 1000;
+    const timePassed = Date.now() - parseInt(dismissedAt, 10);
+
+    // If more than 24 hours passed, reset it so they see it again
+    if (timePassed > twentyFourHours) {
+      localStorage.removeItem("moonstore_tip_dismissed_at");
+      return false; 
+    }
+
+    return true; // Still within 24 hours, keep it hidden
+  }
+  return false;
+});
+
 
     useEffect(() => {
         const loadData = async () => {
@@ -40,9 +56,11 @@ function ProductsPage() {
     }, []);
 
     const handleDismissTip = () => {
-        localStorage.setItem("moonstore_tip_dismissed", "true");
-        setTipDismissed(true);
-    };
+  // Save the current timestamp (in milliseconds)
+  localStorage.setItem("moonstore_tip_dismissed_at", Date.now().toString());
+  setTipDismissed(true);
+};
+
 
     const handleAddClick = () => {
         setEditingProduct(null);
