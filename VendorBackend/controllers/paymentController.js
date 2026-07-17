@@ -32,18 +32,19 @@ const createSubaccount = async (businessName, accountNumber, bankCode) => {
 
 
 // this extract banks list from paystack for sellers to choose
-const getBanks = async (req, res) =>{
+const getBanks = async (req, res) => {
     try {
         const response = await fetch(
             `${PAYSTACK_BASE}/bank?country=nigeria&use_cursor=false&perPage=100`,
             {
-                headers: {Authorization: `Bearer ${PAYSTACK_SECRET}`}
+                headers: { Authorization: `Bearer ${PAYSTACK_SECRET}` }
             }
         );
 
-        const data = await response.json()
+        const data = await response.json();
 
         if (!data.status) {
+            console.error("Paystack banks error:", data);
             return res.status(400).json({ message: "Could not fetch banks" });
         }
 
@@ -53,8 +54,9 @@ const getBanks = async (req, res) =>{
         }));
 
         res.json({ banks });
-    } catch (err){
-        res.status(500).json({ message: "Server error"});
+    } catch (err) {
+        console.error("getBanks error:", err.message);
+        res.status(500).json({ message: "Server error" });
     }
 };
 
