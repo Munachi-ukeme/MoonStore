@@ -188,13 +188,14 @@ const startConversation = async (req, res) => {
             content: orderMessage,
         });
 
+        
         // notify seller
-        const firstProduct = products[0];
-        sendSellerNewChatEmail(
-            seller.email,
-            seller.businessName,
-            items.length > 1 ? `${items.length} products` : firstProduct.name
-        ).catch((err) => console.error("Email error:", err.message));
+const productNames = products.map((p) => p.name);
+sendSellerNewChatEmail(
+    seller.email,
+    seller.businessName,
+    productNames
+).catch((err) => console.error("Email error:", err.message));
 
         try {
             getIO().to(seller._id.toString()).emit("new_conversation", {
