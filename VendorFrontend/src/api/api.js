@@ -403,18 +403,32 @@ export const getCategories = async () =>{
     }
 };
 
-export const createCategory = async(name) =>{
-  try{
+export const createCategory = async (name) => {
+  try {
     const res = await fetchWithTimeout(`${BASE_URL}/categories`, {
-        method: "POST",
-        headers: getAuthHeaders(),
-        body: JSON.stringify({name}),
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ name }),
     });
-    return res.json();
-  }catch (error){
-        return{ error: "Failed to create category."};
+
+    // 1. Parse the JSON response first to see what the server said
+    const data = await res.json();
+
+    // 2. If the server returned an error code (like 403 or 500)
+    if (!res.ok) {
+      return { 
+        error: data.message || "Failed to create category." 
+      };
     }
+
+    // 3. SUCCESS: Return the actual data
+    return data;
+
+  } catch (error) {
+    return { error: "Failed to create category." };
+  }
 };
+
 
 export const updateCategory = async (id, name) =>{
     try{
