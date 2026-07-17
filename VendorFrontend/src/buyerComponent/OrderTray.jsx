@@ -13,6 +13,33 @@ const OrderTray = ({ slug }) => {
     const [ordering, setOrdering] = useState(false);
     const [orderError, setOrderError] = useState("");
 
+    const [showEmailBanner, setShowEmailBanner] = useState(false);
+    const [emailInput, setEmailInput] = useState("");
+    const [emailSaved, setEmailSaved] = useState(false);
+
+    useEffect(() => {
+        const savedEmail = localStorage.getItem("moonstore_buyer_email");
+        const dismissed = localStorage.getItem("moonstore_email_banner_dismissed");
+
+        if (!savedEmail && !dismissed) {
+            setShowEmailBanner(true);
+        }
+    }, []);
+
+    const handleSaveEmail = () => {
+        if (!emailInput.trim()) return;
+        localStorage.setItem("moonstore_buyer_email", emailInput.trim());
+        setEmailSaved(true);
+        setTimeout(() => {
+            setShowEmailBanner(false);
+        }, 1200);
+    };
+
+    const handleDismissBanner = () => {
+        localStorage.setItem("moonstore_email_banner_dismissed", "true");
+        setShowEmailBanner(false);
+    };
+
     const loadTray = useCallback(() => {
         try {
             const existing = localStorage.getItem(TRAY_KEY(slug));
@@ -29,12 +56,11 @@ const OrderTray = ({ slug }) => {
         }
     }, [slug]);
 
-    // Combined into a single effect to handle initial mount and storage events
     useEffect(() => {
         loadTray();
         window.addEventListener("storage", loadTray);
         return () => window.removeEventListener("storage", loadTray);
-    }, [loadTray]); 
+    }, [loadTray]);
 
     const handleRemoveItem = (index) => {
         try {
@@ -61,12 +87,14 @@ const OrderTray = ({ slug }) => {
 
         try {
             const sessionId = getOrCreateSessionId();
+            const buyerEmail = localStorage.getItem("moonstore_buyer_email") || "";
 
             const data = await startConversation(
                 slug,
                 sessionId,
                 tray.items,
                 tray.buyerName,
+                buyerEmail,
                 tray.deliveryAddress,
                 tray.deliveryCity,
                 tray.deliveryPhone,
@@ -75,20 +103,20 @@ const OrderTray = ({ slug }) => {
             if (data?.error) {
                 setOrderError("Could not start order. Please try again.");
                 setTimeout(() => setOrderError(""), 3000);
-                setOrdering(false); // turn off loader on business error
+                setOrdering(false);
                 return;
             }
 
             // clear tray after successful order
             localStorage.removeItem(TRAY_KEY(slug));
+            localStorage.removeItem("moonstore_email_banner_dismissed");
             navigate(`/${slug}/chat/${data.conversation._id}`);
 
         } catch (error) {
-            // Catch network crashes so the UI doesn't freeze permanently
             console.error("Order failed:", error);
             setOrderError("Network error. Please try again.");
             setTimeout(() => setOrderError(""), 3000);
-            setOrdering(false); // Unlock buttons
+            setOrdering(false);
         }
     };
 
@@ -98,7 +126,43 @@ const OrderTray = ({ slug }) => {
     const itemCount = tray.items.length;
 
     return (
-        <div className={styles.tray}>
+        <div className={styles.trayWrapper}>
+            {showEmailBanner ? (
+                <div className={styles.emailBanner}>
+                    {emailSaved ? (
+                        <p className={styles.emailBannerSaved}>Email saved ✓</p>
+                    ) : (
+                        <div className={styles.emailBannerContent}>
+                            <p className={styles.emailBannerText}>
+                                Add your email so you don't miss order replies
+                            </p>
+                            <div className={styles.emailBannerRow}>
+                                <input
+                                    type="email"
+                                    className={styles.emailBannerInput}
+                                    placeholder="you@email.com"
+                                    value={emailInput}
+                                    onChange={(e) => setEmailInput(e.target.value)}
+                                />
+                                <button
+                                    className={styles.emailBannerSaveBtn}
+                                    onClick={handleSaveEmail}
+                                >
+                                    Save
+                                </button>
+                                <button
+                                    className={styles.emailBannerDismissBtn}
+                                    onClick={handleDismissBanner}
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            ) : null}
+
+            <div className={styles.tray}>
             {/* collapsed bar */}
             {!expanded ? (
                 <div className={styles.collapsed} onClick={() => setExpanded(true)}>
@@ -169,6 +233,8 @@ const OrderTray = ({ slug }) => {
                     </button>
                 </div>
             )}
+        </div>
+
         </div>
     );
 };

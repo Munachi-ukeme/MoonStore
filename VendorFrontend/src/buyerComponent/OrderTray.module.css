@@ -18,6 +18,59 @@
     cursor: pointer;
 }
 
+.emailBanner {
+    background: #f5f3ff;
+    border: 1px solid #ddd6fe;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 10px;
+}
+
+.emailBannerText {
+    font-size: 12px;
+    color: #4c1d95;
+    margin: 0 0 6px 0;
+}
+
+.emailBannerRow {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.emailBannerInput {
+    flex: 1;
+    font-size: 12px;
+    padding: 6px 8px;
+    border: 1px solid #ddd6fe;
+    border-radius: 6px;
+}
+
+.emailBannerSaveBtn {
+    font-size: 12px;
+    padding: 6px 10px;
+    background: #6d28d9;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+}
+
+.emailBannerDismissBtn {
+    font-size: 12px;
+    padding: 6px 8px;
+    background: transparent;
+    border: none;
+    color: #9ca3af;
+}
+
+.emailBannerSaved {
+    font-size: 12px;
+    color: #059669;
+    margin: 0;
+    text-align: center;
+}
+
 .collapsedText {
     font-size: 13px;
     font-weight: 600;

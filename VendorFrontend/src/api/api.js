@@ -258,7 +258,7 @@ export const reportConversation = async (conversationId, sessionId, reason) => {
 
 
 
-export const startConversation = async (slug, sessionId, items, buyerName, deliveryAddress, deliveryCity, deliveryPhone) => {
+export const startConversation = async (slug, sessionId, items, buyerName, buyerEmail, deliveryAddress, deliveryCity, deliveryPhone) => {
     try {
         const res = await fetchWithTimeout(`${BASE_URL}/chat/start`, {
             method: "POST",
@@ -268,6 +268,7 @@ export const startConversation = async (slug, sessionId, items, buyerName, deliv
                 sessionId,
                 items,
                 buyerName,
+                buyerEmail,
                 deliveryAddress,
                 deliveryCity,
                 deliveryPhone,

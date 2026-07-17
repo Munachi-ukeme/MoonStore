@@ -200,6 +200,11 @@ const StoreSettings = () => {
     window.open(`https://wa.me/2348152905325?text=${encodedMessage}`, "_blank");
   };
 
+  const handleHelpButton = () => {
+  // Directly opens your official WhatsApp Channel in a new tab
+  window.open("https://whatsapp.com/channel/0029Vb84tO9GpLHI1O3xll2o", "_blank", "noopener,noreferrer");
+};
+
   const handlePay = async () => {
     if (!selectedPlan) return;
     setPayLoading(true);
@@ -300,6 +305,17 @@ const StoreSettings = () => {
               <span className={styles.chevron}>›</span>
             </div>
           ) : null}
+
+          <div className={styles.menuItem} onClick={handleHelpButton}>
+  <div className={styles.menuLeft}>
+    <span className={styles.menuIcon}>📢</span> 
+    <div>
+      <p className={styles.menuTitle}>Join our Channel</p>
+      <p className={styles.menuSub}>MoonStore updates, selling tips & motivation on WhatsApp</p>
+    </div>
+  </div>
+  <span className={styles.chevron}>›</span>
+</div>
 
           <div className={styles.menuItem} onClick={handleHelpButton}>
             <div className={styles.menuLeft}>
