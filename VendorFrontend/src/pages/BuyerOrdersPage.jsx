@@ -135,23 +135,33 @@ const BuyerOrdersPage = () => {
 };
 
 const formatTime = (dateString) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    
-    if (diffMs < 0) return "Just now"; // Safety fallback for clock variations
+  if (!dateString) return "";
+  
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  
+  if (diffMs < 0) return "Just now"; // Safety fallback for clock variations
 
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60)); // Standardized clean integers up front
-    const diffDays = Math.floor(diffHours / 24);
+  // Calculate clean integers up front
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
 
-    if (diffHours < 1) return "Just now";
-    if (diffHours < 24) return `${diffHours}h`;
-    if (diffDays < 7) {
-        const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-        return days[date.getDay()];
-    }
-    return date.toLocaleDateString("en-NG", { day: "numeric", month: "short" });
+  // Time formatting hierarchy
+  if (diffMins < 1) return "Just now";
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays === 1) return "Yesterday";
+  
+  // Show day name if it is within the last week
+  if (diffDays < 7) {
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    return days[date.getDay()];
+  }
+  
+  // Return localized date for older messages (e.g., "17 Jul")
+  return date.toLocaleDateString("en-NG", { day: "numeric", month: "short" });
 };
 
 export default BuyerOrdersPage;
