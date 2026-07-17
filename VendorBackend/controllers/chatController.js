@@ -66,6 +66,7 @@ const startConversation = async (req, res) => {
             sessionId,
             items,
             buyerName,
+            buyerEmail,
             deliveryAddress,
             deliveryCity,
             deliveryPhone,
@@ -110,6 +111,7 @@ const startConversation = async (req, res) => {
 
         const conversation = await Conversation.create({
             buyerSessionId: sessionId,
+            buyerEmail: buyerEmail || "",
             sellerId: seller._id,
             productIds,
             amount: totalAmount,
