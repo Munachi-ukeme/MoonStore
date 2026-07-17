@@ -370,12 +370,12 @@ const StoreSettings = () => {
             <input className={styles.input} type="file" accept="image/*" onChange={(e) => setLogo(e.target.files[0])} />
           </div>
 
-          {seller?.plan === "pro" || seller?.plan === "premium" ? (
+          
             <div className={styles.field}>
               <label className={styles.label}>Banner Image</label>
               <input className={styles.input} type="file" accept="image/*" onChange={(e) => setBanner(e.target.files[0])} />
             </div>
-          ) : null}
+          
 
 
           <button className={styles.saveBtn} onClick={handleSave} disabled={loading}>

@@ -10,7 +10,7 @@ function DashboardPage() {
     const navigate = useNavigate();
     const location = useLocation(); 
 
-    const referralLink = `https://moonstore.ng/signup?ref=${seller?.referralCode}`;
+    const referralLink = `https://moonstore.ng/register?ref=${seller?.referralCode}`;
     const storeLink = `moonstore.ng/${seller?.slug}`;
 
     const [products, setProducts] = useState([]);
