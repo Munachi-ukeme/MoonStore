@@ -41,7 +41,7 @@ const sendBuyerReplyEmail = async (buyerEmail, sellerBusinessName, storeSlug, se
   try {
     const restoreLink = `${process.env.FRONTEND_URL}/restore?sid=${sessionId}&store=${storeSlug}`;
     await resend.emails.send({
-      from: "MoonStore <onboarding@resend.dev>",
+      from: "MoonStore <noreply@moonstore.ng>",
       to: buyerEmail,
       subject: `${sellerBusinessName} replied to your order`,
       html: `
