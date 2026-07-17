@@ -57,12 +57,17 @@ useEffect(() => {
 
  
 
-    // fetch products when page loads
     useEffect(() => {
-        if (isInactive) {
-            setShowWelcomePopup(true);
-        }
-    }, [isInactive]); // means run this only when use is not active
+    if (!seller?._id) return;
+
+    const welcomeKey = `moonstore_welcome_seen_${seller._id}`;
+    const hasSeenWelcome = localStorage.getItem(welcomeKey);
+
+    if (!hasSeenWelcome) {
+        setShowWelcomePopup(true);
+        localStorage.setItem(welcomeKey, "true");
+    }
+}, [seller]);
 
         const loadProducts = async () => {
             setError(null);
@@ -125,7 +130,7 @@ useEffect(() => {
     return (
         <div className={styles.container}>
 
-         {/* welcome popup for inactive sellers */}
+         {/* welcome popup for new sellers */}
             {showWelcomePopup ? (
                 <div className={styles.popupOverlay}>
                     <div className={styles.popup}>
@@ -140,20 +145,19 @@ useEffect(() => {
                             Welcome to MoonStore, {seller?.businessName}!
                         </h2>
                         <p className={styles.popupText}>
-                            Your account is set up and ready. To go live and start
-                            receiving orders, activate your store by choosing a plan.
+                            Your 7-day free trial is live. Here's how to get the most out of it before you start selling:
                         </p>
                         <div className={styles.popupSteps}>
-                            <p className={styles.popupStep}>1. Go to Settings</p>
-                            <p className={styles.popupStep}>2. Tap Activate Store</p>
-                            <p className={styles.popupStep}>3. Choose a plan and pay</p>
-                            <p className={styles.popupStep}>4. Your store goes live instantly</p>
+                            <p className={styles.popupStep}>1. Go to Settings and finish setting up your store, add your logo, tagline, and banner</p>
+                            <p className={styles.popupStep}> 2. Turn on email notifications so you never miss an order alert</p>
+                            <p className={styles.popupStep}> 3. Paste your product links whenever you post online, so buyers can order directly on your site instead of messaging you</p>
+                            
                         </div>
                         <button
                             className={styles.popupActivateBtn}
                             onClick={handleActivateNow}
                         >
-                            Activate My Store
+                            Go to Settings
                         </button>
                     </div>
                 </div>
