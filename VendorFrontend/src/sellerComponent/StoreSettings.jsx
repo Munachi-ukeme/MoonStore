@@ -200,7 +200,7 @@ const StoreSettings = () => {
     window.open(`https://wa.me/2348152905325?text=${encodedMessage}`, "_blank");
   };
 
-  const handleHelpButton = () => {
+  const handleWhatsappChanneButton = () => {
   // Directly opens your official WhatsApp Channel in a new tab
   window.open("https://whatsapp.com/channel/0029Vb84tO9GpLHI1O3xll2o", "_blank", "noopener,noreferrer");
 };
@@ -306,7 +306,7 @@ const StoreSettings = () => {
             </div>
           ) : null}
 
-          <div className={styles.menuItem} onClick={handleHelpButton}>
+          <div className={styles.menuItem} onClick={handleWhatsappChanneButton}>
   <div className={styles.menuLeft}>
     <span className={styles.menuIcon}>📢</span> 
     <div>
