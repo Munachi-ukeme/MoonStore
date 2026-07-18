@@ -1,4 +1,13 @@
 .tray {
+    bottom: 56px; /* sits above StoreBottomNav */
+    left: 0;
+    right: 0;
+    z-index: 50;
+    max-width: 480px;
+    margin: 0 auto;
+}
+
+.trayWrapper {
     position: fixed;
     bottom: 56px; /* sits above StoreBottomNav */
     left: 0;
@@ -7,6 +16,8 @@
     max-width: 480px;
     margin: 0 auto;
 }
+
+
 
 .collapsed {
     display: flex;
