@@ -22,7 +22,7 @@ const DesktopBlock = ({ children }) => {
                     <p className={styles.message}>
                         MoonStore is currently only available on mobile devices.
                         Please open this website on your phone to continue.
-                        Got questions? WhatsApp +2348152905325
+                        Got questions? WhatsApp +2349132227203
                     </p>
                     <div className={styles.icon}>📱</div>
                 </div>
