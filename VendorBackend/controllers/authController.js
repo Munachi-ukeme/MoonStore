@@ -51,15 +51,18 @@ if (!errors.isEmpty()) {
             return res.status(400).json({message: "Email already registered"})
         }
 
-        //2. generate slug from business name
-        let slug = generateSlug(businessName)
+       // 2. generate slug from business name
+let baseSlug = generateSlug(businessName);
+let slug = baseSlug;
 
-        //3. check if slug already exists - add number if it does. e.g if chinwe-fashion already exists create chinwe-fashion-1
+// 3. check if slug already exists - keep trying random suffixes until unique
+let existingSlug = await Seller.findOne({ slug });
 
-        const existingSlug = await Seller.findOne({ slug })
-    if (existingSlug) {
-      slug = `${slug}-${Date.now()}`
-    }
+while (existingSlug) {
+    const randomSuffix = Math.floor(1000 + Math.random() * 9000); // 4-digit number, 1000-9999
+    slug = `${baseSlug}-${randomSuffix}`;
+    existingSlug = await Seller.findOne({ slug });
+}
 
     //4. Hash the password before saving
     const salt = await bcrypt.genSalt(10)
