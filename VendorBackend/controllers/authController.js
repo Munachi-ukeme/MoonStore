@@ -277,7 +277,6 @@ const forgotPassword = async (req, res) => {
 };
 
 
-const bcrypt = require("bcrypt");
 
 const resetPassword = async (req, res) => {
     try {
