@@ -248,4 +248,60 @@ if (!errors.isEmpty()) {
   }
 }
 
-module.exports = { registerSeller, loginSeller }
+const crypto = require("crypto");
+
+const forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+        const seller = await Seller.findOne({ email });
+
+        // Always respond the same way, whether seller exists or not —
+        // this prevents someone from using this form to check which emails are registered
+        if (!seller) {
+            return res.status(200).json({ message: "If that email exists, a reset link has been sent" });
+        }
+
+        const resetToken = crypto.randomBytes(32).toString("hex");
+        seller.resetPasswordToken = resetToken;
+        seller.resetPasswordExpires = Date.now() + 5 * 60 * 1000; // 5 minutes from now
+        await seller.save();
+
+        const { sendPasswordResetEmail } = require("../utils/mailer");
+        sendPasswordResetEmail(seller.email, seller.businessName, resetToken)
+            .catch((err) => console.error("Reset email error:", err.message));
+
+        res.status(200).json({ message: "If that email exists, a reset link has been sent" });
+    } catch (err) {
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+
+const bcrypt = require("bcrypt");
+
+const resetPassword = async (req, res) => {
+    try {
+        const { token, newPassword } = req.body;
+
+        const seller = await Seller.findOne({
+            resetPasswordToken: token,
+            resetPasswordExpires: { $gt: Date.now() }, // $gt = "greater than" — must not be expired yet
+        });
+
+        if (!seller) {
+            return res.status(400).json({ message: "Reset link is invalid or has expired" });
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        seller.password = hashedPassword;
+        seller.resetPasswordToken = null;
+        seller.resetPasswordExpires = null;
+        await seller.save();
+
+        res.status(200).json({ message: "Password reset successful" });
+    } catch (err) {
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+module.exports = { registerSeller, loginSeller, resetPassword, forgotPassword}

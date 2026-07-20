@@ -61,4 +61,28 @@ const sendBuyerReplyEmail = async (buyerEmail, sellerBusinessName, storeSlug, se
   }
 };
 
-module.exports = { sendSellerNewChatEmail, sendBuyerReplyEmail };
+const sendPasswordResetEmail = async (sellerEmail, sellerBusinessName, resetToken) => {
+  try {
+    const resetLink = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+    await resend.emails.send({
+      from: "MoonStore <noreply@moonstore.ng>",
+      to: sellerEmail,
+      subject: "Reset your MoonStore password",
+      html: `
+        <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+          <h2 style="color: #6d28d9;">Reset your password</h2>
+          <p>Hi ${sellerBusinessName}, click below to set a new password. This link expires in 5 minutes.</p>
+          <a href="${resetLink}"
+            style="display:inline-block;padding:10px 20px;background:#6d28d9;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;">
+            Reset Password
+          </a>
+          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">If you didn't request this, ignore this email.</p>
+        </div>
+      `,
+    });
+  } catch (err) {
+    console.error("Password reset email error:", err.message);
+  }
+};
+
+module.exports = { sendSellerNewChatEmail, sendBuyerReplyEmail, sendPasswordResetEmail };

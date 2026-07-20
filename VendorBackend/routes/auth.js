@@ -1,6 +1,6 @@
 const express = require("express")
 const router = express.Router()
-const { registerSeller, loginSeller } = require("../controllers/authController")
+const { registerSeller, loginSeller, resetPassword, forgotPassword } = require("../controllers/authController")
 const rateLimit = require("express-rate-limit")
 const { body } = require("express-validator")
 
@@ -42,5 +42,8 @@ router.post("/register", registerValidation, registerSeller)
 
 // POST /api/auth/login
 router.post("/login", loginLimiter, loginValidation, loginSeller)
+
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password", resetPassword);
 
 module.exports = router

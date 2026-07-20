@@ -63,6 +63,16 @@ const sellerSchema = new mongoose.Schema(
             default: "",
         },
 
+        resetPasswordToken: { 
+            type: String, 
+            default: null 
+        },
+
+resetPasswordExpires: { 
+    type: Date, 
+    default: null 
+},
+
     isActive: {
       type: Boolean,
       default: false, // store is not active by default when created
