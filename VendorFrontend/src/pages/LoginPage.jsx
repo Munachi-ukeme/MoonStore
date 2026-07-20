@@ -95,10 +95,11 @@ function LoginPage() {
 
                    <p className={styles.resetPasswordLink}>
                      Forgot password?{" "}
-                   </p>
-                   <button onClick={() => navigate("/forgot-password")} className={styles.linkBtn}>
+                     <button onClick={() => navigate("/forgot-password")} className={styles.linkBtn}>
                     Reset
                     </button>
+                   </p>
+                   
 
                     {/* login link */}
                 <p className={styles.registerLink}>
