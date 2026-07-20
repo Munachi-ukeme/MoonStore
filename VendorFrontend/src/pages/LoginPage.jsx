@@ -96,6 +96,7 @@ function LoginPage() {
                    <button onClick={() => navigate("/forgot-password")} className={styles.forgotLink}>
                     Forgot password?
                     </button>
+                    
                     {/* login link */}
                 <p className={styles.registerLink}>
                     Dont have an account?{" "}
