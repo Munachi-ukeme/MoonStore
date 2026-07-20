@@ -61,9 +61,10 @@ const ForgotPasswordPage = () => {
                 </div>
             )}
 
-            <Link to="/login" className={styles.backLink}>
+            <button onClick={() => navigate("/login")} className={styles.backLink}>
                 Back to Login
-            </Link>
+            </button>
+             
         </div>
     );
 };
