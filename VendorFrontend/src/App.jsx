@@ -22,6 +22,8 @@ import SellerChatThreadPage from "./pages/SellerChatThreadPage";
 import OfflineBanner from "./buyerComponent/OfflineBanner";
 import ErrorBoundary from "./sellerComponent/ErrorBoundary";
 import AboutUsPage from "./pages/AboutUsPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 
 function App(){
   return (
@@ -36,6 +38,8 @@ function App(){
       {/* Auth */}
       <Route path="/login" element={<ErrorBoundary><LoginPage /></ErrorBoundary>} />
       <Route path="/register" element={<ErrorBoundary><SignupPage /></ErrorBoundary>} />
+      <Route path="/forgot-password" element={<ErrorBoundary> <ForgotPasswordPage /> </ErrorBoundary>} />
+<Route path="/reset-password/:token" element={<ErrorBoundary> <ResetPasswordPage /> </ErrorBoundary>} />
       
 
       {/* Public buyer routes */}  

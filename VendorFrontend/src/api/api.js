@@ -280,6 +280,33 @@ export const startConversation = async (slug, sessionId, items, buyerName, buyer
     }
 };
 
+//forgotten password
+export const forgotPassword = async (email) => {
+    try {
+        const res = await fetchWithTimeout(`${BASE_URL}/auth/forgot-password`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email }),
+        });
+        return await res.json();
+    } catch {
+        return { error: "Could not send reset link. Please try again." };
+    }
+};
+
+export const resetPassword = async (token, newPassword) => {
+    try {
+        const res = await fetchWithTimeout(`${BASE_URL}/auth/reset-password`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token, newPassword }),
+        });
+        return await res.json();
+    } catch {
+        return { error: "Could not reset password. Please try again." };
+    }
+};
+
 // SELLER SIDE
 export const getSellerInbox = async () => {
   try {

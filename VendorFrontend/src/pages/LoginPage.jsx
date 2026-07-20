@@ -93,6 +93,9 @@ function LoginPage() {
                         {loading ? "Signing in..." : "Sign In"}
                     </button>
 
+<Link to="/forgot-password" className={styles.forgotLink}>
+    Forgot password?
+</Link>
                     {/* login link */}
                 <p className={styles.registerLink}>
                     Dont have an account?{" "}

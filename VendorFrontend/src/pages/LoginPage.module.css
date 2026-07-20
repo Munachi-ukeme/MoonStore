@@ -163,6 +163,15 @@
     white-space: nowrap;
 }
 
+.forgotLink{
+    display: inline-block;
+    margin-top: 20px;
+    font-size: 13px;
+    color: #6c47ff;
+    text-decoration: none;
+}
+
+
 .eyeBtn:hover {
     color: #6d28d9;
 }
