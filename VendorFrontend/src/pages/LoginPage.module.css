@@ -111,12 +111,20 @@
     cursor: not-allowed;
 }
 
+.resetPasswordLink{
+    text-align: center;
+    font-size: 13px;
+    color: #6b7280;
+    margin: 16px 0 0;
+}
+
 /* login link */
 .registerLink {
     text-align: center;
     font-size: 13px;
     color: #6b7280;
     margin: 16px 0 0;
+    margin-top: 10px;
 }
 
 .linkBtn {
@@ -162,33 +170,6 @@
     padding: 4px 8px;
     white-space: nowrap;
 }
-
-.forgotLink {
-  
-  display: inline-block;
-  padding: 12px 16px;
-  margin-top: 10px; 
-
-  /* Typography & color */
-  font-size: 14px;
-  color: #6c47ff;
-  font-weight: 500;
-  text-decoration: none;
-  text-align: center;
-
-  
-  -webkit-text-size-adjust: 100%;
-}
-
-.forgotLink:active,
-.forgotLink:hover {
-  
-  color: #5333cc;
-  text-decoration: underline;
-  background-color: rgba(108, 71, 255, 0.05);
-  border-radius: 4px;
-}
-
 
 
 .eyeBtn:hover {
