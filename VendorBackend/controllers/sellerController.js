@@ -71,42 +71,37 @@ const deactivateSubaccount = async (subaccountCode) => {
 // DELETE /api/seller/account
 // Protected — seller must be logged in
 // -----------------------------------
-const deleteAccount = async (req, res) => {
-  try {
+const deleteSeller = async (req, res) => {
+    try {
+        if (!verifyAdmin(req, res)) return;
 
-    // 1. Find seller
-    const seller = await Seller.findById(req.seller._id)
+        const { email } = req.body;
 
-    
-    if (!seller) {
-      return res.status(404).json({ 
-        message: "Seller not found" 
-      })
-    }
+        const seller = await Seller.findOne({ email });
+        if (!seller) {
+            return res.status(404).json({ message: "Seller not found" });
+        }
 
-    // deactivate Paystack subaccount before deleting seller
-        // we do this first while we still have the seller object
         if (seller.paystackSubaccountCode) {
             await deactivateSubaccount(seller.paystackSubaccountCode);
         }
 
-    // 3. Delete all seller's products
-    await Product.deleteMany({ sellerId: seller._id })
+        // find all conversations for this seller first, so we can delete their messages too
+        const conversations = await Conversation.find({ sellerId: seller._id });
+        const conversationIds = conversations.map((c) => c._id);
 
-    // 4. Delete all seller's categories
-    await Category.deleteMany({ sellerId: seller._id })
+        await Message.deleteMany({ conversationId: { $in: conversationIds } });
+        await Conversation.deleteMany({ sellerId: seller._id });
 
-    // 5. Delete seller account
-    await seller.deleteOne()
+        await Product.deleteMany({ sellerId: seller._id });
+        await Category.deleteMany({ sellerId: seller._id });
+        await seller.deleteOne();
 
-    res.json({ 
-      message: "Your account and all data have been deleted successfully." 
-    })
-
-  } catch (error) {
-    res.status(500).json({ message: error.message })
-  }
-}
+        res.json({ message: "Seller account and all data deleted successfully" });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
 
 
 

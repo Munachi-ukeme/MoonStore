@@ -83,7 +83,10 @@ const getBuyerConversations = async (req, res) => {
             .populate("productIds", "name images")
             .sort({ createdAt: -1 });
 
-        return res.json({ conversations });
+        // filter out conversations whose seller no longer exists (deleted store)
+        const validConversations = conversations.filter((convo) => convo.sellerId !== null);
+
+        return res.json({ conversations: validConversations });
     } catch (err) {
         res.status(500).json({ error: "Server error" });
     }

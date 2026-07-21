@@ -176,13 +176,17 @@ const deleteSeller = async (req, res) => {
             return res.status(404).json({ message: "Seller not found" });
         }
 
-        // deactivate Paystack subaccount before deleting seller
-        // we do this first while we still have the seller object
         if (seller.paystackSubaccountCode) {
             await deactivateSubaccount(seller.paystackSubaccountCode);
         }
 
-        // delete all seller data
+        // find all conversations for this seller first, so we can delete their messages too
+        const conversations = await Conversation.find({ sellerId: seller._id });
+        const conversationIds = conversations.map((c) => c._id);
+
+        await Message.deleteMany({ conversationId: { $in: conversationIds } });
+        await Conversation.deleteMany({ sellerId: seller._id });
+
         await Product.deleteMany({ sellerId: seller._id });
         await Category.deleteMany({ sellerId: seller._id });
         await seller.deleteOne();

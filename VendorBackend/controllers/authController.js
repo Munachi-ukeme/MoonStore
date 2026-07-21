@@ -255,8 +255,7 @@ const forgotPassword = async (req, res) => {
         const { email } = req.body;
         const seller = await Seller.findOne({ email });
 
-        // Always respond the same way, whether seller exists or not —
-        // this prevents someone from using this form to check which emails are registered
+        
         if (!seller) {
             return res.status(200).json({ message: "If that email exists, a reset link has been sent" });
         }
@@ -284,7 +283,7 @@ const resetPassword = async (req, res) => {
 
         const seller = await Seller.findOne({
             resetPasswordToken: token,
-            resetPasswordExpires: { $gt: Date.now() }, // $gt = "greater than" — must not be expired yet
+            resetPasswordExpires: { $gt: Date.now() }, 
         });
 
         if (!seller) {
