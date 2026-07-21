@@ -122,7 +122,7 @@ function StorePage() {
         return (
             <div className={styles.blankState}>
                 <p className={styles.blankTitle}>Store does not exist</p>
-                <p className={styles.blankText}>This store link is no longer valid.</p>
+                <p className={styles.blankText}>Check the store link or contact the seller you are trying to shop from.</p>
             </div>
         );
     }
