@@ -108,12 +108,18 @@ export const loginSeller = async(email, password) =>{
 // PUBLIC (BUYER)
 // Loads the full store for a given slug - used on StorePage
 export const getStore = async (slug) => {
-    try{
-    const res = await fetchWithTimeout(`${BASE_URL}/store/${slug}`);
-    return res.json();
+    try {
+        const res = await fetchWithTimeout(`${BASE_URL}/store/${slug}`);
+        const json = await res.json();
+
+        if (!res.ok) {
+            return { error: json.message, status: res.status };
+        }
+
+        return json;
     } catch (err) {
-    return { error: err.error || "Something went wrong." };
-  }
+        return { error: err.message || "Something went wrong." };
+    }
 };
 
 //Loads the full store for a given slug - used on StorePage
@@ -185,16 +191,6 @@ export const getSellerConversations = async (slug, sessionId) => {
     }
 };
 
-export const buyerClaimedPayment = async (conversationId) => {
-  try {
-    const res = await fetchWithTimeout(`${BASE_URL}/chat/${conversationId}/buyer-paid`, {
-      method: "PUT",
-    });
-    return await res.json();
-  } catch {
-    return { error: "Failed to send claim" };
-  }
-};
 
 export const sendBuyerMessage = async (conversationId, sessionId, content) => {
   try {

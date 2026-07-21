@@ -25,6 +25,7 @@ function StorePage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showEmailPopup, setShowEmailPopup] = useState(false);
+    const [errorStatus, setErrorStatus] = useState(null);
 
     const loadStore = useCallback(async () => {
         setError(null);
@@ -51,6 +52,7 @@ function StorePage() {
 
         if (data.error) {
             setError(data.error);
+            setErrorStatus(data.status)
             setLoading(false);
             return;
         }
@@ -116,15 +118,33 @@ function StorePage() {
     }
 
     if (error) {
+    if (errorStatus === 404) {
         return (
-            <div className={styles.errorContainer}>
-                <p className={styles.errorTitle}>{error}</p>
-                <button className={styles.retryBtn} onClick={loadStore}>
-                    Try Again
-                </button>
+            <div className={styles.blankState}>
+                <p className={styles.blankTitle}>Store does not exist</p>
+                <p className={styles.blankText}>This store link is no longer valid.</p>
             </div>
         );
     }
+
+    if (errorStatus === 403) {
+        return (
+            <div className={styles.blankState}>
+                <p className={styles.blankTitle}>Store temporarily unavailable</p>
+                <p className={styles.blankText}>This store is currently paused by the seller.</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className={styles.errorContainer}>
+            <p className={styles.errorTitle}>{error}</p>
+            <button className={styles.retryBtn} onClick={loadStore}>
+                Try Again
+            </button>
+        </div>
+    );
+}
 
     return (
         <div className={styles.container}>
