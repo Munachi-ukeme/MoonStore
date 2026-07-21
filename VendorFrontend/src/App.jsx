@@ -24,6 +24,7 @@ import ErrorBoundary from "./sellerComponent/ErrorBoundary";
 import AboutUsPage from "./pages/AboutUsPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import AcceptableUsePage from "./pages/AcceptableUsePage";
 
 function App(){
   return (
@@ -48,6 +49,8 @@ function App(){
        <Route path="/my-orders" element={<ErrorBoundary><BuyerDashboard /></ErrorBoundary>} />
       <Route path="/restore" element={<ErrorBoundary><SessionRestore /></ErrorBoundary>} />
       <Route path="/aboutus" element={<ErrorBoundary><AboutUsPage /></ErrorBoundary>} />
+      <Route path="/acceptableusepolicy" element={<ErrorBoundary><AcceptableUsePage /></ErrorBoundary>} />
+
       
 
       {/* Protected seller routes - wrapped in protectedRoute*/}

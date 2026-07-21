@@ -416,7 +416,7 @@ const handleSendAll = async () => {
         disabled={sending}
         title="Send image"
       >
-        <GrAttachment size={18} color="#888" />
+        <GrAttachment size={18} color="#000000" />
       </button>
       <textarea
         className={styles.input}

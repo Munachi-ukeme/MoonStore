@@ -105,28 +105,8 @@ return(
             } onClick={handleLinkClick}> Settings </NavLink>
 
 
-            <NavLink
-            to="/aboutus"
-            className={({ isActive }) =>
-                isActive ? `${styles.link} ${styles.activeLink}` : styles.link
-            } onClick={handleLinkClick}> About Us </NavLink>
-
-
-            <NavLink
-            to="/privacypolicy"
-            className={({ isActive }) =>
-                isActive ? `${styles.link} ${styles.activeLink}` : styles.link
-            } onClick={handleLinkClick}> Privacy Policy </NavLink>
-
-
-            <NavLink
-            to="/termsofservice"
-            className={({ isActive }) =>
-                isActive ? `${styles.link} ${styles.activeLink}` : styles.link
-            } onClick={handleLinkClick}> Terms of Service </NavLink>
-
               <a
-               href={`https://wa.me/2348152905325?text=${encodeURIComponent(`Feedback from ${seller?.businessName}: `)}`}
+               href={`https://wa.me/2349132227203?text=${encodeURIComponent(`Feedback from ${seller?.businessName}: `)}`}
                target="_blank"
                rel="noreferrer"
                className={styles.feedbackBtn}

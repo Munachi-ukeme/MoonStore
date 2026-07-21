@@ -177,6 +177,13 @@ const HomePage = () => {
                             >
                                 Terms of Service
                             </Link>
+
+                            <Link
+                                className={styles.legalLink}
+                                to="/acceptableusepolicy"
+                            >
+                                Acceptable Use Policy
+                            </Link>
                         </div>
             
                         {/* powered by */}
