@@ -3,15 +3,7 @@ const Product = require("../models/Product")
 const Category = require("../models/Category")
 const bcrypt = require("bcryptjs")
 
-// helper — verify admin secret key
-const verifyAdmin = (req, res) => {
-  const adminKey = req.headers["admin-key"]
-  if (adminKey !== process.env.ADMIN_SECRET) {
-    res.status(401).json({ message: "Unauthorized" })
-    return false
-  }
-  return true
-}
+
 
 
 // -----------------------------------
