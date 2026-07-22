@@ -576,3 +576,121 @@ export const generatePaymentLink = async (conversationId) => {
         return { error: "Failed to generate payment link" };
     }
 };
+
+
+export const adminLogin = async (passkey) => {
+    try {
+        const res = await fetchWithTimeout(`${BASE_URL}/admin/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ passkey }),
+        });
+        const json = await res.json();
+        if (!res.ok) return { error: json.message || "Login failed" };
+        return json;
+    } catch {
+        return { error: "Could not log in. Please try again." };
+    }
+};
+
+const getAdminHeaders = () => ({
+    "admin-key": localStorage.getItem("moonstore_admin_token"),
+    "Content-Type": "application/json",
+});
+
+export const getAllSellers = async () => {
+    try {
+        const res = await fetchWithTimeout(`${BASE_URL}/admin/sellers`, {
+            headers: getAdminHeaders(),
+        });
+        const json = await res.json();
+        if (!res.ok) return { error: json.message || "Could not load sellers" };
+        return json;
+    } catch {
+        return { error: "Could not load sellers. Please try again." };
+    }
+};
+
+export const activateStore = async (email) => {
+    try {
+        const res = await fetchWithTimeout(`${BASE_URL}/admin/activate`, {
+            method: "PUT",
+            headers: getAdminHeaders(),
+            body: JSON.stringify({ email }),
+        });
+        const json = await res.json();
+        if (!res.ok) return { error: json.message || "Could not activate store" };
+        return json;
+    } catch {
+        return { error: "Could not activate store. Please try again." };
+    }
+};
+
+export const deactivateStore = async (email) => {
+    try {
+        const res = await fetchWithTimeout(`${BASE_URL}/admin/deactivate`, {
+            method: "PUT",
+            headers: getAdminHeaders(),
+            body: JSON.stringify({ email }),
+        });
+        const json = await res.json();
+        if (!res.ok) return { error: json.message || "Could not deactivate store" };
+        return json;
+    } catch {
+        return { error: "Could not deactivate store. Please try again." };
+    }
+};
+
+export const deleteSellerAdmin = async (email) => {
+    try {
+        const res = await fetchWithTimeout(`${BASE_URL}/admin/delete-seller`, {
+            method: "DELETE",
+            headers: getAdminHeaders(),
+            body: JSON.stringify({ email }),
+        });
+        const json = await res.json();
+        if (!res.ok) return { error: json.message || "Could not delete seller" };
+        return json;
+    } catch {
+        return { error: "Could not delete seller. Please try again." };
+    }
+};
+
+export const getAllReferralsAdmin = async () => {
+    try {
+        const res = await fetchWithTimeout(`${BASE_URL}/admin/referrals`, {
+            headers: getAdminHeaders(),
+        });
+        const json = await res.json();
+        if (!res.ok) return { error: json.message || "Could not load referrals" };
+        return json;
+    } catch {
+        return { error: "Could not load referrals. Please try again." };
+    }
+};
+
+export const markCommissionPaidAdmin = async (email) => {
+    try {
+        const res = await fetchWithTimeout(`${BASE_URL}/admin/mark-commission-paid`, {
+            method: "PUT",
+            headers: getAdminHeaders(),
+            body: JSON.stringify({ email }),
+        });
+        const json = await res.json();
+        if (!res.ok) return { error: json.message || "Could not update commission" };
+        return json;
+    } catch {
+        return { error: "Could not update commission. Please try again." };
+    }
+};
+
+export const adminLogout = async () => {
+    try {
+        await fetchWithTimeout(`${BASE_URL}/admin/logout`, {
+            method: "POST",
+            headers: getAdminHeaders(),
+        });
+    } catch {
+       
+    }
+};

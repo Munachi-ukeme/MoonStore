@@ -25,6 +25,12 @@ import AboutUsPage from "./pages/AboutUsPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import AcceptableUsePage from "./pages/AcceptableUsePage";
+import AdminLoginPage from "./adminComponent/AdminLoginPage";
+import AdminProtectedRoute from "./AdminProtectedRoute";
+import AdminSellersPage from "./adminComponent/AdminSellersPage";
+import AdminLayout from "./adminComponent/AdminLayout";
+import AdminReferralsPage from "./adminComponent/AdminReferralsPage";
+
 
 function App(){
   return (
@@ -50,6 +56,7 @@ function App(){
       <Route path="/restore" element={<ErrorBoundary><SessionRestore /></ErrorBoundary>} />
       <Route path="/aboutus" element={<ErrorBoundary><AboutUsPage /></ErrorBoundary>} />
       <Route path="/acceptableusepolicy" element={<ErrorBoundary><AcceptableUsePage /></ErrorBoundary>} />
+      <Route path="/admin/login" element={<ErrorBoundary> <AdminLoginPage /></ErrorBoundary> } />
 
       
 
@@ -152,6 +159,25 @@ function App(){
         </ProtectedRoute>
         
         }/>
+
+        <Route path="/admin/sellers" element={
+        <AdminProtectedRoute>
+          <AdminLayout>
+            <AdminSellersPage />
+          </AdminLayout>    
+        </AdminProtectedRoute>
+    }/>
+
+    <Route
+    path="/admin/referrals"
+    element={
+        <AdminProtectedRoute>
+            <AdminLayout>
+                <AdminReferralsPage />
+            </AdminLayout>
+        </AdminProtectedRoute>
+    }
+/>
 
 
       {/* buyer routes — dynamic last */}

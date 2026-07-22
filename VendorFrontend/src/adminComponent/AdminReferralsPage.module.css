@@ -1,0 +1,21 @@
+.subText {
+    font-size: 11px;
+    color: #888;
+    margin: 2px 0 0 0;
+}
+
+.markPaidBtn {
+    font-size: 12px;
+    padding: 6px 10px;
+    background: #ede9fe;
+    color: #6d28d9;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.markPaidBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
