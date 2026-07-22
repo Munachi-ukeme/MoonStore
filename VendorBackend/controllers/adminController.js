@@ -13,38 +13,6 @@ const verifyAdmin = (req, res) => {
   return true
 }
 
-// -----------------------------------
-// UPGRADE SELLER PLAN
-// PUT /api/admin/upgrade
-// -----------------------------------
-const upgradePlan = async (req, res) => {
-  try {
-    if (!verifyAdmin(req, res)) return
-
-    const { email, plan } = req.body
-
-    const seller = await Seller.findOneAndUpdate(
-      { email },
-      { plan },
-     { new: true }
-    )
-
-    if (!seller) {
-      return res.status(404).json({ message: "Seller not found" })
-    }
-
-    res.json({
-      message: `Plan upgraded to ${plan} successfully`,
-      seller: {
-        businessName: seller.businessName,
-        email: seller.email,
-        plan: seller.plan,
-      },
-    })
-  } catch (error) {
-    res.status(500).json({ message: error.message })
-  }
-}
 
 // -----------------------------------
 // ACTIVATE ONE STORE
@@ -98,43 +66,6 @@ const deactivateStore = async (req, res) => {
   }
 }
 
-// -----------------------------------
-// ACTIVATE ALL STORES
-// PUT /api/admin/activate-all
-// -----------------------------------
-const activateAll = async (req, res) => {
-  try {
-    if (!verifyAdmin(req, res)) return
-
-    const result = await Seller.updateMany(
-      { isActive: false },
-      { isActive: true }
-    )
-
-    res.json({ message: `${result.modifiedCount} stores activated successfully` })
-  } catch (error) {
-    res.status(500).json({ message: error.message })
-  }
-}
-
-// -----------------------------------
-// DEACTIVATE ALL STORES
-// PUT /api/admin/deactivate-all
-// -----------------------------------
-const deactivateAll = async (req, res) => {
-  try {
-    if (!verifyAdmin(req, res)) return
-
-    const result = await Seller.updateMany(
-      { isActive: true },
-      { isActive: false }
-    )
-
-    res.json({ message: `${result.modifiedCount} stores deactivated successfully` })
-  } catch (error) {
-    res.status(500).json({ message: error.message })
-  }
-}
 
 // deactivateSubaccount is a helper function — not a route handler.
 // it lives in the same file and gets called from inside deleteSeller
@@ -234,37 +165,6 @@ const getAllSellers = async (req, res) => {
   }
 }
 
-// -----------------------------------
-// RESET SELLER PASSWORD
-// PUT /api/admin/reset-password
-const resetPassword = async (req, res) =>{
-  try{
-    if(!verifyAdmin(req, res)) return
-
-    const { email, newPassword } = req.body
-
-    //check if seller exists
-    const seller = await Seller.findOne({ email })
-    if (!seller) {
-      return res.status(404).json({ message: "Seller not found"})
-    }
-
-    // hash the new password before saving
-    // never store plain text passwords
-    const salt = await bcrypt.genSalt(10)
-    const hashedPassword = await bcrypt.hash(newPassword, salt)
-
-    //save the new hashed password
-    seller.password = hashedPassword
-    await seller.save()
-
-    res.json({
-      message: `Password reset successfully for ${seller.businessName}`,
-    })
-  } catch (error) {
-    res.status(500).json({ message: error.message})
-  }
-}
 
 //Mark commission as paid
 const markCommissionPaid = async(req, res) =>{
@@ -318,6 +218,7 @@ const getAllReferrals = async(req, res) =>{
           return{
             referrer: referrer ? referrer.businessName : "Unknown",
             referrerEmail: referrer ? referrer.email : "Unknown",
+            referrerCommissionBalance: referrer ? referrer.commissionBalance : 0,
             referredSeller: referred.businessName,
             referredEmail: referred.email,
             referralCode: referred.referredBy,
@@ -334,15 +235,55 @@ const getAllReferrals = async(req, res) =>{
   }
 }
 
+const crypto = require("crypto");
+let activeAdminToken = null;
+let adminTokenExpires = null;
+
+const adminLogin = async (req, res) => {
+    const { passkey } = req.body;
+
+    if (!passkey || passkey !== process.env.ADMIN_SECRET) {
+        return res.status(401).json({ message: "Incorrect passkey" });
+    }
+
+    activeAdminToken = crypto.randomBytes(32).toString("hex");
+    adminTokenExpires = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+
+    res.json({ success: true, token: activeAdminToken });
+};
+
+const adminLogout = async (req, res) => {
+    activeAdminToken = null;
+    adminTokenExpires = null;
+    res.json({ message: "Logged out" });
+};
+
+// replaces verifyAdmin everywhere
+const verifyAdmin = (req, res) => {
+    const providedToken = req.headers["admin-key"];
+
+    if (!activeAdminToken || Date.now() > adminTokenExpires) {
+        res.status(401).json({ message: "Session expired, please log in again" });
+        return false;
+    }
+
+    if (providedToken !== activeAdminToken) {
+        res.status(401).json({ message: "Unauthorized" });
+        return false;
+    }
+
+    return true;
+};
+
+
 module.exports = {
-  upgradePlan,
   activateStore,
   deactivateStore,
-  activateAll,
-  deactivateAll,
+  adminLogin,
+  adminLogout,
+  verifyAdmin,
   deleteSeller,
   getAllSellers,
-  resetPassword,
   markCommissionPaid,
   getAllReferrals,
 }

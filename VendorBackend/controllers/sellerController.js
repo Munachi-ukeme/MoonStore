@@ -105,4 +105,4 @@ const deleteSeller = async (req, res) => {
 
 
 
-module.exports = { deleteAccount, changePassword }
+module.exports = { deleteSeller, changePassword }
