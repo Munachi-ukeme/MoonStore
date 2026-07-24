@@ -6,7 +6,7 @@ const DesktopBlock = ({ children }) => {
 
     useEffect(() => {
         const check = () => {
-            setIsDesktop(window.innerWidth >= 500);
+            setIsDesktop(window.innerWidth >= 10000);
         };
         check();
         window.addEventListener("resize", check);
