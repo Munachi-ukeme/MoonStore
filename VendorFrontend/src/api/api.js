@@ -238,19 +238,31 @@ export const sendImageMessage = async (conversationId, sessionId, base64Content,
   }
 };
 
-export const reportConversation = async (conversationId, sessionId, reason) => {
-  try {
-    const res = await fetchWithTimeout(`${BASE_URL}/chat/${conversationId}/report`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-session-id": sessionId },
-      body: JSON.stringify({ reason }),
-    });
-    return await res.json();
-  } catch {
-    return { error: "Failed to submit report" };
-  }
+export const reportConversation = async (conversationId, sessionId, reason, buyerPhone) => {
+    try {
+        const res = await fetchWithTimeout(`${BASE_URL}/chat/${conversationId}/report`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "x-session-id": sessionId },
+            body: JSON.stringify({ reason, buyerPhone }),
+        });
+        return await res.json();
+    } catch {
+        return { error: "Failed to submit report" };
+    }
 };
 
+export const getReportedConversationsAdmin = async () => {
+    try {
+        const res = await fetchWithTimeout(`${BASE_URL}/admin/reports`, {
+            headers: getAdminHeaders(),
+        });
+        const json = await res.json();
+        if (!res.ok) return { error: json.message || "Could not load reports" };
+        return json;
+    } catch {
+        return { error: "Could not load reports. Please try again." };
+    }
+};
 
 
 

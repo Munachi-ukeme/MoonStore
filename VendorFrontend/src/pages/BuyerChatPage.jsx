@@ -65,6 +65,7 @@ const BuyerChatPage = () => {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
+  const [buyerPhone, setBuyerPhone] = useState("");
   const [reportReason, setReportReason] = useState("");
   const [reportSending, setReportSending] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
@@ -228,7 +229,7 @@ const handleSendAll = async () => {
   const handleReport = async () => {
     if (!reportReason.trim()) return;
     setReportSending(true);
-    const data = await reportConversation(conversationId, sessionId, reportReason.trim());
+    const data = await reportConversation(conversationId, sessionId, reportReason.trim(), buyerPhone.trim());
     if (!data.error) {
       setReportSent(true);
       setShowReportModal(false);
@@ -450,6 +451,12 @@ const renderMessageContent = (content, msgId) => {
           <div className={styles.modal}>
             <h3>Report Seller</h3>
             <p>Describe the issue below. Our team will review this conversation.</p>
+            <input
+    type="tel"
+    placeholder="Your WhatsApp/phone number"
+    value={buyerPhone}
+    onChange={(e) => setBuyerPhone(e.target.value)}
+/>
             <textarea
               className={styles.reportInput}
               value={reportReason}

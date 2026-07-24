@@ -30,6 +30,7 @@ import AdminProtectedRoute from "./AdminProtectedRoute";
 import AdminSellersPage from "./adminComponent/AdminSellersPage";
 import AdminLayout from "./adminComponent/AdminLayout";
 import AdminReferralsPage from "./adminComponent/AdminReferralsPage";
+import AdminReportsPage from "./adminComponent/AdminReportsPage";
 
 
 function App(){
@@ -174,6 +175,17 @@ function App(){
         <AdminProtectedRoute>
             <AdminLayout>
                 <AdminReferralsPage />
+            </AdminLayout>
+        </AdminProtectedRoute>
+    }
+/>
+
+<Route
+    path="/admin/reports"
+    element={
+        <AdminProtectedRoute>
+            <AdminLayout>
+                <AdminReportsPage />
             </AdminLayout>
         </AdminProtectedRoute>
     }
