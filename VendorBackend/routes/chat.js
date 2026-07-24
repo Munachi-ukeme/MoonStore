@@ -9,7 +9,6 @@ const {
     getSellerInbox,
     reportConversation,
     initializeOrderPayment,
-    reportConversation
 } = require("../controllers/chatController");
 
 // ── public routes — buyers access these using sessionId ──
