@@ -1,4 +1,7 @@
 const Seller = require("../models/Seller")
+const Conversation = require("../models/Conversation");
+const Message = require("../models/Message");
+const PDFDocument = require("pdfkit");
 const Product = require("../models/Product")
 const Category = require("../models/Category")
 const bcrypt = require("bcryptjs")
@@ -267,10 +270,80 @@ const verifyAdmin = (req, res) => {
     return true;
 };
 
+const getReportedConversations = async (req, res) => {
+    try {
+        if (!verifyAdmin(req, res)) return;
+
+        const reportedConversations = await Conversation.find({ isReported: true })
+            .populate("sellerId", "businessName slug email whatsappNumber isActive")
+            .populate("productIds", "name")
+            .sort({ updatedAt: -1 });
+
+        res.json({ reports: reportedConversations });
+    } catch (err) {
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+
+const exportConversationPdf = async (req, res) => {
+    try {
+        if (!verifyAdmin(req, res)) return;
+
+        const { conversationId } = req.params;
+
+        const conversation = await Conversation.findById(conversationId)
+            .populate("sellerId", "businessName slug email whatsappNumber");
+
+        if (!conversation) {
+            return res.status(404).json({ message: "Conversation not found" });
+        }
+
+        const messages = await Message.find({ conversationId }).sort({ createdAt: 1 });
+
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader("Content-Disposition", `attachment; filename=conversation-${conversationId}.pdf`);
+
+        const doc = new PDFDocument({ margin: 40 });
+        doc.pipe(res);
+
+        doc.fontSize(16).text("MoonStore — Conversation Export", { align: "center" });
+        doc.moveDown();
+
+        doc.fontSize(11);
+        doc.text(`Seller: ${conversation.sellerId?.businessName || "Unknown"}`);
+        doc.text(`Store: /${conversation.sellerId?.slug || "—"}`);
+        doc.text(`Buyer name: ${conversation.buyerName || "—"}`);
+        doc.text(`Buyer email: ${conversation.buyerEmail || "—"}`);
+        doc.text(`Buyer phone: ${conversation.buyerPhone || "—"}`);
+        doc.text(`Delivery: ${conversation.deliveryAddress || "—"}, ${conversation.deliveryCity || "—"}`);
+        doc.text(`Amount: NGN ${conversation.amount?.toLocaleString() || 0}`);
+        doc.text(`Report reason: ${conversation.reportReason || "Not specified"}`);
+        doc.moveDown();
+
+        doc.fontSize(13).text("Message History", { underline: true });
+        doc.moveDown(0.5);
+
+        doc.fontSize(10);
+        messages.forEach((msg) => {
+            const time = new Date(msg.createdAt).toLocaleString("en-NG");
+            const sender = msg.sender === "buyer" ? "Buyer" : msg.sender === "seller" ? "Seller" : "System";
+            const cleanContent = msg.content.replace(/\[img\].*?\[\/img\]/gs, "[Image attached]");
+            doc.text(`[${time}] ${sender}: ${cleanContent}`);
+            doc.moveDown(0.3);
+        });
+
+        doc.end();
+    } catch (err) {
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
 
 module.exports = {
   activateStore,
   deactivateStore,
+  getReportedConversations,
   adminLogin,
   adminLogout,
   verifyAdmin,
@@ -278,4 +351,5 @@ module.exports = {
   getAllSellers,
   markCommissionPaid,
   getAllReferrals,
+  exportConversationPdf,
 }

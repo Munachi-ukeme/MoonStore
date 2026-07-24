@@ -530,8 +530,32 @@ const initializeOrderPayment = async (req, res) => {
     }
 };
 
+const reportConversation = async (req, res) => {
+    try {
+        const { conversationId } = req.params;
+        const { reason, buyerPhone } = req.body;
+
+        const conversation = await Conversation.findById(conversationId);
+        if (!conversation) {
+            return res.status(404).json({ message: "Conversation not found" });
+        }
+
+        conversation.isReported = true;
+        conversation.reportReason = reason;
+        conversation.buyerPhone = buyerPhone || "";
+        await conversation.save();
+
+        res.json({ message: "Report submitted" });
+    } catch (err) {
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+
+
 module.exports = {
     startConversation,
+    reportConversation,
     getMessages,
     getMessagesAsSeller,
     sendMessage,

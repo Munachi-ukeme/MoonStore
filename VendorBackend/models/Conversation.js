@@ -10,6 +10,12 @@ const conversationSchema = new mongoose.Schema(
             type: String,
             default: null,
         },
+
+        buyerPhone: {
+            type: String,
+            default: "" 
+        },
+        
         sellerId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Seller",
