@@ -560,6 +560,5 @@ module.exports = {
     getMessagesAsSeller,
     sendMessage,
     getSellerInbox,
-    reportConversation,
     initializeOrderPayment,
 };
