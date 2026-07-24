@@ -36,8 +36,8 @@ router.put("/mark-commission-paid", markCommissionPaid)
 // get all referrals
 router.get("/referrals", getAllReferrals)
 
-router.get("/admin/reports", getReportedConversations);
+router.get("/reports", getReportedConversations);
 
-router.get("/admin/reports/:conversationId/export", exportConversationPdf);
+router.get("/reports/:conversationId/export", exportConversationPdf);
 
 module.exports = router
