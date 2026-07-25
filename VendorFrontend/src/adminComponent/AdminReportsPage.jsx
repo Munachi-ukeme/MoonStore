@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getReportedConversationsAdmin } from "../api/api";
+import { getReportedConversationsAdmin, BASE_URL } from "../api/api";
 import styles from "./AdminReportsPage.module.css";
 
 const AdminReportsPage = () => {
