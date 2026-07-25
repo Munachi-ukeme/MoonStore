@@ -533,7 +533,8 @@ const initializeOrderPayment = async (req, res) => {
 const reportConversation = async (req, res) => {
     try {
         const { conversationId } = req.params;
-        const { sessionId, reason, buyerPhone } = req.body;
+        const sessionId = req.headers["x-session-id"];
+        const { reason, buyerPhone } = req.body;
 
         const conversation = await Conversation.findById(conversationId);
         if (!conversation) {
