@@ -1,4 +1,4 @@
-const BASE_URL = import.meta.env.VITE_API_URL ; //backend address
+export const BASE_URL = import.meta.env.VITE_API_URL ; //backend address
 
 const fetchWithTimeout = async (url, options = {}, timeout = 20000) => {
   const controller = new AbortController();
