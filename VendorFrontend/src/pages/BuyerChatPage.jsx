@@ -235,7 +235,8 @@ const handleSendAll = async () => {
       setShowReportModal(false);
     }
     setBuyerPhone("");
-    setReportReason("")
+    setReportReason("");
+    setReportSent("");
     setReportSending(false);
 
   };
@@ -457,7 +458,7 @@ const renderMessageContent = (content, msgId) => {
             <input
     type="tel"
     className={styles.reportPhoneInput}
-    placeholder="Your WhatsApp/phone number"
+    placeholder="Your WhatsApp / Phone number"
     value={buyerPhone}
     onChange={(e) => setBuyerPhone(e.target.value)}
 />
