@@ -234,7 +234,10 @@ const handleSendAll = async () => {
       setReportSent(true);
       setShowReportModal(false);
     }
+    setBuyerPhone("");
+    setReportReason("")
     setReportSending(false);
+
   };
 
   
