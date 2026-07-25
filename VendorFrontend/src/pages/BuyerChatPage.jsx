@@ -227,7 +227,7 @@ const handleSendAll = async () => {
 };
 
   const handleReport = async () => {
-    if (!reportReason.trim()) return;
+    if (!reportReason.trim() || !buyerPhone.trim()) return;
     setReportSending(true);
     const data = await reportConversation(conversationId, sessionId, reportReason.trim(), buyerPhone.trim());
     if (!data.error) {
@@ -477,7 +477,7 @@ const renderMessageContent = (content, msgId) => {
               <button
                 className={styles.submitBtn}
                 onClick={handleReport}
-                disabled={reportSending || !reportReason.trim()}
+                disabled={reportSending || !reportReason.trim() ||!buyerPhone.trim()}
               >
                 {reportSending ? "Sending..." : "Submit Report"}
               </button>
