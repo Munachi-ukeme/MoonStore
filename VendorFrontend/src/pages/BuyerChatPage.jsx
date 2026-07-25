@@ -456,6 +456,7 @@ const renderMessageContent = (content, msgId) => {
             <p>Describe the issue below. Our team will review this conversation.</p>
             <input
     type="tel"
+    className={styles.reportPhoneInput}
     placeholder="Your WhatsApp/phone number"
     value={buyerPhone}
     onChange={(e) => setBuyerPhone(e.target.value)}

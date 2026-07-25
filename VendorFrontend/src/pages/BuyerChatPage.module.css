@@ -388,6 +388,15 @@
   box-sizing: border-box;
 }
 
+.reportPhoneInput{
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 13px;
+  font-family: inherit;
+  width: 50%;
+  height: 15px;
+}
+
 .reportInput:focus {
   border-color: #6c47ff;
 }
