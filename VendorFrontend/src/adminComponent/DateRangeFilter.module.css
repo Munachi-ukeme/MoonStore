@@ -1,0 +1,5 @@
+.wrapper { display: flex; align-items: center; gap: 8px; }
+.select { padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
+.customRow { display: flex; align-items: center; gap: 6px; }
+.dateInput { padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
+.toLabel { font-size: 12px; color: #888; }

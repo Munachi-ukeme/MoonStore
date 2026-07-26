@@ -6,12 +6,18 @@ import {
     deleteSellerAdmin,
 } from "../api/api";
 import styles from "./AdminSellersPage.module.css";
+import DateRangeFilter from "../adminComponent/DateRangeFilter";
 
 const AdminSellersPage = () => {
     const [sellers, setSellers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [actionLoading, setActionLoading] = useState(null); // tracks which row's button is busy
+    const [searchTerm, setSearchTerm] = useState("");
+const [statusFilter, setStatusFilter] = useState("all");
+const [startDate, setStartDate] = useState("");
+const [endDate, setEndDate] = useState("");
+
 
     const loadSellers = async () => {
         setLoading(true);
@@ -63,6 +69,23 @@ const AdminSellersPage = () => {
         });
     };
 
+    const filteredSellers = sellers.filter((seller) => {
+    const matchesSearch =
+        seller.businessName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        seller.email.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesStatus =
+        statusFilter === "all" ||
+        (statusFilter === "active" && seller.isActive) ||
+        (statusFilter === "inactive" && !seller.isActive);
+
+    const joinedDate = new Date(seller.joinedDate);
+    const matchesStartDate = !startDate || joinedDate >= new Date(startDate);
+    const matchesEndDate = !endDate || joinedDate <= new Date(endDate);
+
+    return matchesSearch && matchesStatus && matchesStartDate && matchesEndDate;
+});
+
     if (loading) return <p className={styles.stateText}>Loading sellers...</p>;
     if (error) return <p className={styles.errorText}>{error}</p>;
 
@@ -70,6 +93,27 @@ const AdminSellersPage = () => {
         <div className={styles.page}>
             <h1 className={styles.title}>Sellers ({sellers.length})</h1>
 
+
+        <div className={styles.filterRow}>
+    <input
+        type="text"
+        className={styles.searchInput}
+        placeholder="Search by business name or email"
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+    />
+    <select
+        className={styles.statusSelect}
+        value={statusFilter}
+        onChange={(e) => setStatusFilter(e.target.value)}
+    >
+        <option value="all">All</option>
+        <option value="active">Active</option>
+        <option value="inactive">Inactive</option>
+    </select>
+
+    <DateRangeFilter onChange={(start, end) => { setStartDate(start); setEndDate(end); }} />
+</div>
             <div className={styles.tableWrapper}>
                 <table className={styles.table}>
                     <thead>
@@ -84,7 +128,7 @@ const AdminSellersPage = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {sellers.map((seller) => (
+                        {filteredSellers.map((seller) => (
                             <tr key={seller.email}>
                                 <td>
                                     <p className={styles.bizName}>{seller.businessName}</p>

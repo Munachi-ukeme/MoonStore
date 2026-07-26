@@ -110,3 +110,9 @@
     text-align: center;
     color: #ef4444;
 }
+
+.filterRow { display: flex; gap: 8px; margin-bottom: 14px; }
+.searchInput { flex: 1; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
+.statusSelect { padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
+
+.dateInput { padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }

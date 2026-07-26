@@ -706,3 +706,21 @@ export const adminLogout = async () => {
        
     }
 };
+
+
+export const getRevenueSummaryAdmin = async (startDate, endDate) => {
+    try {
+        let url = `${BASE_URL}/admin/revenue-summary`;
+        const params = new URLSearchParams();
+        if (startDate) params.append("startDate", startDate);
+        if (endDate) params.append("endDate", endDate);
+        if (params.toString()) url += `?${params.toString()}`;
+
+        const res = await fetchWithTimeout(url, { headers: getAdminHeaders() });
+        const json = await res.json();
+        if (!res.ok) return { error: json.message || "Could not load revenue" };
+        return json;
+    } catch {
+        return { error: "Could not load revenue. Please try again." };
+    }
+};
