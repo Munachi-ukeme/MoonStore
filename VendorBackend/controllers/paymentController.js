@@ -173,16 +173,25 @@ const paystackWebhook = async (req, res) => {
                 const seller = await Seller.findById(sellerId);
 
                 if (seller) {
-                    const now = new Date();
-                    const end = new Date();
-                    end.setDate(end.getDate() + 30);
+    const now = new Date();
+    const end = new Date();
+    end.setDate(end.getDate() + 30);
 
-                    seller.isActive = true;
-                    seller.plan = plan;
-                    seller.subscriptionStart = now;
-                    seller.subscriptionEnd = end;
-                    await seller.save();
-                }
+    seller.isActive = true;
+    seller.plan = plan;
+    seller.subscriptionStart = now;
+    seller.subscriptionEnd = end;
+    await seller.save();
+
+    const Transaction = require("../models/Transaction");
+    await Transaction.create({
+        sellerId: seller._id,
+        type: "subscription",
+        amount: event.data.amount / 100,
+        plan: plan,
+        reference: event.data.reference,
+    });
+}
             } catch (err) {
                 console.error("Webhook subscription update failed:", err.message);
             }
@@ -197,17 +206,26 @@ const paystackWebhook = async (req, res) => {
 
                 const conversation = await Conversation.findById(conversationId);
 
-                if (conversation && conversation.status !== "paid") {
-                    conversation.status = "paid";
-                    conversation.paidAt = new Date();
-                    conversation.amount = event.data.amount / 100; // kobo to naira
-                    await conversation.save();
+               if (conversation && conversation.status !== "paid") {
+    conversation.status = "paid";
+    conversation.paidAt = new Date();
+    conversation.amount = event.data.amount / 100;
+    await conversation.save();
 
-                    await Message.create({
-                        conversationId: conversation._id,
-                        sender: "system",
-                        content: "✅ Payment confirmed. This conversation will be deleted in 7 days.",
-                    });
+    const Transaction = require("../models/Transaction");
+    await Transaction.create({
+        sellerId: conversation.sellerId,
+        type: "order",
+        amount: conversation.amount,
+        platformFee: conversation.amount * 0.015,
+        reference: event.data.reference,
+    });
+
+    await Message.create({
+        conversationId: conversation._id,
+        sender: "system",
+        content: "✅ Payment confirmed. This conversation will be deleted in 7 days.",
+    });
 
                     try {
                         getIO().to(conversationId.toString()).emit("conversation_paid", {

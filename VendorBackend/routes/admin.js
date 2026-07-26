@@ -11,7 +11,8 @@ const {
   getAllReferrals,
   adminLogout,
   getReportedConversations,
-  exportConversationPdf
+  exportConversationPdf,
+  getRevenueSummary,
 } = require("../controllers/adminController")
 
 // PUT /api/admin/activate → activate one store
@@ -39,5 +40,7 @@ router.get("/referrals", getAllReferrals)
 router.get("/reports", getReportedConversations);
 
 router.get("/reports/:conversationId/export", exportConversationPdf);
+
+router.get("/revenue-summary", getRevenueSummary);
 
 module.exports = router

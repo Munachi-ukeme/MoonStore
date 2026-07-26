@@ -5,8 +5,7 @@ const PDFDocument = require("pdfkit");
 const Product = require("../models/Product")
 const Category = require("../models/Category")
 const bcrypt = require("bcryptjs")
-
-
+const Transaction = require("../models/Transaction");
 
 
 // -----------------------------------
@@ -340,6 +339,66 @@ const exportConversationPdf = async (req, res) => {
 };
 
 
+const getRevenueSummary = async (req, res) => {
+    try {
+        if (!verifyAdmin(req, res)) return;
+
+        const { startDate, endDate } = req.query;
+
+        const dateFilter = {};
+        if (startDate) dateFilter.$gte = new Date(startDate);
+        if (endDate) dateFilter.$lte = new Date(endDate);
+
+        const matchStage = Object.keys(dateFilter).length > 0
+            ? { createdAt: dateFilter }
+            : {};
+
+        const summary = await Transaction.aggregate([
+            { $match: matchStage },
+            {
+                $group: {
+                    _id: "$type",
+                    totalAmount: { $sum: "$amount" },
+                    totalFee: { $sum: "$platformFee" },
+                    count: { $sum: 1 },
+                },
+            },
+        ]);
+
+        // summary is an array like [{ _id: "order", totalAmount: ..., totalFee: ... }, { _id: "subscription", ... }]
+        // turn it into a clean, predictable object instead of an array we'd have to search through
+        let gmv = 0;
+        let transactionFeeRevenue = 0;
+        let subscriptionRevenue = 0;
+        let orderCount = 0;
+        let subscriptionCount = 0;
+
+        summary.forEach((group) => {
+            if (group._id === "order") {
+                gmv = group.totalAmount;
+                transactionFeeRevenue = group.totalFee;
+                orderCount = group.count;
+            }
+            if (group._id === "subscription") {
+                subscriptionRevenue = group.totalAmount;
+                subscriptionCount = group.count;
+            }
+        });
+
+        res.json({
+            gmv,
+            transactionFeeRevenue,
+            subscriptionRevenue,
+            totalRevenue: transactionFeeRevenue + subscriptionRevenue,
+            orderCount,
+            subscriptionCount,
+        });
+    } catch (err) {
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+
 module.exports = {
   activateStore,
   deactivateStore,
@@ -352,4 +411,5 @@ module.exports = {
   markCommissionPaid,
   getAllReferrals,
   exportConversationPdf,
+  getRevenueSummary
 }
