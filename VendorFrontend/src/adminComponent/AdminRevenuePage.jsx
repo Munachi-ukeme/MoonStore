@@ -7,25 +7,28 @@ const AdminRevenuePage = () => {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [initialLoading, setInitialLoading] = useState(true);
+const [refreshing, setRefreshing] = useState(false);
 
     const handleFilterChange = async (start, end) => {
-        setLoading(true);
-        const result = await getRevenueSummaryAdmin(start, end);
-        if (result.error) {
-            setError(result.error);
-        } else {
-            setData(result);
-            setError("");
-        }
-        setLoading(false);
-    };
+    setRefreshing(true);
+    const result = await getRevenueSummaryAdmin(start, end);
+    if (result.error) {
+        setError(result.error);
+    } else {
+        setData(result);
+        setError("");
+    }
+    setRefreshing(false);
+    setInitialLoading(false);
+};
 
-    useEffect(() => {
-        handleFilterChange("", "");
-    }, []);
+useEffect(() => {
+    handleFilterChange("", "");
+}, []);
 
-    if (loading) return <p className={styles.stateText}>Loading revenue...</p>;
-    if (error) return <p className={styles.errorText}>{error}</p>;
+if (initialLoading) return <p className={styles.stateText}>Loading revenue...</p>;
+if (error) return <p className={styles.errorText}>{error}</p>;
 
     return (
         <div className={styles.page}>
