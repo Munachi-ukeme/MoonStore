@@ -383,6 +383,24 @@
   gap: 10px;
 }
 
+.reasonLabel {
+  display: block;
+  font-size: 13px;
+  margin-top: 12px;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.reasonTextarea {
+  width: 100%;
+  padding: 10px;
+  font-size: 13px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  resize: none;
+  font-family: inherit;
+}
+
 .cancelButton {
   flex: 1;
   padding: 12px;

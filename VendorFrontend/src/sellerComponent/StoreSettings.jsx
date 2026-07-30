@@ -89,6 +89,8 @@ const StoreSettings = () => {
   // delete account
   const [showDeleteWarning, setShowDeleteWarning] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [reason, setReason] = useState("");
+  const [reasonError, setReasonError] = useState("");
 
   // plan selection
   const [selectedPlan, setSelectedPlan] = useState(null);
@@ -181,18 +183,23 @@ const StoreSettings = () => {
   };
 
   const handleDeleteAccount = async () => {
-    setDeleteLoading(true);
-    const data = await deleteSellerAccount();
-    setDeleteLoading(false);
+  if (reason.trim().length < 10) {
+    setReasonError("Please provide a reason (at least 10 characters).");
+    return;
+  }
+  setReasonError("");
+  setDeleteLoading(true);
+  const data = await deleteSellerAccount(reason.trim());
+  setDeleteLoading(false);
 
-    if (data?.error) {
-      setError(data.error);
-      return;
-    }
+  if (data?.error) {
+    setError(data.error);
+    return;
+  }
 
-    logout();
-    navigate("/login");
-  };
+  logout();
+  navigate("/login");
+};
 
   const handleHelpButton = () => {
     const message = `Hi, I need help with my MoonStore store. Business: ${seller?.businessName} Plan: ${seller?.plan}`;
@@ -587,6 +594,19 @@ const StoreSettings = () => {
               <p className={styles.popupText}>
                 This will permanently delete your store, all your products, and all your categories. This action cannot be undone.
               </p>
+               <label className={styles.reasonLabel} htmlFor="deleteReason">
+        Please tell us why you're leaving (required)
+      </label>
+
+      <textarea
+        id="deleteReason"
+        className={styles.reasonTextarea}
+        value={reason}
+        onChange={(e) => setReason(e.target.value)}
+        placeholder="Your feedback helps us improve..."
+        rows={4}
+      />
+      {reasonError ? <p className={styles.error}>{reasonError}</p> : null}
               <div className={styles.popupButtons}>
                 <button className={styles.cancelButton} onClick={() => setShowDeleteWarning(false)}>
                   Cancel

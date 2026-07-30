@@ -32,6 +32,7 @@ import AdminLayout from "./adminComponent/AdminLayout";
 import AdminReferralsPage from "./adminComponent/AdminReferralsPage";
 import AdminReportsPage from "./adminComponent/AdminReportsPage";
 import AdminRevenuePage from "./adminComponent/AdminRevenuePage";
+import AdminExitSurveysPage from "./adminComponent/AdminExitSurveysPage";
 
 function App(){
   return (
@@ -58,7 +59,8 @@ function App(){
       <Route path="/aboutus" element={<ErrorBoundary><AboutUsPage /></ErrorBoundary>} />
       <Route path="/acceptableusepolicy" element={<ErrorBoundary><AcceptableUsePage /></ErrorBoundary>} />
       <Route path="/admin/login" element={<ErrorBoundary> <AdminLoginPage /></ErrorBoundary> } />
-
+      
+      <Route path="/admin/exit-surveys" element={ <ErrorBoundary> <AdminExitSurveysPage /> </ErrorBoundary>} />
       
 
       {/* Protected seller routes - wrapped in protectedRoute*/}
@@ -197,6 +199,17 @@ function App(){
         <AdminProtectedRoute>
             <AdminLayout>
                 <AdminRevenuePage />
+            </AdminLayout>
+        </AdminProtectedRoute>
+    }
+/>
+
+<Route
+    path="/admin/exit-surveys"
+    element={
+        <AdminProtectedRoute>
+            <AdminLayout>
+                <AdminExitSurveysPage />
             </AdminLayout>
         </AdminProtectedRoute>
     }

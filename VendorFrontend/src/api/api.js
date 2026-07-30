@@ -526,17 +526,19 @@ export const changeSellerPassword = async (currentPassword, newPassword) => {
 
 //SELLER ACCOUNT
 //Permently delete the seller's account
-export const deleteSellerAccount = async () =>{
-  try{
+export const deleteSellerAccount = async (reason) => {
+  try {
     const res = await fetchWithTimeout(`${BASE_URL}/seller/account`, {
-        method: "DELETE",
-        headers: getAuthHeaders(),
+      method: "DELETE",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ reason }),
     });
     return res.json();
-  }catch (error){
-        return{ error: "Failed to delete seller account."};
-    }
+  } catch (error) {
+    return { error: "Failed to delete seller account." };
+  }
 };
+
 
 export const trackStoreVisit = async ({ sellerId, sessionId, referrer }) => {
   try {
@@ -723,4 +725,17 @@ export const getRevenueSummaryAdmin = async (startDate, endDate) => {
     } catch {
         return { error: "Could not load revenue. Please try again." };
     }
+};
+
+
+export const getExitSurveys = async () => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/admin/exit-surveys`, {
+      method: "GET",
+      headers: getAdminHeaders(),
+    });
+    return res.json();
+  } catch (error) {
+    return { error: "Failed to fetch exit surveys." };
+  }
 };
