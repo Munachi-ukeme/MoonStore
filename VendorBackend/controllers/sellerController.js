@@ -3,6 +3,8 @@ const Product = require("../models/Product");
 const Category = require("../models/Category");
 const ExitSurvey = require("../models/ExitSurvey");
 const bcrypt = require("bcryptjs");
+const Conversation = require("../models/Conversation");
+const Message = require("../models/Message");
 
 
 // CHANGE PASSWORD
@@ -95,6 +97,7 @@ const deleteSeller = async (req, res) => {
     await ExitSurvey.create({
       businessName: seller.businessName,
       email: seller.email,
+      whatsappNumber: seller.whatsappNumber,
       plan: seller.plan,
       slug: seller.slug,
       reason: reason.trim(),
