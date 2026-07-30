@@ -4,6 +4,7 @@ const Message = require("../models/Message");
 const PDFDocument = require("pdfkit");
 const Product = require("../models/Product")
 const Category = require("../models/Category")
+const ExitSurvey = require("../models/ExitSurvey");
 const bcrypt = require("bcryptjs")
 const Transaction = require("../models/Transaction");
 
@@ -398,6 +399,18 @@ const getRevenueSummary = async (req, res) => {
     }
 };
 
+const getExitSurveys = async (req, res) => {
+    try {
+        if (!verifyAdmin(req, res)) return;
+
+        const exitSurveys = await ExitSurvey.find({}).sort({ createdAt: -1 });
+
+        res.json({ exitSurveys });
+    } catch (err) {
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
 
 module.exports = {
   activateStore,
@@ -411,5 +424,6 @@ module.exports = {
   markCommissionPaid,
   getAllReferrals,
   exportConversationPdf,
-  getRevenueSummary
+  getRevenueSummary,
+  getExitSurveys,
 }

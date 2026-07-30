@@ -13,6 +13,7 @@ const {
   getReportedConversations,
   exportConversationPdf,
   getRevenueSummary,
+  getExitSurveys,
 } = require("../controllers/adminController")
 
 // PUT /api/admin/activate → activate one store
@@ -42,5 +43,7 @@ router.get("/reports", getReportedConversations);
 router.get("/reports/:conversationId/export", exportConversationPdf);
 
 router.get("/revenue-summary", getRevenueSummary);
+
+router.get("/exit-surveys", getExitSurveys);
 
 module.exports = router

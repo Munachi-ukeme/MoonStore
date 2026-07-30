@@ -1,7 +1,8 @@
-const Seller = require("../models/Seller")
-const Product = require("../models/Product")
-const Category = require("../models/Category")
-const bcrypt = require("bcryptjs")
+const Seller = require("../models/Seller");
+const Product = require("../models/Product");
+const Category = require("../models/Category");
+const ExitSurvey = require("../models/ExitSurvey");
+const bcrypt = require("bcryptjs");
 
 
 // CHANGE PASSWORD
@@ -73,11 +74,14 @@ const deactivateSubaccount = async (subaccountCode) => {
 // -----------------------------------
 const deleteSeller = async (req, res) => {
     try {
-        if (!verifyAdmin(req, res)) return;
+        
+    const { reason } = req.body;
 
-        const { email } = req.body;
+    if (!reason || reason.trim().length < 10) {
+      return res.status(400).json({ error: "Please provide a reason of at least 10 characters." });
+    }
+        const seller = await Seller.findById(req.seller._id);
 
-        const seller = await Seller.findOne({ email });
         if (!seller) {
             return res.status(404).json({ message: "Seller not found" });
         }
@@ -85,6 +89,16 @@ const deleteSeller = async (req, res) => {
         if (seller.paystackSubaccountCode) {
             await deactivateSubaccount(seller.paystackSubaccountCode);
         }
+
+
+    // snapshot seller info + reason before the seller doc is gone
+    await ExitSurvey.create({
+      businessName: seller.businessName,
+      email: seller.email,
+      plan: seller.plan,
+      slug: seller.slug,
+      reason: reason.trim(),
+    });
 
         // find all conversations for this seller first, so we can delete their messages too
         const conversations = await Conversation.find({ sellerId: seller._id });
@@ -97,7 +111,7 @@ const deleteSeller = async (req, res) => {
         await Category.deleteMany({ sellerId: seller._id });
         await seller.deleteOne();
 
-        res.json({ message: "Seller account and all data deleted successfully" });
+        res.json({ message: "Account and all data deleted successfully" });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
