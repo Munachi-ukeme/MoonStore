@@ -41,6 +41,7 @@ const AdminExitSurveysPage = () => {
             <tr>
               <th>Business Name</th>
               <th>Email</th>
+              <th>WhatsApp</th>
               <th>Plan</th>
               <th>Reason</th>
               <th>Date</th>
@@ -51,6 +52,7 @@ const AdminExitSurveysPage = () => {
               <tr key={survey._id}>
                 <td>{survey.businessName}</td>
                 <td>{survey.email}</td>
+                <td>{survey.whatsappNumber}</td>
                 <td>{survey.plan}</td>
                 <td className={styles.reasonCell}>{survey.reason}</td>
                 <td>{new Date(survey.createdAt).toLocaleDateString()}</td>

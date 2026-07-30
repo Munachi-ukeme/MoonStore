@@ -205,7 +205,7 @@ function App(){
 />
 
 <Route
-    path="/admin/exit-surveys"
+    path="/admin/exitsurveys"
     element={
         <AdminProtectedRoute>
             <AdminLayout>
