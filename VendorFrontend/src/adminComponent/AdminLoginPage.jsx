@@ -26,7 +26,7 @@ const AdminLoginPage = () => {
         }
 
         localStorage.setItem("moonstore_admin_token", data.token);
-        navigate("/admin/sellers");
+        navigate("/admin/revenue");
     };
 
     return (

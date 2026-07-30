@@ -19,7 +19,7 @@ const AdminSidebar = () => {
                 <a href="/admin/sellers" className={styles.navLink}>Sellers</a>
                 <a href="/admin/referrals" className={styles.navLink}>Referrals</a>
                 <a href="/admin/reports" className={styles.navLink}>Reports</a>
-                <a href="/admin/exit-surveys" className={styles.navLink}>Exit Surveys</a>
+                <a href="/admin/exitsurveys" className={styles.navLink}>Exit Surveys</a>
 
             </nav>
             <button className={styles.logoutBtn} onClick={handleLogout}>
