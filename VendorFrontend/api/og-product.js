@@ -12,7 +12,9 @@ export default async function handler(req, res) {
 
     const product = data.product || data;
 
-    const title = product.name || "MoonStore Product";
+    const title = product.name
+  ? `${product.name} — ₦${product.price?.toLocaleString()}`
+  : "MoonStore Product";
     const description = product.description
       ? product.description.slice(0, 150)
       : "Check out this product on MoonStore.";
