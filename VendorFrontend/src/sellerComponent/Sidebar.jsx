@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import styles from "./Sidebar.module.css";
 
-function Sidebar({ isOpen, onClose}){
+function Sidebar({ isOpen, onClose, isWide }){
     const { seller, logout } = useAuth();
     const navigate = useNavigate();
 
@@ -25,9 +25,9 @@ return(
     <>
     {/* this shows dark overlay behind sidebar only when the sidebar is open on mobile. clicking it close the sidebar*/}
 
-    {isOpen && (
-        <div className={styles.overlay} onClick={onClose}></div>
-    )}
+    {isOpen && !isWide && (
+    <div className={styles.overlay} onClick={onClose}></div>
+)}
 
     <div className={`${styles.sidebar} ${isOpen ? styles.sidebarOpen : ""}`}>
         {/* brand name at the top */}

@@ -125,14 +125,3 @@
     cursor: not-allowed;
     pointer-events: none;
 }
-
-/* desktop sidebar always visible */
-@media (min-width: 768px) {
-    .sidebar{
-        transform: translateX(0);
-    }
-
-    .overlay{
-        display: none;
-    }
-}

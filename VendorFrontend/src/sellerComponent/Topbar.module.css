@@ -69,14 +69,3 @@
     padding: 0;
     
 }
-
-/* desktop - push content beside sidebar */
-@media (min-width: 768px) {
-    .main{
-        margin-left: 240px;
-        padding: 40px;
-    }
-    .menuButton{
-        display: none;
-    }
-}

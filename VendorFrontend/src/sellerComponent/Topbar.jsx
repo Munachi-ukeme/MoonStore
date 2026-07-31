@@ -1,57 +1,58 @@
-import {useLocation} from "react-router-dom"; //this makes it possible for topbar to display the right page a user is on.
+import { useLocation } from "react-router-dom";
 
 import { useAuth } from "../context/AuthContext";
 import styles from "./Topbar.module.css";
 
-function Topbar ({ onOpen}){
-    const {seller} = useAuth();
+function Topbar({ onOpen, onToggle, isWide, sidebarOpen }) {
+    const { seller } = useAuth();
     const location = useLocation();
 
-    // check current url and return the right page title
     let pageTitle;
-    if(location.pathname ==="/dashboard"){
+    if (location.pathname === "/dashboard") {
         pageTitle = "Dashboard";
-    } else if(location.pathname === "/dashboard/products"){
+    } else if (location.pathname === "/dashboard/products") {
         pageTitle = "Products";
-    } else if(location.pathname === "/dashboard/categories") {
+    } else if (location.pathname === "/dashboard/categories") {
         pageTitle = "Categories"
-    } else if(location.pathname === "/dashboard/settings"){
+    } else if (location.pathname === "/dashboard/settings") {
         pageTitle = "Settings"
-    } else if(location.pathname === "/dashboard/privacy-policy"){
+    } else if (location.pathname === "/dashboard/privacy-policy") {
         pageTitle = "Privacy Policy"
-    } else if(location.pathname === "/dashboard/terms-of-service"){
+    } else if (location.pathname === "/dashboard/terms-of-service") {
         pageTitle = "Terms Of Service"
-    } else if(location.pathname === "/dashboard/inbox"){
+    } else if (location.pathname === "/dashboard/inbox") {
         pageTitle = "Inbox"
-    } else{
+    } else {
         pageTitle = "Dashboard"
     }
-    
-    
 
-    // check plan and return the right badge color class
     let planClass;
-    if (seller?.plan === "basic"){
+    if (seller?.plan === "basic") {
         planClass = styles.planBasic;
-    } else if(seller?.plan === "pro"){
+    } else if (seller?.plan === "pro") {
         planClass = styles.planPro;
     } else if (seller?.plan === 'premium') {
         planClass = styles.planPremium;
-    } else{
+    } else {
         planClass = styles.planBasic;
     }
 
-    return(
+    const handleMenuClick = () => {
+        if (isWide) {
+            onToggle();
+        } else {
+            onOpen();
+        }
+    };
 
+    return (
         <div className={styles.topbar}>
-           {/* hamburger menu button-only show on mobile */}
-                <button className={styles.menuButton} onClick={onOpen}>
-                     ☰
-                    </button>
-                    
+            <button className={styles.menuButton} onClick={handleMenuClick}>
+                ☰
+            </button>
+
             <h2 className={styles.pageTitle}>{pageTitle}</h2>
 
-            {/* seller plan badge */}
             <div className={`${styles.planBadge} ${planClass}`}>{seller?.plan}</div>
         </div>
     );
