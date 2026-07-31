@@ -159,7 +159,7 @@
     cursor: pointer;
     transition: background-color 0.2s;
     white-space: nowrap;
-    margin-left: 215px;
+    margin-left: auto;
 }
 
 .copyButton:hover {
@@ -408,13 +408,30 @@
 
 
 
-/* desktop */
+/* tablet and up */
 @media (min-width: 768px) {
+    .container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
     .welcomeTitle {
         font-size: 18px;
     }
 
     .cards {
         grid-template-columns: 1fr 1fr 1fr 1fr;
+    }
+}
+
+/* laptop and up */
+@media (min-width: 1200px) {
+    .container {
+        max-width: 1100px;
+    }
+
+    .heroCard,
+    .referralCard {
+        padding: 20px 24px;
     }
 }
