@@ -47,9 +47,11 @@ function Topbar({ onOpen, onToggle, isWide, sidebarOpen }) {
 
     return (
         <div className={styles.topbar}>
-            <button className={styles.menuButton} onClick={handleMenuClick}>
-                ☰
-            </button>
+           {(!isWide || !sidebarOpen) && (
+    <button className={styles.menuButton} onClick={handleMenuClick}>
+        ☰
+    </button>
+)}
 
             <h2 className={styles.pageTitle}>{pageTitle}</h2>
 

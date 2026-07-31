@@ -33,7 +33,7 @@ function DashboardLayout({ children, hideTopbar }) {
 
     return (
         <div className={styles.layout}>
-            <Sidebar isOpen={sidebarOpen} onClose={handleClose} isWide={isWide} />
+            <Sidebar isOpen={sidebarOpen} onClose={handleClose} onToggle={handleToggle} isWide={isWide} />
             <div
                 className={styles.main}
                 style={{ marginLeft: isWide && sidebarOpen ? "210px" : "0" }}

@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import styles from "./Sidebar.module.css";
 
-function Sidebar({ isOpen, onClose, isWide }){
+function Sidebar({ isOpen, onClose, onToggle, isWide }){
     const { seller, logout } = useAuth();
     const navigate = useNavigate();
 
@@ -30,7 +30,13 @@ return(
 )}
 
     <div className={`${styles.sidebar} ${isOpen ? styles.sidebarOpen : ""}`}>
-        {/* brand name at the top */}
+    {isWide && isOpen && (
+        <button className={styles.edgeToggle} onClick={onToggle}>
+            ✕
+        </button>
+    )}
+
+    {/* brand name at the top */}
         <div className={styles.brand}>
             <h1 className={styles.brandName}>MoonStore</h1>
             <p className={styles.businessName}>{seller?.businessName}</p>

@@ -125,3 +125,24 @@
     cursor: not-allowed;
     pointer-events: none;
 }
+.edgeToggle {
+    position: absolute;
+    top: 20px;
+    right: -14px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background-color: #ffffff;
+    border: 1px solid #eda9fe;
+    color: #7c3aed;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 1px 4px rgba(109, 40, 217, 0.15);
+}
+
+.edgeToggle:hover {
+    background-color: #f5f3ff;
+}
