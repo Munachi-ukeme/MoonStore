@@ -1,8 +1,9 @@
+export const BASE_URL = import.meta.env.VITE_API_URL ;
 export default async function handler(req, res) {
   try {
     const { slug, productSlug } = req.query;
 
-    const response = await fetch(`https://moonstore.onrender.com/api/store/${slug}/${productSlug}`);
+    const response = await fetch(`${BASE_URL}/store/${slug}/${productSlug}`);
     const data = await response.json();
 
     if (!data || data.error) {
