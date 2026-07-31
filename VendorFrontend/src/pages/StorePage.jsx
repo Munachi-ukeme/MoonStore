@@ -11,6 +11,7 @@ import styles from "./StorePage.module.css";
 import StoreBottomNav from "../buyerComponent/StoreBottomNav";
 import EmailCapturePopup from "../buyerComponent/EmailCapturePopup";
 import OrderTray from "../buyerComponent/OrderTray";
+import SearchBar from "../buyerComponent/SearchBar";
 
 // moved outside component — stable references, no recreation on render
 const CACHE_TTL = 3 * 60 * 1000;
@@ -26,6 +27,8 @@ function StorePage() {
     const [error, setError] = useState(null);
     const [showEmailPopup, setShowEmailPopup] = useState(false);
     const [errorStatus, setErrorStatus] = useState(null);
+    const [activeCategory, setActiveCategory] = useState("all");
+const [searchTerm, setSearchTerm] = useState("");
 
     const loadStore = useCallback(async () => {
         setError(null);
@@ -96,18 +99,41 @@ function StorePage() {
     }, []);
 
     const handleSelectCategory = (categoryId) => {
-        if (categoryId === "all") {
-            setFilteredProducts(products);
-            return;
-        }
-        const filtered = products.filter((product) => {
-            const productCategoryId = typeof product.categoryId === "object"
-                ? product.categoryId._id
-                : product.categoryId;
-            return productCategoryId === categoryId;
-        });
-        setFilteredProducts(filtered);
-    };
+    setActiveCategory(categoryId);
+    setSearchTerm("");
+
+    if (categoryId === "all") {
+        setFilteredProducts(products);
+        return;
+    }
+
+    const filtered = products.filter((product) => {
+        const productCategoryId = typeof product.categoryId === "object"
+            ? product.categoryId._id
+            : product.categoryId;
+        return productCategoryId === categoryId;
+    });
+    setFilteredProducts(filtered);
+};
+
+const handleSearchChange = (value) => {
+    setSearchTerm(value);
+
+    if (value.trim() === "") {
+        handleSelectCategory(activeCategory);
+        return;
+    }
+
+    setActiveCategory("all");
+
+    const lowerValue = value.toLowerCase();
+    const filtered = products.filter((product) => {
+        const nameMatch = product.name?.toLowerCase().includes(lowerValue);
+        const descriptionMatch = product.description?.toLowerCase().includes(lowerValue);
+        return nameMatch || descriptionMatch;
+    });
+    setFilteredProducts(filtered);
+};
 
     if (loading) {
         return (
@@ -150,14 +176,22 @@ function StorePage() {
         <div className={styles.container}>
             <Navbar store={store} />
             <HeroSection store={store} />
+
+            <SearchBar
+    value={searchTerm}
+    onChange={handleSearchChange}
+/>
+
             <CategoryTabs
-                categories={Array.isArray(categories) ? categories : []}
-                onSelectCategory={handleSelectCategory}
-            />
+    categories={Array.isArray(categories) ? categories : []}
+    activeTab={activeCategory}
+    onSelectCategory={handleSelectCategory}
+/>
+
             <ProductGrid
-                products={Array.isArray(filteredProducts) ? filteredProducts : []}
-                slug={slug}
-            />
+    products={Array.isArray(filteredProducts) ? filteredProducts : []}
+    slug={slug}
+/>
             <Footer store={store} />
             <OrderTray slug={slug} />
             <StoreBottomNav sellerId={store?._id} slug={store?.slug} />

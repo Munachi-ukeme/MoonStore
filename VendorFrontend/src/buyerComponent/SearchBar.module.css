@@ -1,0 +1,17 @@
+.wrapper {
+  padding: 10px 16px;
+  margin-bottom: 20px;
+}
+
+.input {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 13px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  outline: none;
+}
+
+.input:focus {
+  border-color: #6d28d9;
+}
