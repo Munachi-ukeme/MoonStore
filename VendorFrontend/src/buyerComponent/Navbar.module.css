@@ -13,6 +13,9 @@
     top: 0;
     z-index: 100;
     box-shadow: 0 1px 4px rgba(109, 40, 217, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .brand {
@@ -46,4 +49,20 @@
     font-size: 13px;
     color: #7c3aed;
     font-weight: 400;
+}
+
+.ratingRow {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.ratingBadge {
+  font-size: 12px;
+  font-weight: 700;
+  color: #7c3aed;
+  background-color: #f5f3ff;
+  padding: 4px 10px;
+  border-radius: 8px;
+  white-space: nowrap;
 }

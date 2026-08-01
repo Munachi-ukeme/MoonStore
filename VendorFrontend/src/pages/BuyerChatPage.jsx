@@ -5,6 +5,7 @@ import { GrAttachment } from "react-icons/gr";
 import { getConversationMessages, sendBuyerMessage, reportConversation, sendImageMessage } from "../api/api";
 import { getOrCreateSessionId } from "../utils/session";
 import styles from "./BuyerChatPage.module.css";
+import { Link } from "react-router-dom";
 
 const MAX_IMAGE_BYTES = 300 * 1024;
 
@@ -276,14 +277,14 @@ const renderMessageContent = (content, msgId) => {
     decodedContent = content; 
   }
 
-  const parts = decodedContent.split(/(\[img\].*?\[\/img\]|\\n|\n)/g);
+  const parts = decodedContent.split(/(\[img\].*?\[\/img\]|\[product\].*?\[\/product\]|\\n|\n)/g);
 
   return parts
     .filter(part => part !== "") 
     .map((part, index) => {
       const imgMatch = part.match(/\[img\](.*?)\[\/img\]/);
-      
-      // Generate a stable key combining message ID and index
+      const productMatch = part.match(/\[product\](.*?)\|(.*?)\[\/product\]/);
+
       const itemKey = `${msgId}-part-${index}`;
 
       if (imgMatch) {
@@ -296,6 +297,16 @@ const renderMessageContent = (content, msgId) => {
             className={styles.thumbnailImg} 
             onClick={() => setFullscreenImage(url)} 
           />
+        );
+      }
+
+      if (productMatch) {
+        const path = productMatch[1];
+        const name = productMatch[2];
+        return (
+          <Link key={itemKey} to={`/${path}`} className={styles.productLink}>
+            {name}
+          </Link>
         );
       }
 

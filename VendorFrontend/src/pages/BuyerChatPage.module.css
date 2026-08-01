@@ -559,3 +559,9 @@
 .feedbackBtn:hover {
   background: #5b21b6;
 }
+
+.productLink {
+  color: #7c3aed;
+  font-weight: 700;
+  text-decoration: underline;
+}

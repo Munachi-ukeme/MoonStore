@@ -383,6 +383,145 @@
     background: #22c55e;
 }
 
+.reviewsSection {
+  padding: 16px;
+  border-top: 1px solid #ede9fe;
+  margin-top: 16px;
+}
+
+.reviewsHeader {
+  margin-bottom: 12px;
+}
+
+.reviewsTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e1b2e;
+}
+
+.reviewEmailCheck {
+  background-color: #faf8ff;
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+
+.reviewEmailInput {
+  width: 100%;
+  padding: 10px;
+  font-size: 13px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.reviewCheckBtn {
+  width: 100%;
+  padding: 10px;
+  background-color: #6d28d9;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.reviewForm {
+  background-color: #faf8ff;
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 16px;
+}
+
+.reviewFormLabel {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.starPicker {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+.starActive {
+  font-size: 24px;
+  color: #f5b800;
+  cursor: pointer;
+}
+
+.starInactive {
+  font-size: 24px;
+  color: #d1d5db;
+  cursor: pointer;
+}
+
+.reviewTextarea {
+  width: 100%;
+  padding: 10px;
+  font-size: 13px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  resize: none;
+  font-family: inherit;
+  margin-bottom: 10px;
+}
+
+.reviewError {
+  font-size: 12px;
+  color: #dc2626;
+  margin-bottom: 8px;
+}
+
+.reviewSubmitBtn {
+  width: 100%;
+  padding: 10px;
+  background-color: #6d28d9;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.reviewThanks {
+  font-size: 13px;
+  color: #15803d;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.reviewsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.reviewItem {
+  border-bottom: 1px solid #f3f0ff;
+  padding-bottom: 12px;
+}
+
+.reviewItemStars {
+  color: #f5b800;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.reviewItemText {
+  font-size: 13px;
+  color: #374151;
+  margin-bottom: 4px;
+}
+
+.reviewItemMeta {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
 /* ── desktop ── */
 @media (min-width: 768px) {
     .page {

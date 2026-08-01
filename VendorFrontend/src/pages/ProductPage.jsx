@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { trackProductClick, getProduct, getStore } from "../api/api";
-import { getOrCreateSessionId } from "../utils/session";
+import { trackProductClick, getProduct, getStore, getReviewEligibility, submitReview, getProductReviews } from "../api/api";
+import { getOrCreateSessionId, getSavedEmail, saveBuyerEmailLocally } from "../utils/session";
 import styles from "./ProductPage.module.css";
 import Navbar from "../buyerComponent/Navbar";
 
@@ -16,13 +16,11 @@ const ProductPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [selectedColors, setSelectedColors] = useState([]);
-const [selectedSizes, setSelectedSizes] = useState([]);
+    const [selectedSizes, setSelectedSizes] = useState([]);
     const [quantity, setQuantity] = useState(1);
     const [currentImage, setCurrentImage] = useState(0);
     const [copied, setCopied] = useState(false);
-    
 
-    // delivery fields
     const [buyerName, setBuyerName] = useState("");
     const [deliveryAddress, setDeliveryAddress] = useState("");
     const [deliveryCity, setDeliveryCity] = useState("");
@@ -31,6 +29,19 @@ const [selectedSizes, setSelectedSizes] = useState([]);
     const [showChangeAddress, setShowChangeAddress] = useState(false);
 
     const [addedToTray, setAddedToTray] = useState(false);
+
+    // ─── review state ───
+    const [reviews, setReviews] = useState([]);
+    const [averageRating, setAverageRating] = useState(0);
+    const [totalReviews, setTotalReviews] = useState(0);
+    const [eligible, setEligible] = useState(false);
+    const [hasNoSavedEmail, setHasNoSavedEmail] = useState(false);
+    const [buyerEmailInput, setBuyerEmailInput] = useState("");
+    const [reviewRating, setReviewRating] = useState(0);
+    const [reviewText, setReviewText] = useState("");
+    const [reviewSubmitting, setReviewSubmitting] = useState(false);
+    const [reviewSubmitted, setReviewSubmitted] = useState(false);
+    const [reviewError, setReviewError] = useState("");
 
     const loadData = async () => {
         setError(null);
@@ -48,7 +59,6 @@ const [selectedSizes, setSelectedSizes] = useState([]);
             setStore(storeData.store);
             setProduct(productData.product);
 
-            // check if tray already has address saved
             try {
                 const existing = localStorage.getItem(TRAY_KEY(slug));
                 if (existing) {
@@ -75,6 +85,33 @@ const [selectedSizes, setSelectedSizes] = useState([]);
     useEffect(() => {
         loadData();
     }, [slug, productSlug]);
+
+    // ─── load reviews + check eligibility once product is loaded ───
+    const loadReviews = async () => {
+        if (!product?._id) return;
+
+        const reviewData = await getProductReviews(product._id);
+        if (!reviewData.error) {
+            setReviews(reviewData.reviews);
+            setAverageRating(reviewData.averageRating);
+            setTotalReviews(reviewData.totalReviews);
+        }
+
+        const savedEmail = getSavedEmail();
+        if (!savedEmail) {
+            setHasNoSavedEmail(true);
+            return;
+        }
+
+        const eligibilityData = await getReviewEligibility(product._id, savedEmail);
+        if (eligibilityData.eligible) {
+            setEligible(true);
+        }
+    };
+
+    useEffect(() => {
+        loadReviews();
+    }, [product]);
 
     useEffect(() => {
         if (!product) return;
@@ -120,21 +157,21 @@ const [selectedSizes, setSelectedSizes] = useState([]);
         if (quantity > 1) setQuantity((prev) => prev - 1);
     };
 
-   const handleColorSelect = (color) => {
-    if (selectedColors.includes(color)) {
-        setSelectedColors(selectedColors.filter((c) => c !== color));
-    } else {
-        setSelectedColors([...selectedColors, color]);
-    }
-};
+    const handleColorSelect = (color) => {
+        if (selectedColors.includes(color)) {
+            setSelectedColors(selectedColors.filter((c) => c !== color));
+        } else {
+            setSelectedColors([...selectedColors, color]);
+        }
+    };
 
-const handleSizeSelect = (size) => {
-    if (selectedSizes.includes(size)) {
-        setSelectedSizes(selectedSizes.filter((s) => s !== size));
-    } else {
-        setSelectedSizes([...selectedSizes, size]);
-    }
-};
+    const handleSizeSelect = (size) => {
+        if (selectedSizes.includes(size)) {
+            setSelectedSizes(selectedSizes.filter((s) => s !== size));
+        } else {
+            setSelectedSizes([...selectedSizes, size]);
+        }
+    };
 
     const handleCopyLink = () => {
         navigator.clipboard.writeText(window.location.href);
@@ -156,7 +193,6 @@ const handleSizeSelect = (size) => {
                 deliveryPhone: "",
             };
 
-            // save address only if not already saved
             if (!tray.deliveryAddress && deliveryAddress) {
                 tray.deliveryAddress = deliveryAddress;
                 tray.deliveryCity = deliveryCity;
@@ -164,20 +200,18 @@ const handleSizeSelect = (size) => {
                 tray.buyerName = buyerName;
             }
 
-            // add item to tray
             tray.items.push({
-    productSlug: product.slug,
-    productName: product.name,
-    price: product.price,
-    quantity,
-    colors: selectedColors.length > 0 ? selectedColors : null,
-    sizes: selectedSizes.length > 0 ? selectedSizes : null,
-    image: product.images && product.images.length > 0 ? product.images[0] : null,
-});
+                productSlug: product.slug,
+                productName: product.name,
+                price: product.price,
+                quantity,
+                colors: selectedColors.length > 0 ? selectedColors : null,
+                sizes: selectedSizes.length > 0 ? selectedSizes : null,
+                image: product.images && product.images.length > 0 ? product.images[0] : null,
+            });
 
             localStorage.setItem(TRAY_KEY(slug), JSON.stringify(tray));
 
-            // track product click
             trackProductClick({
                 sellerId: store._id,
                 productId: product._id,
@@ -189,9 +223,74 @@ const handleSizeSelect = (size) => {
                 navigate(`/${slug}`);
             }, 600);
         } catch {
-            // localStorage failed — still navigate back
             navigate(`/${slug}`);
         }
+    };
+
+    // ─── review handlers ───
+    const maskEmail = (email) => {
+        const [name, domain] = email.split("@");
+        const masked = name.length > 2
+            ? name[0] + "*".repeat(name.length - 2) + name[name.length - 1]
+            : name[0] + "*";
+        return `${masked}@${domain}`;
+    };
+
+    const handleCheckEligibilityWithEmail = async () => {
+        if (!buyerEmailInput.trim() || !buyerEmailInput.includes("@")) {
+            setReviewError("Please enter a valid email.");
+            return;
+        }
+
+        setReviewError("");
+        const email = buyerEmailInput.trim();
+
+        saveBuyerEmailLocally(email);
+
+        const eligibilityData = await getReviewEligibility(product._id, email);
+        if (eligibilityData.eligible) {
+            setEligible(true);
+            setHasNoSavedEmail(false);
+        } else {
+            setReviewError(
+                eligibilityData.reason === "not_purchased"
+                    ? "We couldn't find a purchase of this product with that email."
+                    : eligibilityData.reason === "too_soon"
+                        ? "Your review will be available 24 hours after payment."
+                        : eligibilityData.reason === "already_reviewed"
+                            ? "You've already reviewed this product."
+                            : "Could not verify your purchase."
+            );
+        }
+    };
+
+    const handleSubmitReview = async () => {
+        if (reviewRating < 1) {
+            setReviewError("Please select a star rating.");
+            return;
+        }
+
+        const buyerEmail = getSavedEmail() || buyerEmailInput.trim();
+        if (!buyerEmail) {
+            setReviewError("Please enter your email first.");
+            return;
+        }
+
+        setReviewSubmitting(true);
+        setReviewError("");
+
+        const data = await submitReview(store._id, product._id, buyerEmail, reviewRating, reviewText);
+
+        setReviewSubmitting(false);
+
+        if (data.error) {
+            setReviewError(data.error);
+            return;
+        }
+
+        setReviewSubmitted(true);
+        setEligible(false);
+        loadReviews();
     };
 
     if (loading) {
@@ -228,7 +327,6 @@ const handleSizeSelect = (size) => {
 
             <div className={styles.container}>
 
-                {/* images */}
                 {product.images && product.images.length > 0 ? (
                     <div className={styles.imageSection}>
                         <img
@@ -274,53 +372,50 @@ const handleSizeSelect = (size) => {
                         <p className={styles.description}>{product.description}</p>
                     ) : null}
 
-                    {/* colors */}
                     {product.colors && product.colors.length > 0 ? (
-    <div className={styles.selectorSection}>
-        <p className={styles.selectorLabel}>Color</p>
-        <p className={styles.deliveryHint}>You can pick more than one colors</p>
-        <div className={styles.options}>
-            {product.colors.map((color) => (
-                <button
-                    key={color}
-                    className={
-                        selectedColors.includes(color)
-                            ? `${styles.optionBtn} ${styles.activeOption}`
-                            : styles.optionBtn
-                    }
-                    onClick={() => handleColorSelect(color)}
-                >
-                    {color}
-                </button>
-            ))}
-        </div>
-    </div>
-) : null}
+                        <div className={styles.selectorSection}>
+                            <p className={styles.selectorLabel}>Color</p>
+                            <p className={styles.deliveryHint}>You can pick more than one colors</p>
+                            <div className={styles.options}>
+                                {product.colors.map((color) => (
+                                    <button
+                                        key={color}
+                                        className={
+                                            selectedColors.includes(color)
+                                                ? `${styles.optionBtn} ${styles.activeOption}`
+                                                : styles.optionBtn
+                                        }
+                                        onClick={() => handleColorSelect(color)}
+                                    >
+                                        {color}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    ) : null}
 
-                    {/* sizes */}
                     {product.sizes && product.sizes.length > 0 ? (
-    <div className={styles.selectorSection}>
-        <p className={styles.selectorLabel}>Size</p>
-        <p className={styles.deliveryHint}>You can pick more than one sizes</p>
-        <div className={styles.options}>
-            {product.sizes.map((size) => (
-                <button
-                    key={size}
-                    className={
-                        selectedSizes.includes(size)
-                            ? `${styles.optionBtn} ${styles.activeOption}`
-                            : styles.optionBtn
-                    }
-                    onClick={() => handleSizeSelect(size)}
-                >
-                    {size}
-                </button>
-            ))}
-        </div>
-    </div>
-) : null}
+                        <div className={styles.selectorSection}>
+                            <p className={styles.selectorLabel}>Size</p>
+                            <p className={styles.deliveryHint}>You can pick more than one sizes</p>
+                            <div className={styles.options}>
+                                {product.sizes.map((size) => (
+                                    <button
+                                        key={size}
+                                        className={
+                                            selectedSizes.includes(size)
+                                                ? `${styles.optionBtn} ${styles.activeOption}`
+                                                : styles.optionBtn
+                                        }
+                                        onClick={() => handleSizeSelect(size)}
+                                    >
+                                        {size}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    ) : null}
 
-                    {/* delivery section */}
                     <div className={styles.deliverySection}>
                         <p className={styles.selectorLabel}>Delivery Details</p>
                         <p className={styles.deliveryHint}>Optional — fill in if you want delivery</p>
@@ -377,7 +472,6 @@ const handleSizeSelect = (size) => {
                         )}
                     </div>
 
-                    {/* quantity */}
                     <div className={styles.selectorSection}>
                         <p className={styles.selectorLabel}>Quantity</p>
                         <div className={styles.quantityControl}>
@@ -389,7 +483,6 @@ const handleSizeSelect = (size) => {
 
                     <p className={styles.total}>Total: ₦{total.toLocaleString()}</p>
 
-                    {/* add to order button */}
                     <button
                         className={addedToTray ? `${styles.orderBtn} ${styles.addedBtn}` : styles.orderBtn}
                         onClick={handleAddToOrder}
@@ -401,6 +494,84 @@ const handleSizeSelect = (size) => {
                     <button className={styles.copyBtn} onClick={handleCopyLink}>
                         {copied ? "✓ Link Copied!" : "Copy Product Link"}
                     </button>
+                </div>
+            </div>
+
+            {/* ─── reviews section ─── */}
+            <div className={styles.reviewsSection}>
+                <div className={styles.reviewsHeader}>
+                    <p className={styles.reviewsTitle}>
+                        {totalReviews > 0
+                            ? `★ ${averageRating.toFixed(1)} · ${totalReviews} review${totalReviews === 1 ? "" : "s"}`
+                            : "No reviews yet"}
+                    </p>
+                </div>
+
+                {hasNoSavedEmail && !eligible && !reviewSubmitted ? (
+                    <div className={styles.reviewEmailCheck}>
+                        <p className={styles.reviewFormLabel}>Bought this product? Enter your email to leave a review</p>
+                        <input
+                            type="email"
+                            className={styles.reviewEmailInput}
+                            placeholder="Your email"
+                            value={buyerEmailInput}
+                            onChange={(e) => setBuyerEmailInput(e.target.value)}
+                        />
+                        {reviewError ? <p className={styles.reviewError}>{reviewError}</p> : null}
+                        <button className={styles.reviewCheckBtn} onClick={handleCheckEligibilityWithEmail}>
+                            Check
+                        </button>
+                    </div>
+                ) : null}
+
+                {eligible && !reviewSubmitted ? (
+                    <div className={styles.reviewForm}>
+                        <p className={styles.reviewFormLabel}>Leave a review</p>
+                        <div className={styles.starPicker}>
+                            {[1, 2, 3, 4, 5].map((star) => (
+                                <span
+                                    key={star}
+                                    className={star <= reviewRating ? styles.starActive : styles.starInactive}
+                                    onClick={() => setReviewRating(star)}
+                                >
+                                    ★
+                                </span>
+                            ))}
+                        </div>
+                        <textarea
+                            className={styles.reviewTextarea}
+                            placeholder="Share your experience with this product (optional)"
+                            value={reviewText}
+                            onChange={(e) => setReviewText(e.target.value)}
+                            rows={3}
+                        />
+                        {reviewError ? <p className={styles.reviewError}>{reviewError}</p> : null}
+                        <button
+                            className={styles.reviewSubmitBtn}
+                            onClick={handleSubmitReview}
+                            disabled={reviewSubmitting}
+                        >
+                            {reviewSubmitting ? "Submitting..." : "Submit Review"}
+                        </button>
+                    </div>
+                ) : null}
+
+                {reviewSubmitted ? (
+                    <p className={styles.reviewThanks}>Thank you for your review!</p>
+                ) : null}
+
+                <div className={styles.reviewsList}>
+                    {reviews.map((review) => (
+                        <div key={review._id} className={styles.reviewItem}>
+                            <p className={styles.reviewItemStars}>
+                                {"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}
+                            </p>
+                            {review.text ? <p className={styles.reviewItemText}>{review.text}</p> : null}
+                            <p className={styles.reviewItemMeta}>
+                                {maskEmail(review.buyerEmail)} · {new Date(review.createdAt).toLocaleDateString()}
+                            </p>
+                        </div>
+                    ))}
                 </div>
             </div>
         </div>

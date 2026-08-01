@@ -3,7 +3,6 @@ import styles from './Navbar.module.css';
 function Navbar({ store }) {
     return(
         <div className={styles.navbar}>
-            {/* logo and business info */}
             <div className={styles.brand}>
                 {store?.logo ?(
                     <img
@@ -20,6 +19,14 @@ function Navbar({ store }) {
                     ) : null}
                 </div>
             </div>
+
+            {store?.totalReviews > 0 ? (
+                <div className={styles.ratingRow}>
+                    <span className={styles.ratingBadge}>
+                        ★ {store.averageRating.toFixed(1)}
+                    </span>
+                </div>
+            ) : null}
         </div>
     );
 }

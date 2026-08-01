@@ -739,3 +739,37 @@ export const getExitSurveys = async () => {
     return { error: "Failed to fetch exit surveys." };
   }
 };
+
+
+export const getReviewEligibility = async (productId, buyerEmail) => {
+  try {
+    const res = await fetchWithTimeout(
+      `${BASE_URL}/reviews/eligibility?productId=${productId}&buyerEmail=${encodeURIComponent(buyerEmail)}`
+    );
+    return res.json();
+  } catch (error) {
+    return { error: "Failed to check review eligibility." };
+  }
+};
+
+export const submitReview = async (sellerId, productId, buyerEmail, rating, text) => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/reviews`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sellerId, productId, buyerEmail, rating, text }),
+    });
+    return res.json();
+  } catch (error) {
+    return { error: "Failed to submit review." };
+  }
+};
+
+export const getProductReviews = async (productId) => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/reviews/product/${productId}`);
+    return res.json();
+  } catch (error) {
+    return { error: "Failed to load reviews." };
+  }
+};
