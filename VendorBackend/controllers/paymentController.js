@@ -197,35 +197,47 @@ const paystackWebhook = async (req, res) => {
             }
         }
 
-        // ── order payment ──
+     // ── order payment ──
         if (conversationId) {
             try {
                 const Conversation = require("../models/Conversation");
                 const Message = require("../models/Message");
+                const Product = require("../models/Product");
+                const Seller = require("../models/Seller");
                 const { getIO } = require("../utils/socket");
 
                 const conversation = await Conversation.findById(conversationId);
 
-               if (conversation && conversation.status !== "paid") {
-    conversation.status = "paid";
-    conversation.paidAt = new Date();
-    conversation.amount = event.data.amount / 100;
-    await conversation.save();
+                if (conversation && conversation.status !== "paid") {
+                    conversation.status = "paid";
+                    conversation.paidAt = new Date();
+                    conversation.amount = event.data.amount / 100;
+                    await conversation.save();
 
-    const Transaction = require("../models/Transaction");
-    await Transaction.create({
-        sellerId: conversation.sellerId,
-        type: "order",
-        amount: conversation.amount,
-        platformFee: conversation.amount * 0.015,
-        reference: event.data.reference,
-    });
+                    const Transaction = require("../models/Transaction");
+                    await Transaction.create({
+                        sellerId: conversation.sellerId,
+                        type: "order",
+                        amount: conversation.amount,
+                        platformFee: conversation.amount * 0.015,
+                        reference: event.data.reference,
+                        productIds: conversation.productIds,
+                        buyerEmail: conversation.buyerEmail,
+                        buyerSessionId: conversation.buyerSessionId,
+                    });
 
-    await Message.create({
-        conversationId: conversation._id,
-        sender: "system",
-        content: "✅ Payment confirmed. This conversation will be deleted in 7 days.",
-    });
+                    const seller = await Seller.findById(conversation.sellerId);
+                    const products = await Product.find({ _id: { $in: conversation.productIds } });
+
+                    const productLinks = products
+                        .map((p) => `[product]${seller.slug}/${p.slug}|${p.name}[/product]`)
+                        .join(", ");
+
+                    await Message.create({
+                        conversationId: conversation._id,
+                        sender: "system",
+                        content: `✅ Thank you for your order! Payment is confirmed. Once you receive ${productLinks}, come back and tap the product to leave a review — available 24 hours after payment. Note that this conversation will be deleted in 7 days.`,
+                    });
 
                     try {
                         getIO().to(conversationId.toString()).emit("conversation_paid", {

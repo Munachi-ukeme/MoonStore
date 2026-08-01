@@ -1,6 +1,7 @@
 const Seller = require("../models/Seller")
 const Product = require("../models/Product")
 const Category = require("../models/Category")
+const Review = require("../models/Review")
 const {cloudinary} = require("../config/cloudinary")
 
 // -----------------------------------
@@ -9,30 +10,31 @@ const {cloudinary} = require("../config/cloudinary")
 // -----------------------------------
 const getStore = async (req, res) => {
   try {
-    // 1. Find seller by slug
     const seller = await Seller.findOne({ slug: req.params.slug }).select(
-      "-password" // never send password to frontend
+      "-password"
     )
 
     if (!seller) {
       return res.status(404).json({ message: "Store not found" })
     }
 
-    // 2. check if store is active
-if (!seller.isActive) {
-  return res.status(403).json({ 
-    message: "This store is currently inactive" 
-  })
-}
+    if (!seller.isActive) {
+      return res.status(403).json({ 
+        message: "This store is currently inactive" 
+      })
+    }
 
-    // 3. Get all categories for this store
     const categories = await Category.find({ sellerId: seller._id })
 
-    // 4. Get all products for this store
     const products = await Product.find({ sellerId: seller._id })
       .populate("categoryId", "name")
 
-    // 5. Return everything in one response
+    const reviews = await Review.find({ sellerId: seller._id })
+    const totalReviews = reviews.length
+    const averageRating = totalReviews > 0
+      ? reviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews
+      : 0
+
     res.json({
       store: {
          _id: seller._id,
@@ -45,6 +47,8 @@ if (!seller.isActive) {
         plan: seller.plan,
         address: seller.address,
         phoneNumber: seller.phoneNumber,
+        averageRating,
+        totalReviews,
       },
       categories,
       products,
@@ -61,18 +65,15 @@ if (!seller.isActive) {
 // -----------------------------------
 const getProduct = async (req, res) => {
   try {
-    // 1. Find seller by slug
     const seller = await Seller.findOne({ slug: req.params.slug })
     if (!seller) {
       return res.status(404).json({ message: "Store not found" })
     }
 
-    //Safety check so buyers cannot browse single product pages of expired/inactive stores
     if (!seller.isActive) {
       return res.status(403).json({ message: "This store is currently inactive" })
     }
 
-    // 2. Find product by slug
     const product = await Product.findOne({
       sellerId: seller._id,
       slug: req.params.productSlug,
@@ -82,7 +83,6 @@ const getProduct = async (req, res) => {
       return res.status(404).json({ message: "Product not found" })
     }
 
-    // 3. Return product + store info (needed for OG tags and WhatsApp number)
     res.json({
       product,
       store: {
@@ -103,14 +103,12 @@ const getProduct = async (req, res) => {
 
   const updateSettings = async (req, res) =>{
     try{
-      ///1. find the seller from the JWT token
       const seller = await Seller.findById(req.seller.id)
 
       if (!seller){
         return res.status(404).json({ message: "Seller not found"})
       }
 
-      //2. Update basic fields if they were sent
       if (req.body.businessName) {
         seller.businessName = req.body.businessName
       }
@@ -131,7 +129,6 @@ const getProduct = async (req, res) => {
         seller.phoneNumber = req.body.phoneNumber
       }
 
-      // bank details
       if(!seller.bankDetails) seller.bankDetails = {};
       if(req.body.accountName !== undefined){
         seller.bankDetails.accountName = req.body.accountName
@@ -145,7 +142,6 @@ const getProduct = async (req, res) => {
         seller.bankDetails.bankName = req.body.bankName
       }
 
-      //4. Upload logo to cloudinary if a new one was sent
       if (req.files && req.files.logo && req.files.logo.length > 0){
         const logoResult = await cloudinary.uploader.upload(
           req.files.logo[0].path,
@@ -156,7 +152,6 @@ const getProduct = async (req, res) => {
         seller.logo = logoResult.secure_url
       }
 
-      //5. Upload banner
       if(req.files && req.files.bannerImage  && req.files.bannerImage.length > 0) {
           const bannerResult = await cloudinary.uploader.upload(
             req.files.bannerImage[0].path,
@@ -167,10 +162,8 @@ const getProduct = async (req, res) => {
           seller.bannerImage = bannerResult.secure_url
       }
 
-      //6. save updated seller to mongoDB
       await seller.save()
 
-      //7. Return updated seller without password
       res.json({
         message: "Store settings updated successfully",
         seller: {

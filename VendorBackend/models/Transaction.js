@@ -28,6 +28,23 @@ const transactionSchema = new mongoose.Schema(
             type: String,
             default: "",
         },
+        productIds: {
+            type: [mongoose.Schema.Types.ObjectId],
+            ref: "Product",
+            default: [],
+        },
+        buyerEmail: {
+            type: String,
+            default: null,
+        },
+        buyerSessionId: {
+            type: String,
+            default: null,
+        },
+        paidAt: {
+            type: Date,
+            default: Date.now,
+        },
     },
     { timestamps: true }
 );
