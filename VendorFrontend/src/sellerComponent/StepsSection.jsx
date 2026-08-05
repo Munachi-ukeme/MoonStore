@@ -4,12 +4,12 @@ const steps = [
     {
         number: "1",
         title: "Sign up",
-        text: "Enter your business name, email, password, WhatsApp number, and the bank account you want your sales money sent to — this is very important.",
+        text: "Enter your business name, email, password, WhatsApp number, and the bank account you want your sales money to be sent to, this is very important.",
     },
     {
         number: "2",
         title: "Set up your store",
-        text: "Add your logo, banner, physical address, products, and categories.",
+        text: "Add your logo, banner, tagline, Phone Number, physical address, products, and categories.",
     },
     {
         number: "3",
