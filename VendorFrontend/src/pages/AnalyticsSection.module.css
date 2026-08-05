@@ -67,14 +67,14 @@
 .cardValue {
   font-size: 17px;
   font-weight: 600;
-  color: #7c3aed;
+  color: #111;
   margin: 4px 0 0;
 }
 
 .cardLabel {
   font-size: 12px;
   font-weight: 600;
-  color: #111;
+  color: #7c3aed;
   margin: 0;
 }
 
