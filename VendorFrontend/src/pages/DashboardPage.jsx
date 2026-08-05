@@ -204,7 +204,7 @@ function DashboardPage() {
                         >
                             {copied ? "Copied!" : "Copy"}
                         </button>
-                        <p className={styles.heroHint}>
+                        <p className={styles.cardHint}>
                 Share this link on your social bio and messaging apps to direct customers to your store.
               </p>
                     </div>
@@ -236,7 +236,6 @@ function DashboardPage() {
             <div className={styles.referralCard}>
                 <p className={styles.heroLabel}>Earn ₦3,000 Per Referral</p>
                 <div className={styles.storeLinkRow}>
-                    <span className={styles.storeLinkText}>{referralLink}</span>
                     <button
                         className={styles.copyButton}
                         onClick={handleCopyReferral}
