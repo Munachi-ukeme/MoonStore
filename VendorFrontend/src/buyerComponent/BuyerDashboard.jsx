@@ -30,7 +30,7 @@ const BuyerDashboard = () => {
                 return;
             }
 
-             const result = await getBuyerConversations(sessionIds);
+            const result = await getBuyerConversations(sessionIds);
 
             if (result.error) {
                 setError(result.error);
@@ -54,8 +54,7 @@ const BuyerDashboard = () => {
         return <span className={`${styles.badge} ${styles.newBadge}`}>New</span>;
     };
 
-
-      const renderContent = () => {
+    const renderContent = () => {
         if (loading) {
             return <p className={styles.stateText}>Loading your orders...</p>;
         }
@@ -87,13 +86,15 @@ const BuyerDashboard = () => {
                         <div className={styles.rowRight}>
                             {renderBadge(conv.status)}
                             <button
-    className={styles.viewBtn}
-    onClick={() => navigate(`/${conv.sellerId?.slug}/chat/${conv._id}`, {
-        state: { sessionId: conv.buyerSessionId }
-    })}
->
-    View Chat
-</button>
+                                className={styles.viewBtn}
+                                onClick={() =>
+                                    navigate(`/${conv.sellerId?.slug}/chat/${conv._id}`, {
+                                        state: { sessionId: conv.buyerSessionId }
+                                    })
+                                }
+                            >
+                                View Chat
+                            </button>
                         </div>
                     </div>
                 ))}
@@ -101,7 +102,7 @@ const BuyerDashboard = () => {
         );
     };
 
-     return (
+    return (
         <div className={styles.page}>
             <div className={styles.header}>
                 <button className={styles.backBtn} onClick={() => navigate(-1)}>
@@ -115,5 +116,4 @@ const BuyerDashboard = () => {
     );
 };
 
-
-    export default BuyerDashboard;
+export default BuyerDashboard;

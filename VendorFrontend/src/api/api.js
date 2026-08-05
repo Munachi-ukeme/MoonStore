@@ -1,4 +1,4 @@
-export const BASE_URL = import.meta.env.VITE_API_URL ; //backend address
+export const BASE_URL = (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
 
 const fetchWithTimeout = async (url, options = {}, timeout = 20000) => {
   const controller = new AbortController();
@@ -16,196 +16,276 @@ const fetchWithTimeout = async (url, options = {}, timeout = 20000) => {
   }
 };
 
-const getAuthHeaders = () =>{
-  try{
+// Helper Headers
+const getAuthHeaders = () => {
+  try {
     const token = localStorage.getItem("token");
-    return{
-        "Content-Type": "application/json",
-        ...(token && {Authorization: `Bearer ${token}`}),
+    return {
+      "Content-Type": "application/json",
+      ...(token && { Authorization: `Bearer ${token}` }),
     };
-   } catch (error){
-        return{ error: "Failed to fetch token"};
-    }
+  } catch (error) {
+    return { "Content-Type": "application/json" };
+  }
 };
 
-//seller signup 
-export const registerSeller = async(data) =>{
-    try{
-        const res = await fetchWithTimeout(`${BASE_URL}/auth/register`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data),
-        });
-        const json = await res.json();
-        if (!res.ok) return { error: json.message || "Registration failed" };
-        return json;
-    } catch (err) {
-        return { error: "Something went wrong. Please try again." };
-    }
+const getAdminHeaders = () => {
+  try {
+    const adminToken = localStorage.getItem("moonstore_admin_token");
+    return {
+      "Content-Type": "application/json",
+      ...(adminToken && { "admin-key": adminToken }),
+    };
+  } catch (error) {
+    return { "Content-Type": "application/json" };
+  }
 };
 
-// payment
-export const getBanks = async() =>{
-    try{
-        const res = await fetchWithTimeout(`${BASE_URL}/payments/banks`);
-        const json = await res.json();
-        if (!res.ok) return { error: json.message || "Could not load banks" };
-        return json;
-    } catch (err) {
-        return { error: "Could not load banks. Please try again." };
-    }
+// ================= AUTH =================
+export const registerSeller = async (data) => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || json.error || "Registration failed" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Something went wrong. Please try again." };
+  }
 };
 
+export const loginSeller = async (email, password) => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || json.error || "Login failed" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Something went wrong." };
+  }
+};
+
+export const forgotPassword = async (email) => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/auth/forgot-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Could not send reset link." };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Could not send reset link. Please try again." };
+  }
+};
+
+export const resetPassword = async (token, newPassword) => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/auth/reset-password`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token, newPassword }),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Could not reset password." };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Could not reset password. Please try again." };
+  }
+};
+
+// ================= PAYMENTS =================
+export const getBanks = async () => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/payments/banks`);
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Could not load banks" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Could not load banks. Please try again." };
+  }
+};
 
 export const verifyAccount = async (accountNumber, bankCode) => {
-    try {
-        const res = await fetchWithTimeout(`${BASE_URL}/payments/verify-account`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ accountNumber, bankCode }),
-        });
-        const json = await res.json();
-        if (!res.ok) return { error: json.message || "Account not found" };
-        return json;
-    } catch (err) {
-        return { error: "Could not verify account. Please try again." };
-    }
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/payments/verify-account`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ accountNumber, bankCode }),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Account not found" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Could not verify account. Please try again." };
+  }
 };
 
 export const initializePayment = async (plan) => {
   try {
-    const token = localStorage.getItem("token");
     const res = await fetchWithTimeout(`${BASE_URL}/payments/initialize`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ plan }),
     });
-    return await res.json();
-  } catch {
-    return { error: "Payment initialization failed" };
-  }
-};
-//AUTH
-//Called on the login page
-//send email + password, expect back {token, seller}
-export const loginSeller = async(email, password) =>{
-    try{
-    const res = await fetchWithTimeout(`${BASE_URL}/auth/login`,{
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({ email, password}),
-        });
-        return res.json();
-    }catch (err) {
-    return { error: err.error || "Something went wrong." };
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Payment initialization failed" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Payment initialization failed" };
   }
 };
 
+export const generatePaymentLink = async (conversationId) => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/chat/${conversationId}/generate-payment-link`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Failed to generate payment link" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Failed to generate payment link" };
+  }
+};
 
-// PUBLIC (BUYER)
-// Loads the full store for a given slug - used on StorePage
+// ================= PUBLIC (BUYER & STORE) =================
 export const getStore = async (slug) => {
-    try {
-        const res = await fetchWithTimeout(`${BASE_URL}/store/${slug}`);
-        const json = await res.json();
-
-        if (!res.ok) {
-            return { error: json.message, status: res.status };
-        }
-
-        return json;
-    } catch (err) {
-        return { error: err.message || "Something went wrong." };
-    }
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/store/${slug}`);
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Store not found", status: res.status };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Something went wrong." };
+  }
 };
 
-//Loads the full store for a given slug - used on StorePage
-export const getProduct = async(slug, productSlug) => {
-    try{
+export const getProduct = async (slug, productSlug) => {
+  try {
     const res = await fetchWithTimeout(`${BASE_URL}/store/${slug}/${productSlug}`);
-    return res.json();
-    } catch (err) {
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Product not found" };
+    return json;
+  } catch (err) {
     return { error: err.message || "Something went wrong." };
   }
 };
 
 export const saveBuyerEmail = async (email, sessionId, sellerId) => {
-    try {
-        const res = await fetchWithTimeout(`${BASE_URL}/buyer/save-email`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, sessionId, sellerId }),
-        });
-        const json = await res.json();
-        if (!res.ok) return { error: json.message || "Could not save email" };
-        return json;
-    } catch (err) {
-        return { error: "Something went wrong. Please try again." };
-    }
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/buyer/save-email`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, sessionId, sellerId }),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Could not save email" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Something went wrong. Please try again." };
+  }
 };
 
 export const buyerLogin = async (email) => {
-    try {
-        const res = await fetchWithTimeout(`${BASE_URL}/buyer/login`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email }),
-        });
-        const json = await res.json();
-        if (!res.ok) return { error: json.error || "Login failed" };
-        return json;
-    } catch (err) {
-        return { error: "Something went wrong. Please try again." };
-    }
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/buyer/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.error || json.message || "Login failed" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Something went wrong. Please try again." };
+  }
 };
 
-//Buyer side
-// this is for all chats across moonstore stores
 export const getBuyerConversations = async (sessionIds) => {
-    try {
-        // sessionIds is an array — we join to a comma-separated query string
-        const query = sessionIds.join(",");
-        const res = await fetchWithTimeout(`${BASE_URL}/buyer/conversations?sessionIds=${query}`);
-        const json = await res.json();
-        if (!res.ok) return { error: json.error || "Could not load orders" };
-        return json;
-    } catch (err) {
-        return { error: "Could not load orders. Please try again." };
-    }
+  try {
+    const query = Array.isArray(sessionIds) ? sessionIds.join(",") : sessionIds;
+    const res = await fetchWithTimeout(`${BASE_URL}/buyer/conversations?sessionIds=${query}`);
+    const json = await res.json();
+    if (!res.ok) return { error: json.error || json.message || "Could not load orders" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Could not load orders. Please try again." };
+  }
 };
 
-//this is for chat in a specific store
 export const getSellerConversations = async (slug, sessionId) => {
-    try {
-        const res = await fetchWithTimeout(
-            `${BASE_URL}/buyer/conversations/seller/${slug}?sessionId=${sessionId}`
-        );
-        const json = await res.json();
-        if (!res.ok) return { error: json.error || "Could not load orders" };
-        return json;
-    } catch (err) {
-        return { error: "Could not load orders. Please try again." };
-    }
+  try {
+    const res = await fetchWithTimeout(
+      `${BASE_URL}/buyer/conversations/seller/${slug}?sessionId=${sessionId}`
+    );
+    const json = await res.json();
+    if (!res.ok) return { error: json.error || json.message || "Could not load orders" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Could not load orders. Please try again." };
+  }
 };
 
+// ================= CHAT =================
+export const startConversation = async (
+  slug,
+  sessionId,
+  items,
+  buyerName,
+  buyerEmail,
+  deliveryAddress,
+  deliveryCity,
+  deliveryPhone
+) => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/chat/start`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        slug,
+        sessionId,
+        items,
+        buyerName,
+        buyerEmail,
+        deliveryAddress,
+        deliveryCity,
+        deliveryPhone,
+      }),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Failed to start conversation" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Failed to start conversation" };
+  }
+};
 
 export const sendBuyerMessage = async (conversationId, sessionId, content) => {
   try {
     const res = await fetchWithTimeout(`${BASE_URL}/chat/${conversationId}/message`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-session-id": sessionId },
-      body: JSON.stringify({ 
-        content,  
-        sender: "buyer",      
-        sessionId: sessionId 
-       }),
+      body: JSON.stringify({
+        content,
+        sender: "buyer",
+        sessionId,
+      }),
     });
-    return await res.json();
-  } catch {
-    return { error: "Failed to send message" };
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Failed to send message" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Failed to send message" };
   }
 };
 
@@ -214,9 +294,11 @@ export const getConversationMessages = async (conversationId, sessionId) => {
     const res = await fetchWithTimeout(`${BASE_URL}/chat/${conversationId}`, {
       headers: { "x-session-id": sessionId },
     });
-    return await res.json();
-  } catch {
-    return { error: "Failed to load messages" };
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Failed to load messages" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Failed to load messages" };
   }
 };
 
@@ -231,212 +313,150 @@ export const sendImageMessage = async (conversationId, sessionId, base64Content,
         sessionId,
       }),
     });
-    if (res.status === 413) return { status: 413 };
-    return await res.json();
-  } catch {
-    return { error: "Failed to send image" };
+    if (res.status === 413) return { status: 413, error: "Image size too large" };
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Failed to send image" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Failed to send image" };
   }
 };
 
 export const reportConversation = async (conversationId, sessionId, reason, buyerPhone) => {
-    try {
-        const res = await fetchWithTimeout(`${BASE_URL}/chat/${conversationId}/report`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "x-session-id": sessionId },
-            body: JSON.stringify({ reason, buyerPhone }),
-        });
-        return await res.json();
-    } catch {
-        return { error: "Failed to submit report" };
-    }
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/chat/${conversationId}/report`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-session-id": sessionId },
+      body: JSON.stringify({ reason, buyerPhone }),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Failed to submit report" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Failed to submit report" };
+  }
 };
 
-export const getReportedConversationsAdmin = async () => {
-    try {
-        const res = await fetchWithTimeout(`${BASE_URL}/admin/reports`, {
-            headers: getAdminHeaders(),
-        });
-        const json = await res.json();
-        if (!res.ok) return { error: json.message || "Could not load reports" };
-        return json;
-    } catch {
-        return { error: "Could not load reports. Please try again." };
-    }
-};
-
-
-
-export const startConversation = async (slug, sessionId, items, buyerName, buyerEmail, deliveryAddress, deliveryCity, deliveryPhone) => {
-    try {
-        const res = await fetchWithTimeout(`${BASE_URL}/chat/start`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                slug,
-                sessionId,
-                items,
-                buyerName,
-                buyerEmail,
-                deliveryAddress,
-                deliveryCity,
-                deliveryPhone,
-            }),
-        });
-        return await res.json();
-    } catch {
-        return { error: "Failed to start conversation" };
-    }
-};
-
-//forgotten password
-export const forgotPassword = async (email) => {
-    try {
-        const res = await fetchWithTimeout(`${BASE_URL}/auth/forgot-password`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email }),
-        });
-        return await res.json();
-    } catch {
-        return { error: "Could not send reset link. Please try again." };
-    }
-};
-
-export const resetPassword = async (token, newPassword) => {
-    try {
-        const res = await fetchWithTimeout(`${BASE_URL}/auth/reset-password`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ token, newPassword }),
-        });
-        return await res.json();
-    } catch {
-        return { error: "Could not reset password. Please try again." };
-    }
-};
-
-// SELLER SIDE
 export const getSellerInbox = async () => {
   try {
-    const token = localStorage.getItem("token");
     const res = await fetchWithTimeout(`${BASE_URL}/chat/seller/inbox`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: getAuthHeaders(),
     });
-    return await res.json();
-  } catch {
-    return { error: "Failed to load inbox" };
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Failed to load inbox" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Failed to load inbox" };
   }
 };
 
 export const getSellerChatMessages = async (conversationId) => {
   try {
-    const token = localStorage.getItem("token");
     const res = await fetchWithTimeout(`${BASE_URL}/chat/seller/messages/${conversationId}`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: getAuthHeaders(),
     });
-    return await res.json();
-  } catch {
-    return { error: "Failed to load messages" };
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Failed to load messages" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Failed to load messages" };
   }
 };
 
 export const sendSellerMessage = async (conversationId, content) => {
   try {
-    const token = localStorage.getItem("token");
     const res = await fetchWithTimeout(`${BASE_URL}/chat/${conversationId}/message`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ 
+      headers: getAuthHeaders(),
+      body: JSON.stringify({
         content,
-        sender: "seller",      
-        
+        sender: "seller",
       }),
     });
-    return await res.json();
-  } catch {
-    return { error: "Failed to send message" };
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Failed to send message" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Failed to send message" };
   }
 };
 
-
-
-// PRODUCTS (Protected)
-//Get all products belonging to the logged-in seller
-export const getProducts = async() =>{
-  try{
+// ================= PRODUCTS (Protected) =================
+export const getProducts = async () => {
+  try {
     const res = await fetchWithTimeout(`${BASE_URL}/products`, {
-        headers: getAuthHeaders(),
+      headers: getAuthHeaders(),
     });
-    return res.json();
-  } catch (error){
-        return{ error: "Failed to fetch products."};
-    }
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Failed to fetch products." };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Failed to fetch products." };
+  }
 };
 
-// Creates a new product
-// Uses FormData (not JSON) because the request includes image files
-// IMPORTANT: Do NOT set Content-Type manually when using FormData.
-// The browser sets it automatically with the correct format for file uploads.
 export const createProduct = async (formData) => {
-  try{
+  try {
     const token = localStorage.getItem("token");
     const res = await fetchWithTimeout(`${BASE_URL}/products`, {
-        method: "POST",
-        headers: {
-            ...(token && { Authorization: `Bearer ${token}`}),
-        },
-        body: formData,
+      method: "POST",
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: formData,
     });
-    return res.json();
-  }catch (error){
-        return{ error: "Failed to create product."};
-    }
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Failed to create product." };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Failed to create product." };
+  }
 };
 
-
-//Updates an existing product by ID
-export const updateProduct = async(id, formData) =>{
-  try{
+export const updateProduct = async (id, formData) => {
+  try {
     const token = localStorage.getItem("token");
     const res = await fetchWithTimeout(`${BASE_URL}/products/${id}`, {
-        method: "PUT",
-        headers: {
-            ...(token && { Authorization: `Bearer ${token}`}),
-        },
-        body: formData,
+      method: "PUT",
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: formData,
     });
-    return res.json();
-  }catch (error){
-          return{ error: "Failed to update product."};
-    }
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Failed to update product." };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Failed to update product." };
+  }
 };
 
-//Delete a product by ID
-export const deleteProduct = async (id) =>{
-  try{
+export const deleteProduct = async (id) => {
+  try {
     const res = await fetchWithTimeout(`${BASE_URL}/products/${id}`, {
-        method: "DELETE",
-        headers: getAuthHeaders(),
+      method: "DELETE",
+      headers: getAuthHeaders(),
     });
-    return res.json();
-  } catch (error){
-        return{ error: "Failed to delete product."};
-    }
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Failed to delete product." };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Failed to delete product." };
+  }
 };
 
-//CATEGORIES (Protected)
-export const getCategories = async () =>{
-  try{
+// ================= CATEGORIES (Protected) =================
+export const getCategories = async () => {
+  try {
     const res = await fetchWithTimeout(`${BASE_URL}/categories`, {
-        headers: getAuthHeaders(),
+      headers: getAuthHeaders(),
     });
-    return res.json();
-  }catch (error){
-        return{ error: "Failed to fetch category."};
-    }
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Failed to fetch categories." };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Failed to fetch category." };
+  }
 };
 
 export const createCategory = async (name) => {
@@ -446,86 +466,77 @@ export const createCategory = async (name) => {
       headers: getAuthHeaders(),
       body: JSON.stringify({ name }),
     });
-
-    // 1. Parse the JSON response first to see what the server said
     const data = await res.json();
-
-    // 2. If the server returned an error code (like 403 or 500)
-    if (!res.ok) {
-      return { 
-        error: data.message || "Failed to create category." 
-      };
-    }
-
-    // 3. SUCCESS: Return the actual data
+    if (!res.ok) return { error: data.message || "Failed to create category." };
     return data;
-
-  } catch (error) {
-    return { error: "Failed to create category." };
+  } catch (err) {
+    return { error: err.message || "Failed to create category." };
   }
 };
 
-
-export const updateCategory = async (id, name) =>{
-    try{
-        const res = await fetchWithTimeout(`${BASE_URL}/categories/${id}`, {
-            method: "PUT",
-            headers: getAuthHeaders(),
-            body: JSON.stringify({ name }),
-        });
-        return res.json();
-    } catch (error){
-        return{ error: "Failed to update category."};
-    }
-};
-
-export const deleteCategory = async(id) =>{
-  try{
+export const updateCategory = async (id, name) => {
+  try {
     const res = await fetchWithTimeout(`${BASE_URL}/categories/${id}`, {
-        method: "DELETE",
-        headers: getAuthHeaders(),
+      method: "PUT",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ name }),
     });
-    return res.json();
-  }catch (error){
-        return{ error: "Failed to delete category."};
-    }
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Failed to update category." };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Failed to update category." };
+  }
 };
 
-// STORE SETTINGS (Protected)
+export const deleteCategory = async (id) => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/categories/${id}`, {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Failed to delete category." };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Failed to delete category." };
+  }
+};
 
-//Updates store settings - uses FormData bacause logo/banner are image uploads
-export const updateStoreSettings = async(formData) =>{
-  try{
+// ================= STORE & SELLER ACCOUNT =================
+export const updateStoreSettings = async (formData) => {
+  try {
     const token = localStorage.getItem("token");
     const res = await fetchWithTimeout(`${BASE_URL}/store/settings`, {
-        method: "PUT",
-        headers: {
-            ...(token && {Authorization: `Bearer ${token}`}),
-        },
-        body: formData,
+      method: "PUT",
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: formData,
     });
-    return res.json();
-  }catch (error){
-        return{ error: "Failed to update store settings."};
-    }
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Failed to update store settings." };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Failed to update store settings." };
+  }
 };
 
 export const changeSellerPassword = async (currentPassword, newPassword) => {
-    try {
-        const res = await fetchWithTimeout(`${BASE_URL}/seller/change-password`, {
-            method: "PUT",
-            headers: getAuthHeaders(),
-            body: JSON.stringify({ currentPassword, newPassword }),
-        });
-        return res.json();
-    } catch (error) {
-        return { error: "Failed to change password." };
-    }
-}; 
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/seller/change-password`, {
+      method: "PUT",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Failed to change password." };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Failed to change password." };
+  }
+};
 
-
-//SELLER ACCOUNT
-//Permently delete the seller's account
 export const deleteSellerAccount = async (reason) => {
   try {
     const res = await fetchWithTimeout(`${BASE_URL}/seller/account`, {
@@ -533,13 +544,15 @@ export const deleteSellerAccount = async (reason) => {
       headers: getAuthHeaders(),
       body: JSON.stringify({ reason }),
     });
-    return res.json();
-  } catch (error) {
-    return { error: "Failed to delete seller account." };
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Failed to delete seller account." };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Failed to delete seller account." };
   }
 };
 
-
+// ================= ANALYTICS =================
 export const trackStoreVisit = async ({ sellerId, sessionId, referrer }) => {
   try {
     const res = await fetchWithTimeout(`${BASE_URL}/analytics/store-visit`, {
@@ -568,187 +581,28 @@ export const trackProductClick = async ({ sellerId, productId, sessionId }) => {
 
 export const getAnalyticsSummary = async (period) => {
   try {
-    const token = localStorage.getItem("token");
     const res = await fetchWithTimeout(`${BASE_URL}/analytics/summary?period=${period}`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: getAuthHeaders(),
     });
-    return await res.json();
-  } catch {
-    return { error: "Failed to fetch analytics" };
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Failed to fetch analytics" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Failed to fetch analytics" };
   }
 };
 
-export const generatePaymentLink = async (conversationId) => {
-    try {
-        const token = localStorage.getItem("token");
-        const res = await fetchWithTimeout(`${BASE_URL}/chat/${conversationId}/generate-payment-link`, {
-            method: "POST",
-            headers: { Authorization: `Bearer ${token}` },
-        });
-        return await res.json();
-    } catch {
-        return { error: "Failed to generate payment link" };
-    }
-};
-
-
-export const adminLogin = async (passkey) => {
-    try {
-        const res = await fetchWithTimeout(`${BASE_URL}/admin/login`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ passkey }),
-        });
-        const json = await res.json();
-        if (!res.ok) return { error: json.message || "Login failed" };
-        return json;
-    } catch {
-        return { error: "Could not log in. Please try again." };
-    }
-};
-
-const getAdminHeaders = () => ({
-    "admin-key": localStorage.getItem("moonstore_admin_token"),
-    "Content-Type": "application/json",
-});
-
-export const getAllSellers = async () => {
-    try {
-        const res = await fetchWithTimeout(`${BASE_URL}/admin/sellers`, {
-            headers: getAdminHeaders(),
-        });
-        const json = await res.json();
-        if (!res.ok) return { error: json.message || "Could not load sellers" };
-        return json;
-    } catch {
-        return { error: "Could not load sellers. Please try again." };
-    }
-};
-
-export const activateStore = async (email) => {
-    try {
-        const res = await fetchWithTimeout(`${BASE_URL}/admin/activate`, {
-            method: "PUT",
-            headers: getAdminHeaders(),
-            body: JSON.stringify({ email }),
-        });
-        const json = await res.json();
-        if (!res.ok) return { error: json.message || "Could not activate store" };
-        return json;
-    } catch {
-        return { error: "Could not activate store. Please try again." };
-    }
-};
-
-export const deactivateStore = async (email) => {
-    try {
-        const res = await fetchWithTimeout(`${BASE_URL}/admin/deactivate`, {
-            method: "PUT",
-            headers: getAdminHeaders(),
-            body: JSON.stringify({ email }),
-        });
-        const json = await res.json();
-        if (!res.ok) return { error: json.message || "Could not deactivate store" };
-        return json;
-    } catch {
-        return { error: "Could not deactivate store. Please try again." };
-    }
-};
-
-export const deleteSellerAdmin = async (email) => {
-    try {
-        const res = await fetchWithTimeout(`${BASE_URL}/admin/delete-seller`, {
-            method: "DELETE",
-            headers: getAdminHeaders(),
-            body: JSON.stringify({ email }),
-        });
-        const json = await res.json();
-        if (!res.ok) return { error: json.message || "Could not delete seller" };
-        return json;
-    } catch {
-        return { error: "Could not delete seller. Please try again." };
-    }
-};
-
-export const getAllReferralsAdmin = async () => {
-    try {
-        const res = await fetchWithTimeout(`${BASE_URL}/admin/referrals`, {
-            headers: getAdminHeaders(),
-        });
-        const json = await res.json();
-        if (!res.ok) return { error: json.message || "Could not load referrals" };
-        return json;
-    } catch {
-        return { error: "Could not load referrals. Please try again." };
-    }
-};
-
-export const markCommissionPaidAdmin = async (email) => {
-    try {
-        const res = await fetchWithTimeout(`${BASE_URL}/admin/mark-commission-paid`, {
-            method: "PUT",
-            headers: getAdminHeaders(),
-            body: JSON.stringify({ email }),
-        });
-        const json = await res.json();
-        if (!res.ok) return { error: json.message || "Could not update commission" };
-        return json;
-    } catch {
-        return { error: "Could not update commission. Please try again." };
-    }
-};
-
-export const adminLogout = async () => {
-    try {
-        await fetchWithTimeout(`${BASE_URL}/admin/logout`, {
-            method: "POST",
-            headers: getAdminHeaders(),
-        });
-    } catch {
-       
-    }
-};
-
-
-export const getRevenueSummaryAdmin = async (startDate, endDate) => {
-    try {
-        let url = `${BASE_URL}/admin/revenue-summary`;
-        const params = new URLSearchParams();
-        if (startDate) params.append("startDate", startDate);
-        if (endDate) params.append("endDate", endDate);
-        if (params.toString()) url += `?${params.toString()}`;
-
-        const res = await fetchWithTimeout(url, { headers: getAdminHeaders() });
-        const json = await res.json();
-        if (!res.ok) return { error: json.message || "Could not load revenue" };
-        return json;
-    } catch {
-        return { error: "Could not load revenue. Please try again." };
-    }
-};
-
-
-export const getExitSurveys = async () => {
-  try {
-    const res = await fetchWithTimeout(`${BASE_URL}/admin/exit-surveys`, {
-      method: "GET",
-      headers: getAdminHeaders(),
-    });
-    return res.json();
-  } catch (error) {
-    return { error: "Failed to fetch exit surveys." };
-  }
-};
-
-
+// ================= REVIEWS =================
 export const getReviewEligibility = async (productId, buyerEmail) => {
   try {
     const res = await fetchWithTimeout(
       `${BASE_URL}/reviews/eligibility?productId=${productId}&buyerEmail=${encodeURIComponent(buyerEmail)}`
     );
-    return res.json();
-  } catch (error) {
-    return { error: "Failed to check review eligibility." };
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Failed to check review eligibility." };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Failed to check review eligibility." };
   }
 };
 
@@ -759,17 +613,178 @@ export const submitReview = async (sellerId, productId, buyerEmail, rating, text
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ sellerId, productId, buyerEmail, rating, text }),
     });
-    return res.json();
-  } catch (error) {
-    return { error: "Failed to submit review." };
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Failed to submit review." };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Failed to submit review." };
   }
 };
 
 export const getProductReviews = async (productId) => {
   try {
     const res = await fetchWithTimeout(`${BASE_URL}/reviews/product/${productId}`);
-    return res.json();
-  } catch (error) {
-    return { error: "Failed to load reviews." };
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Failed to load reviews." };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Failed to load reviews." };
+  }
+};
+
+// ================= ADMIN =================
+export const adminLogin = async (passkey) => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/admin/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ passkey }),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Login failed" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Could not log in. Please try again." };
+  }
+};
+
+export const getReportedConversationsAdmin = async () => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/admin/reports`, {
+      headers: getAdminHeaders(),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Could not load reports" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Could not load reports. Please try again." };
+  }
+};
+
+export const getAllSellers = async () => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/admin/sellers`, {
+      headers: getAdminHeaders(),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Could not load sellers" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Could not load sellers. Please try again." };
+  }
+};
+
+export const activateStore = async (email) => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/admin/activate`, {
+      method: "PUT",
+      headers: getAdminHeaders(),
+      body: JSON.stringify({ email }),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Could not activate store" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Could not activate store. Please try again." };
+  }
+};
+
+export const deactivateStore = async (email) => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/admin/deactivate`, {
+      method: "PUT",
+      headers: getAdminHeaders(),
+      body: JSON.stringify({ email }),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Could not deactivate store" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Could not deactivate store. Please try again." };
+  }
+};
+
+export const deleteSellerAdmin = async (email) => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/admin/delete-seller`, {
+      method: "DELETE",
+      headers: getAdminHeaders(),
+      body: JSON.stringify({ email }),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Could not delete seller" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Could not delete seller. Please try again." };
+  }
+};
+
+export const getAllReferralsAdmin = async () => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/admin/referrals`, {
+      headers: getAdminHeaders(),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Could not load referrals" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Could not load referrals. Please try again." };
+  }
+};
+
+export const markCommissionPaidAdmin = async (email) => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/admin/mark-commission-paid`, {
+      method: "PUT",
+      headers: getAdminHeaders(),
+      body: JSON.stringify({ email }),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Could not update commission" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Could not update commission. Please try again." };
+  }
+};
+
+export const adminLogout = async () => {
+  try {
+    await fetchWithTimeout(`${BASE_URL}/admin/logout`, {
+      method: "POST",
+      headers: getAdminHeaders(),
+    });
+  } catch (err) {
+    // Fail silently on logout request
+  }
+};
+
+export const getRevenueSummaryAdmin = async (startDate, endDate) => {
+  try {
+    let url = `${BASE_URL}/admin/revenue-summary`;
+    const params = new URLSearchParams();
+    if (startDate) params.append("startDate", startDate);
+    if (endDate) params.append("endDate", endDate);
+    if (params.toString()) url += `?${params.toString()}`;
+
+    const res = await fetchWithTimeout(url, { headers: getAdminHeaders() });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Could not load revenue" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Could not load revenue. Please try again." };
+  }
+};
+
+export const getExitSurveys = async () => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/admin/exit-surveys`, {
+      method: "GET",
+      headers: getAdminHeaders(),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Failed to fetch exit surveys." };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Failed to fetch exit surveys." };
   }
 };

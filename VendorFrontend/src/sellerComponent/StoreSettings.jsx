@@ -1,74 +1,18 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { updateStoreSettings, deleteSellerAccount, initializePayment } from "../api/api";
+import { updateStoreSettings, deleteSellerAccount } from "../api/api";
 import ChangePassword from "../sellerComponent/ChangePassword";
 import styles from "./StoreSettings.module.css";
-
-
-const plans = [
-  {
-    key: "basic",
-    name: "Basic",
-    price: "₦15,000/mo",
-    features: [
-        "Your own branded online storefront",
-        "Shareable store link",
-        "Shareable product links",
-        "Custom business logo and banner",
-        "Add up to 25 products",
-        "Add up to 3 categories" ,
-        "1 image per product",
-        "Built-in chat and ordering system",
-        "In-store secure payments",
-        "Basic sales insights",
-        "Delivery order details",
-        "Search Engine Optimisation (SEO), get found on Google",
-        "Sales Video Generator — 5 videos/month",
-        "Referral programme — earn when you refer other sellers",
-        "Direct WhatsApp developer support",      
-    ],
-  },
-  {
-    key: "pro",
-    name: "Pro",
-    price: "₦35,000/mo",
-    features: [
-        "Everything in Basic",
-        "Add up to 60 products",
-        "Add up to 6 categories",
-        "Up to 2 images per product",
-        "Facebook Pixel & Google Analytics integrations",
-        "Built-in email marketing campaigns",
-        "Advanced email campaign reporting",
-        "Sales Video Generator — 20 videos/month",
-        "Limited-time flash sale features",
-    ],
-  },
-  {
-    key: "premium",
-    name: "Premium",
-    price: "₦75,000/mo",
-    features: [
-     "Everything in Pro",
-     "Unlimited products",
-     "Unlimited categories",
-     "Up to 3 images per product",
-     "Advanced sales & customer traffic insights",
-     "End-to-end order management system",
-     "Sales Video Generator — 100 videos/month",
-     "Priority support",
-    ],
-  },
-];
 
 const StoreSettings = () => {
   const { seller, logout, updateSeller } = useAuth();
   const navigate = useNavigate();
+  const timerRef = useRef(null);
 
   const [activeSection, setActiveSection] = useState(null);
 
-  // store settings fields
+  // Store settings fields
   const [businessName, setBusinessName] = useState("");
   const [tagline, setTagline] = useState("");
   const [whatsappNumber, setWhatsappNumber] = useState("");
@@ -80,21 +24,17 @@ const StoreSettings = () => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
-  // bank details fields
+  // Bank details fields
   const [accountName, setAccountName] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
   const [bankName, setBankName] = useState("");
   const [bankLoading, setBankLoading] = useState(false);
 
-  // delete account
+  // Delete account
   const [showDeleteWarning, setShowDeleteWarning] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [reason, setReason] = useState("");
   const [reasonError, setReasonError] = useState("");
-
-  // plan selection
-  const [selectedPlan, setSelectedPlan] = useState(null);
-  const [payLoading, setPayLoading] = useState(false);
 
   useEffect(() => {
     if (!seller) return;
@@ -108,7 +48,14 @@ const StoreSettings = () => {
     setBankName(seller.bankDetails?.bankName || "");
   }, [seller]);
 
-   const clearMessages = () => {
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  const clearMessages = () => {
     setError(null);
     setSuccess(null);
   };
@@ -130,9 +77,8 @@ const StoreSettings = () => {
     formData.append("phoneNumber", phoneNumber);
 
     if (logo) formData.append("logo", logo);
-
     if (banner) formData.append("bannerImage", banner);
-    
+
     const data = await updateStoreSettings(formData);
     setLoading(false);
 
@@ -141,9 +87,9 @@ const StoreSettings = () => {
       return;
     }
 
-     updateSeller(data.seller);
+    updateSeller(data.seller);
     setSuccess("Store settings updated successfully.");
-    setTimeout(() => {
+    timerRef.current = setTimeout(() => {
       setSuccess(null);
       goBack();
     }, 1500);
@@ -154,13 +100,13 @@ const StoreSettings = () => {
 
     if (!accountName.trim() || !accountNumber.trim() || !bankName.trim()) {
       setError("Please fill in all bank details before saving.");
-      setTimeout(() => setError(null), 2000);
+      timerRef.current = setTimeout(() => setError(null), 2000);
       return;
     }
 
     setBankLoading(true);
 
-     const formData = new FormData();
+    const formData = new FormData();
     formData.append("accountName", accountName);
     formData.append("accountNumber", accountNumber);
     formData.append("bankName", bankName);
@@ -170,75 +116,51 @@ const StoreSettings = () => {
 
     if (data?.error) {
       setError(data.error);
-      setTimeout(() => setError(null), 2000);
+      timerRef.current = setTimeout(() => setError(null), 2000);
       return;
     }
 
-     updateSeller(data.seller);
+    updateSeller(data.seller);
     setSuccess("Bank details saved successfully.");
-    setTimeout(() => {
+    timerRef.current = setTimeout(() => {
       setSuccess(null);
       goBack();
     }, 1500);
   };
 
   const handleDeleteAccount = async () => {
-  if (reason.trim().length < 10) {
-    setReasonError("Please provide a reason (at least 10 characters).");
-    return;
-  }
-  setReasonError("");
-  setDeleteLoading(true);
-  const data = await deleteSellerAccount(reason.trim());
-  setDeleteLoading(false);
+    if (reason.trim().length < 10) {
+      setReasonError("Please provide a reason (at least 10 characters).");
+      return;
+    }
+    setReasonError("");
+    setDeleteLoading(true);
+    const data = await deleteSellerAccount(reason.trim());
+    setDeleteLoading(false);
 
-  if (data?.error) {
-    setError(data.error);
-    return;
-  }
-
-  logout();
-  navigate("/login");
-};
-
-  const handleHelpButton = () => {
-    const message = `Hi, I need help with my MoonStore store. Business: ${seller?.businessName} Plan: ${seller?.plan}`;
-    const encodedMessage = encodeURIComponent(message);
-    window.open(`https://wa.me/2348152905325?text=${encodedMessage}`, "_blank");
-  };
-
-  const handleWhatsappChanneButton = () => {
-  // Directly opens your official WhatsApp Channel in a new tab
-  window.open("https://whatsapp.com/channel/0029Vb84tO9GpLHI1O3xll2o", "_blank", "noopener,noreferrer");
-};
-
-  const handlePay = async () => {
-    if (!selectedPlan) return;
-    setPayLoading(true);
-    setError(null);
-    const data = await initializePayment(selectedPlan);
-    setPayLoading(false);
     if (data?.error) {
       setError(data.error);
       return;
     }
-    window.location.href = data.paymentUrl;
+
+    logout();
+    navigate("/login");
   };
 
-  const isPro = seller?.plan === "pro";
-  const isPremium = seller?.plan === "premium";
-  const isActive = seller?.isActive;
-  const isReactivating = !!seller?.subscriptionEnd;
- const isOnTrial = !!(seller?.trialEnd && !seller?.subscriptionEnd);
+  const handleHelpButton = () => {
+    const message = `Hi, I need help with my MoonStore store. Business: ${seller?.businessName}`;
+    window.open(`https://wa.me/2348152905325?text=${encodeURIComponent(message)}`, "_blank");
+  };
 
-  // menu list
+  const handleWhatsappChannelButton = () => {
+    window.open("https://whatsapp.com/channel/0029Vb84tO9GpLHI1O3xll2o", "_blank", "noopener,noreferrer");
+  };
+
+  // Main Menu View
   if (!activeSection) {
     return (
       <div className={styles.container}>
-
         <div className={styles.menu}>
-
-          {isActive ? (
           <div className={styles.menuItem} onClick={() => setActiveSection("store")}>
             <div className={styles.menuLeft}>
               <span className={styles.menuIcon}>🏪</span>
@@ -249,10 +171,7 @@ const StoreSettings = () => {
             </div>
             <span className={styles.chevron}>›</span>
           </div>
-           ) : null}
 
-
-          {isActive ? (
           <div className={styles.menuItem} onClick={() => setActiveSection("password")}>
             <div className={styles.menuLeft}>
               <span className={styles.menuIcon}>🔒</span>
@@ -263,10 +182,7 @@ const StoreSettings = () => {
             </div>
             <span className={styles.chevron}>›</span>
           </div>
-           ) : null}
 
-          
-          {isActive ? (
           <div className={styles.menuItem} onClick={() => setActiveSection("payout")}>
             <div className={styles.menuLeft}>
               <span className={styles.menuIcon}>🏦</span>
@@ -277,52 +193,17 @@ const StoreSettings = () => {
             </div>
             <span className={styles.chevron}>›</span>
           </div>
-           ) : null}
 
-
-         {!isPremium && isActive ? (
-    <div className={styles.menuItem} onClick={() => setActiveSection("upgrade")}>
-        <div className={styles.menuLeft}>
-            <span className={styles.menuIcon}>⭐</span>
-            <div>
-                <p className={styles.menuTitle}>
-                    {isOnTrial ? "Subscribe" : "Upgrade Plan"}
-                </p>
-                <p className={styles.menuSub}>
-                    {isOnTrial ? "Pick a plan to keep your store live" : "Get more products and features"}
-                </p>
-            </div>
-        </div>
-        <span className={styles.chevron}>›</span>
-    </div>
-) : null}
-
-
-          {!isActive ? (
-            <div className={styles.menuItem} onClick={() => setActiveSection("activate")}>
-              <div className={styles.menuLeft}>
-                <span className={styles.menuIcon}>🚀</span>
-                <div>
-                  <p className={styles.menuTitle}>
-                    {isReactivating ? "Reactivate Store" : "Activate Store"}
-                  </p>
-                  <p className={styles.menuSub}>Choose a plan and go live</p>
-                </div>
+          <div className={styles.menuItem} onClick={handleWhatsappChannelButton}>
+            <div className={styles.menuLeft}>
+              <span className={styles.menuIcon}>📢</span>
+              <div>
+                <p className={styles.menuTitle}>Join our Channel</p>
+                <p className={styles.menuSub}>MoonStore updates, selling tips & motivation on WhatsApp</p>
               </div>
-              <span className={styles.chevron}>›</span>
             </div>
-          ) : null}
-
-          <div className={styles.menuItem} onClick={handleWhatsappChanneButton}>
-  <div className={styles.menuLeft}>
-    <span className={styles.menuIcon}>📢</span> 
-    <div>
-      <p className={styles.menuTitle}>Join our Channel</p>
-      <p className={styles.menuSub}>MoonStore updates, selling tips & motivation on WhatsApp</p>
-    </div>
-  </div>
-  <span className={styles.chevron}>›</span>
-</div>
+            <span className={styles.chevron}>›</span>
+          </div>
 
           <div className={styles.menuItem} onClick={handleHelpButton}>
             <div className={styles.menuLeft}>
@@ -350,7 +231,7 @@ const StoreSettings = () => {
     );
   }
 
-  // store settings section
+  // Store Settings Section
   if (activeSection === "store") {
     return (
       <div className={styles.container}>
@@ -359,8 +240,8 @@ const StoreSettings = () => {
           <h2 className={styles.sectionTitle}>Store Settings</h2>
         </div>
 
-        {success ? <p className={styles.success}>{success}</p> : null}
-        {error ? <p className={styles.error}>{error}</p> : null}
+        {success && <p className={styles.success}>{success}</p>}
+        {error && <p className={styles.error}>{error}</p>}
 
         <div className={styles.form}>
           <div className={styles.field}>
@@ -393,13 +274,10 @@ const StoreSettings = () => {
             <input className={styles.input} type="file" accept="image/*" onChange={(e) => setLogo(e.target.files[0])} />
           </div>
 
-          
-            <div className={styles.field}>
-              <label className={styles.label}>Banner Image</label>
-              <input className={styles.input} type="file" accept="image/*" onChange={(e) => setBanner(e.target.files[0])} />
-            </div>
-          
-
+          <div className={styles.field}>
+            <label className={styles.label}>Banner Image</label>
+            <input className={styles.input} type="file" accept="image/*" onChange={(e) => setBanner(e.target.files[0])} />
+          </div>
 
           <button className={styles.saveBtn} onClick={handleSave} disabled={loading}>
             {loading ? "Saving..." : "Save Settings"}
@@ -409,7 +287,7 @@ const StoreSettings = () => {
     );
   }
 
-  // change password section
+  // Change Password Section
   if (activeSection === "password") {
     return (
       <div className={styles.container}>
@@ -422,7 +300,7 @@ const StoreSettings = () => {
     );
   }
 
-  // referral payout section
+  // Referral Payout Section
   if (activeSection === "payout") {
     return (
       <div className={styles.container}>
@@ -435,8 +313,8 @@ const StoreSettings = () => {
           Add your bank details so we can transfer your referral commission directly to your account. Payouts are every Saturday.
         </p>
 
-        {success ? <p className={styles.success}>{success}</p> : null}
-        {error ? <p className={styles.error}>{error}</p> : null}
+        {success && <p className={styles.success}>{success}</p>}
+        {error && <p className={styles.error}>{error}</p>}
 
         <div className={styles.form}>
           <div className={styles.field}>
@@ -462,111 +340,7 @@ const StoreSettings = () => {
     );
   }
 
-  // upgrade plan section
-  if (activeSection === "upgrade") {
-    return (
-      <div className={styles.container}>
-        <div className={styles.sectionHeader}>
-          <button className={styles.backBtn} onClick={goBack}>←</button>
-          <h2 className={styles.sectionTitle}>Upgrade Plan</h2>
-        </div>
-
-        <div className={styles.feeNotice}>
-          <p className={styles.feeTitle}>1.5% platform service fee per order processed</p>
-          <p className={styles.feeBody}>
-            Every payment your buyer makes goes through MoonStore's secure payment infrastructure, collected, split automatically and settled to your bank account daily. The 1.5% is what keeps that infrastructure running for you.
-          </p>
-        </div>
-
-        {error ? <p className={styles.error}>{error}</p> : null}
-
-        <div className={styles.plans}>
-          {plans.map((plan) => {
-            const isCurrent = seller?.plan === plan.key && !isOnTrial;
-            return (
-              <div
-                key={plan.key}
-                className={`${styles.planCard} ${selectedPlan === plan.key ? styles.selectedPlan : ""} ${isCurrent ? styles.disabledPlan : ""}`}
-                onClick={() => { if (!isCurrent) setSelectedPlan(plan.key); }}
-              >
-                <div className={styles.planTop}>
-                  <div>
-                    <span className={styles.planName}>{plan.name}</span>
-                    {isCurrent ? <span className={styles.currentBadge}>Current</span> : null}
-                  </div>
-                  <span className={styles.planPrice}>{plan.price}</span>
-                </div>
-                <ul className={styles.featureList}>
-                  {plan.features.map((f) => (
-                    <li key={f} className={styles.featureItem}>✓ {f}</li>
-                  ))}
-                </ul>
-              </div>
-            );
-          })}
-        </div>
-
-        <button className={styles.payBtn} onClick={handlePay} disabled={!selectedPlan || payLoading}>
-          {payLoading ? "Redirecting to Paystack..." : "Proceed to Payment"}
-        </button>
-      </div>
-    );
-  }
-
-  // activate / reactivate section
-  if (activeSection === "activate") {
-    return (
-      <div className={styles.container}>
-        <div className={styles.sectionHeader}>
-          <button className={styles.backBtn} onClick={goBack}>←</button>
-          <h2 className={styles.sectionTitle}>
-            {isReactivating ? "Reactivate Store" : "Activate Store"}
-          </h2>
-        </div>
-
-        <p className={styles.hint}>
-          {isReactivating
-            ? "Your subscription has ended. Pick a plan to go live again."
-            : "Choose a plan to activate your store and start selling."}
-        </p>
-
-        <div className={styles.feeNotice}>
-          <p className={styles.feeTitle}>1.5% platform service fee per order processed</p>
-          <p className={styles.feeBody}>
-            Every payment your buyer makes goes through MoonStore's secure payment infrastructure — collected, split automatically and settled to your bank account daily. The 1.5% is what keeps that infrastructure running for you.
-          </p>
-        </div>
-
-        {error ? <p className={styles.error}>{error}</p> : null}
-
-        <div className={styles.plans}>
-          {plans.map((plan) => (
-            <div
-              key={plan.key}
-              className={`${styles.planCard} ${selectedPlan === plan.key ? styles.selectedPlan : ""}`}
-              onClick={() => setSelectedPlan(plan.key)}
-            >
-              <div className={styles.planTop}>
-                <span className={styles.planName}>{plan.name}</span>
-                <span className={styles.planPrice}>{plan.price}</span>
-              </div>
-              <ul className={styles.featureList}>
-                {plan.features.map((f) => (
-                  <li key={f} className={styles.featureItem}>✓ {f}</li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-
-        <button className={styles.payBtn} onClick={handlePay} disabled={!selectedPlan || payLoading}>
-          {payLoading ? "Redirecting to Paystack..." : "Proceed to Payment"}
-        </button>
-      </div>
-    );
-  }
-
-  // delete account section
+  // Delete Account Section
   if (activeSection === "delete") {
     return (
       <div className={styles.container}>
@@ -581,32 +355,32 @@ const StoreSettings = () => {
           </p>
         </div>
 
-        {error ? <p className={styles.error}>{error}</p> : null}
+        {error && <p className={styles.error}>{error}</p>}
 
         <button className={styles.deleteBtn} onClick={() => setShowDeleteWarning(true)}>
           Delete My Account
         </button>
 
-        {showDeleteWarning ? (
+        {showDeleteWarning && (
           <div className={styles.overlay}>
             <div className={styles.popup}>
               <h3 className={styles.popupTitle}>Are you sure?</h3>
               <p className={styles.popupText}>
                 This will permanently delete your store, all your products, and all your categories. This action cannot be undone.
               </p>
-               <label className={styles.reasonLabel} htmlFor="deleteReason">
-        Please tell us why you're leaving (required)
-      </label>
+              <label className={styles.reasonLabel} htmlFor="deleteReason">
+                Please tell us why you're leaving (required)
+              </label>
 
-      <textarea
-        id="deleteReason"
-        className={styles.reasonTextarea}
-        value={reason}
-        onChange={(e) => setReason(e.target.value)}
-        placeholder="Your feedback helps us improve..."
-        rows={4}
-      />
-      {reasonError ? <p className={styles.error}>{reasonError}</p> : null}
+              <textarea
+                id="deleteReason"
+                className={styles.reasonTextarea}
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="Your feedback helps us improve..."
+                rows={4}
+              />
+              {reasonError && <p className={styles.error}>{reasonError}</p>}
               <div className={styles.popupButtons}>
                 <button className={styles.cancelButton} onClick={() => setShowDeleteWarning(false)}>
                   Cancel
@@ -617,7 +391,7 @@ const StoreSettings = () => {
               </div>
             </div>
           </div>
-        ) : null}
+        )}
       </div>
     );
   }

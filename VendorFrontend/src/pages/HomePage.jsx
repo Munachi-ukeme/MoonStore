@@ -6,7 +6,7 @@ import styles from "./HomePage.module.css";
 
 const HomePage = () => {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState("buyer");
+    const [activeTab, setActiveTab] = useState("seller");
     const [email, setEmail] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -103,7 +103,7 @@ const HomePage = () => {
                     className={styles.primaryBtn}
                     onClick={() => navigate("/register")}
                 >
-                    Get Your Store →
+                    Signup to generate Your Store →
                 </button>
 
                 <button
@@ -150,7 +150,7 @@ const HomePage = () => {
 
             {/* content */}
             <div className={styles.card}>
-                {activeTab === "buyer" ? renderBuyerTab() : renderSellerTab()}
+                {activeTab === "seller" ? renderBuyerTab() : renderSellerTab()}
             </div>
 
         

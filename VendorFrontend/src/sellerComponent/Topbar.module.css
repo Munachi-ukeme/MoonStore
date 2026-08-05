@@ -1,71 +1,40 @@
-*{
+* {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
     font-family: sans-serif;
 }
 
-.topbar{
+.topbar {
     display: flex;
     align-items: center;
-    justify-content: space-between;
     background-color: #ffffff;
-    padding: 16px 16px;
-    border-radius: 0px;
-    margin-bottom: 0px;
+    padding: 16px;
     box-shadow: 0 1px 4px rgba(109, 40, 217, 0.06);
-   
-     /* sticky topbar */
+    
+    /* sticky topbar */
     position: sticky;
     top: 0;
     z-index: 50;
 }
 
-/* current page tile */
-.pageTitle{
+/* current page title */
+.pageTitle {
     font-size: 15px;
     font-weight: 600;
     color: #1e1b2e;
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
-    
-}
-
-/* paln badge base style */
-.planBadge{
-    font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-/* basic plan -plurple */
-.planBasic{
-    background-color: #ede9fe;
-    color: #7c3aed;
-}
-
-/* pro plan - blue */
-.planPro{
-    background-color: #dbeafe;
-    color: #1d4ed8;
-}
-
-/* premium plan - gold */
-.planPremium{
-    background-color: #fef9c3;
-    color: #a16207;
 }
 
 /* hamburger button - mobile only */
-
-.menuButton{
+.menuButton {
     display: block;
     background: none;
     border: none;
     font-size: 27px;
     color: #7c3aed;
     padding: 0;
-    
+    cursor: pointer;
 }

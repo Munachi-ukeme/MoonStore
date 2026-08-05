@@ -39,7 +39,7 @@ function PrivacyPolicy(){
                         store your product listings and category information.
                     </p>
                     <p className={styles.sectionText}>
-                        For buyers, we do not require you to create an account.
+                        For buyers, we collect your email address which is needed to sign in into your orders dashboard and seller response alert.
 When you click the "Order Now" button, your order
 details are sent directly to the seller inside MoonStore's
 built-in chat.

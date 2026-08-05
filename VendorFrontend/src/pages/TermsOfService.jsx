@@ -11,7 +11,7 @@ function TermsOfServicePage() {
             </button>
             <div className={styles.content}>
                 <h1 className={styles.title}>Terms of Service</h1>
-                <p className={styles.updated}>Last updated: May 2026</p>
+                <p className={styles.updated}>Last updated: August 2026</p>
 
                 <p className={styles.intro}>
                     By using MoonStore you agree to these terms. Please read
@@ -41,10 +41,9 @@ function TermsOfServicePage() {
                         anyone else.
                     </p>
                     <p className={styles.sectionText}>
-                        Your store is activated after your subscription
-                        payment is confirmed. MoonStore reserves the right
-                        to deactivate any store that violates these terms
-                        without refund.
+                        Your store is activated immediately upon completed registration. 
+                        MoonStore reserves the right to deactivate any store that 
+                        violates these terms.
                     </p>
                 </div>
 
@@ -74,90 +73,82 @@ function TermsOfServicePage() {
                 </div>
 
                 <div className={styles.section}>
-                    <h2 className={styles.sectionTitle}>4. Subscription and Payment</h2>
+                    <h2 className={styles.sectionTitle}>4. Platform Fees and Payments</h2>
                     <p className={styles.sectionText}>
-                        MoonStore operates on a monthly subscription model.
-                        Plans start at ₦15,000 per month for the Basic plan.
-                        Subscription fees are non-refundable once your store
-                        has been activated and set up.
+                        MoonStore does not charge setup fees, monthly subscriptions,
+                        or upfront costs to operate a store.
                     </p>
                     <p className={styles.sectionText}>
-                        A platform service fee of 1.5% applies to every order
-                        processed through your store. This fee covers payment
-                        processing, automatic settlement and the security of
-                        every transaction. Payments are processed through our
-                        licensed payment partner, Paystack, and settled
-                        directly to your bank account daily.
+                        A platform service fee of 4% is deducted directly from the
+                        seller's share of every completed sale processed through your store. 
+                        Payment processing fees charged by our payment gateway partner, 
+                        Paystack, are added directly to the total price paid by the buyer 
+                        at checkout.
                     </p>
                     <p className={styles.sectionText}>
-                        Your store will be deactivated if your subscription
-                        expires and is not renewed. Your data is not deleted
-                        immediately, you have a grace period to renew before
-                        permanent deletion.
-                    </p>
-                </div>
-                <div className={styles.section}>
-                    <h2 className={styles.sectionTitle}>5. Refunds & Disputes</h2>
-                    <p className={styles.sectionText}>
-                        MoonStore is a platform that connects buyers with independent sellers. We are not a party to any transaction between buyers and sellers and are not responsible for refunds, returns, or disputes.
-
-                    </p>
-                    <p className={styles.sectionText}>
-                        If you are unhappy with a purchase, your first step is to contact the seller directly through your chat. Most sellers are willing to resolve issues quickly.
-                        If a seller is unresponsive or you believe you have been defrauded, use the Report button inside your chat. Our team will review the conversation and take action where necessary, including suspending the seller's store.
-
-                    </p>
-                    <p className={styles.sectionText}>
-                        Refunds are at the sole discretion of the seller. MoonStore does not hold or control seller funds and cannot issue refunds on a seller's behalf. If you paid via Paystack and the seller is uncooperative, you may contact Paystack support directly to initiate a dispute.
-                        MoonStore's platform fee of 1.5% deducted at the time of payment is non-refundable under any circumstances.
-                        By shopping on any MoonStore store, you acknowledge and agree to these terms.
-                    </p>
-                </div>
-
-
-
-                <div className={styles.section}>
-                    <h2 className={styles.sectionTitle}>5. Referral Programme</h2>
-                    <p className={styles.sectionText}>
-                        MoonStore offers a referral programme where existing
-                        sellers earn a commission for every new seller they
-                        refer who successfully pays their first subscription.
-                        Commission amounts are displayed in your seller
-                        dashboard and may be updated by MoonStore from time
-                        to time. Commission is paid via bank transfer after
-                        the referred seller's first payment is confirmed.
-                        Commission is not paid for referrals that do not
-                        complete payment.
+                        All customer payments are processed through Paystack and settled
+                        directly to your registered bank account according to Paystack's
+                        standard payout schedules.
                     </p>
                 </div>
 
                 <div className={styles.section}>
-                    <h2 className={styles.sectionTitle}>6. Plan Limits</h2>
+                    <h2 className={styles.sectionTitle}>5. Store Limits</h2>
                     <p className={styles.sectionText}>
-                        Each plan has product limits. Basic sellers can list
-                        up to 25 products. Pro sellers can list up to 60
-                        products. Premium sellers have no product limit.
-                        Exceeding your plan limit requires an upgrade.
+                        Every registered seller on MoonStore receives identical platform access
+                        and resource ceilings: up to 200 listed products, up to 30 categories,
+                        and up to 5 high-resolution images per product.
                     </p>
                 </div>
 
                 <div className={styles.section}>
-                    <h2 className={styles.sectionTitle}>7. Account Deletion</h2>
+                    <h2 className={styles.sectionTitle}>6. Refunds & Disputes</h2>
+                    <p className={styles.sectionText}>
+                        MoonStore is a platform provider connecting buyers with independent 
+                        sellers. We are not a direct party to transactions between buyers and 
+                        sellers and do not issue direct refunds or handle returns.
+                    </p>
+                    <p className={styles.sectionText}>
+                        If a buyer is unhappy with a purchase, their primary resolution path 
+                        is contacting the seller directly through built-in chat. If a seller 
+                        is unresponsive or fraudulent, buyers may use the Report feature inside 
+                        chat. MoonStore will review the interaction and may suspend fraudulent seller stores.
+                    </p>
+                    <p className={styles.sectionText}>
+                        Refunds remain at the sole discretion of the seller. MoonStore does 
+                        not hold or control seller funds and cannot forcibly issue refunds on 
+                        a seller's behalf. MoonStore's 4% platform fee deducted at the time of 
+                        payment processing is non-refundable.
+                    </p>
+                </div>
+
+                <div className={styles.section}>
+                    <h2 className={styles.sectionTitle}>7. Referral Programme</h2>
+                    <p className={styles.sectionText}>
+                        MoonStore may offer a referral programme where existing
+                        sellers earn rewards or commissions for referring new active
+                        sellers to the platform. Commission terms, eligibility criteria, 
+                        and payment schedules are displayed within your seller dashboard and 
+                        may be updated by MoonStore periodically.
+                    </p>
+                </div>
+
+                <div className={styles.section}>
+                    <h2 className={styles.sectionTitle}>8. Account Deletion</h2>
                     <p className={styles.sectionText}>
                         You can delete your account at any time from your
                         dashboard settings. Deleting your account permanently
                         removes your store, all products, all categories, and
-                        all store data. This action cannot be undone. No
-                        refund is issued for unused subscription days.
+                        all stored data. This action cannot be undone.
                     </p>
                 </div>
 
                 <div className={styles.section}>
-                    <h2 className={styles.sectionTitle}>8. MoonStore's Rights</h2>
+                    <h2 className={styles.sectionTitle}>9. MoonStore's Rights</h2>
                     <p className={styles.sectionText}>
                         MoonStore reserves the right to modify these terms
                         at any time. Sellers will be notified of significant
-                        changes via email. Continued use of the platform
+                        changes via email or dashboard notifications. Continued use of the platform
                         after changes means you accept the updated terms.
                     </p>
                     <p className={styles.sectionText}>
@@ -169,23 +160,22 @@ function TermsOfServicePage() {
                 </div>
 
                 <div className={styles.section}>
-                    <h2 className={styles.sectionTitle}>9. Limitation of Liability</h2>
+                    <h2 className={styles.sectionTitle}>10. Limitation of Liability</h2>
                     <p className={styles.sectionText}>
-                        MoonStore is a platform provider. We are not
+                        MoonStore provides the platform infrastructure. We are not
                         responsible for the quality of products sold by
                         sellers, disputes between sellers and buyers, or
-                        delivery failures. While all communication and
-                        payment happen securely within MoonStore, fulfillment
-                        of the order itself remains the seller's
-                        responsibility.
+                        delivery failures. While communication and payment processing
+                        happen securely through integrated providers, order fulfillment
+                        remains strictly the seller's responsibility.
                     </p>
                 </div>
 
                 <div className={styles.section}>
-                    <h2 className={styles.sectionTitle}>10. Contact</h2>
+                    <h2 className={styles.sectionTitle}>11. Contact</h2>
                     <p className={styles.sectionText}>
                         For any questions about these terms contact us
-                        directly on WhatsApp at +2348152905325. We respond
+                        directly on WhatsApp at +2349132227203. We respond
                         to every message personally.
                     </p>
                 </div>

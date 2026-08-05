@@ -1,31 +1,22 @@
 import { useState, useEffect } from "react";
 import { getCategories, createCategory, updateCategory, deleteCategory } from "../api/api";
-import styles from "./CategoryManager.module.css"
+import styles from "./CategoryManager.module.css";
 
-function CategoryManager (){
+const CategoryManager = () => {
     const [categories, setCategories] = useState([]);
-
     const [input, setInput] = useState("");
-
     const [editingCategory, setEditingCategory] = useState(null);
-
     const [loading, setLoading] = useState(true);
-
     const [saveLoading, setSaveLoading] = useState(false);
-
     const [deleteLoading, setDeleteLoading] = useState(false);
-
     const [showDeleteWarning, setShowDeleteWarning] = useState(false);
-
     const [selectedCategory, setSelectedCategory] = useState(null);
-
     const [error, setError] = useState(null);
-
     const [success, setSuccess] = useState(null);
 
     // fetch all categories when page loads 
-    useEffect(() =>{
-        const loadingCategories = async ()=>{
+    useEffect(() => {
+        const loadingCategories = async () => {
             setError(null);
             setLoading(true);
             const data = await getCategories();
@@ -37,9 +28,9 @@ function CategoryManager (){
             }
 
             // make sure data is an array
-            if(Array.isArray(data)){
+            if (Array.isArray(data)) {
                 setCategories(data);
-            } else{
+            } else {
                 setCategories([]);
             }
 
@@ -50,7 +41,7 @@ function CategoryManager (){
     }, []);
 
     // seller clicks edit on a category
-    const handleEditClick = (category) =>{
+    const handleEditClick = (category) => {
         setEditingCategory(category);
         setInput(category.name);
         setError(null);
@@ -58,71 +49,69 @@ function CategoryManager (){
     };
 
     // seller clicks cancel while editing
-    const handleCancel = ()=>{
+    const handleCancel = () => {
         setEditingCategory(null);
-        setInput("")
+        setInput("");
         setError(null);
     };
 
-
     // seller clicks add or update button
-const handleSave = async () => {
-  setError(null);
-  setSuccess(null);
-  
-  const trimmed = input.trim();
-  if (!trimmed) {
-    setError("Category name cannot be empty.");
-    return;
-  }
+    const handleSave = async () => {
+        setError(null);
+        setSuccess(null);
 
-  setSaveLoading(true);
+        const trimmed = input.trim();
+        if (!trimmed) {
+            setError("Category name cannot be empty.");
+            return;
+        }
 
-  if (editingCategory) {
-    // UPDATE EXISTING CATEGORY
-    const data = await updateCategory(editingCategory._id, trimmed);
-    setSaveLoading(false);
+        setSaveLoading(true);
 
-    if (data.error) {
-      setError(data.error);
-      return;
-    }
+        if (editingCategory) {
+            // UPDATE EXISTING CATEGORY
+            const data = await updateCategory(editingCategory._id, trimmed);
+            setSaveLoading(false);
 
-    const currentCategories = Array.isArray(categories) ? categories : [];
-    setCategories(
-      currentCategories.map((cat) =>
-        cat._id === editingCategory._id ? data : cat
-      )
-    );
-    setEditingCategory(null);
-    setInput("");
-    setSuccess("Category updated successfully.");
+            if (data.error) {
+                setError(data.error);
+                return;
+            }
 
-  } else {
-    // ADD NEW CATEGORY
-    const data = await createCategory(trimmed);
-    setSaveLoading(false);
+            const currentCategories = Array.isArray(categories) ? categories : [];
+            setCategories(
+                currentCategories.map((cat) =>
+                    cat._id === editingCategory._id ? data : cat
+                )
+            );
+            setEditingCategory(null);
+            setInput("");
+            setSuccess("Category updated successfully.");
+        } else {
+            // ADD NEW CATEGORY
+            const data = await createCategory(trimmed);
+            setSaveLoading(false);
 
-    if (data.error) {
-      setError(data.error);
-      return;
-    }
+            if (data.error) {
+                setError(data.error);
+                return;
+            }
 
-    const currentCategories = Array.isArray(categories) ? categories : [];
-    setCategories([data, ...currentCategories]);
-    setInput("");
-    setSuccess("Category added successfully.");
-  }
-};
+            const currentCategories = Array.isArray(categories) ? categories : [];
+            setCategories([data, ...currentCategories]);
+            setInput("");
+            setSuccess("Category added successfully.");
+        }
+    };
 
     // seller clicks Delete on a category
-    const handleDeleteClick = (category) =>{
+    const handleDeleteClick = (category) => {
         setSelectedCategory(category);
         setShowDeleteWarning(true);
     };
 
     // seller confirms delete in the popup
-    const handleConfirmDelete = async () =>{
+    const handleConfirmDelete = async () => {
         setDeleteLoading(true);
         const data = await deleteCategory(selectedCategory._id);
         setDeleteLoading(false);
@@ -136,17 +125,17 @@ const handleSave = async () => {
         // remove deleted category from the list
         setCategories(categories.filter((cat) => cat._id !== selectedCategory._id));
         setShowDeleteWarning(false);
-        setSelectedCategory(null)
-        setSuccess("Category deleted successfully")
+        setSelectedCategory(null);
+        setSuccess("Category deleted successfully");
     };
 
     // seller cancels delete popup
-    const handleCancelDelete = () =>{
+    const handleCancelDelete = () => {
         setShowDeleteWarning(false);
         setSelectedCategory(null);
     };
 
-    return(
+    return (
         <div className={styles.container}>
             {/* success message */}
             {success && <p className={styles.success}>{success}</p>}
@@ -156,23 +145,23 @@ const handleSave = async () => {
 
             {/* input and add/update button */}
             <div className={styles.inputRow}>
-                <input 
-                type="text"
-                className={styles.input}
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="e.g Dresses"
-                onKeyDown={(e) =>{
-                    if(e.key === "Enter"){
-                        handleSave();
-                    }
-                }}
+                <input
+                    type="text"
+                    className={styles.input}
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder="e.g Dresses"
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                            handleSave();
+                        }
+                    }}
                 />
 
                 <button
-                className={styles.addButton}
-                onClick={handleSave}
-                disabled={saveLoading}
+                    className={styles.addButton}
+                    onClick={handleSave}
+                    disabled={saveLoading}
                 >
                     {saveLoading ? "Saving..." : editingCategory ? "Update" : "Add"}
                 </button>
@@ -180,16 +169,15 @@ const handleSave = async () => {
                 {/* cancel button only shows when editing */}
                 {editingCategory ? (
                     <button
-                    className={styles.cancelButton}
-                    onClick={handleCancel}
+                        className={styles.cancelButton}
+                        onClick={handleCancel}
                     >
                         Cancel
                     </button>
                 ) : null}
-
             </div>
 
-            {/*  loading state*/}
+            {/* loading state */}
             {loading ? (
                 <p className={styles.loading}>
                     Loading categories...
@@ -210,23 +198,23 @@ const handleSave = async () => {
 
                             <div className={styles.actions}>
                                 <button
-                                className={styles.editButton}
-                                onClick={() => handleEditClick(cat)}
+                                    className={styles.editButton}
+                                    onClick={() => handleEditClick(cat)}
                                 >
                                     Edit
                                 </button>
 
                                 <button
-                                className={styles.deleteButton}
-                                onClick={() => handleDeleteClick(cat)}
+                                    className={styles.deleteButton}
+                                    onClick={() => handleDeleteClick(cat)}
                                 >
                                     Delete
                                 </button>
                             </div>
                         </div>
-                    ))}                    
+                    ))}
                 </div>
-            ): null}
+            ) : null}
 
             {/* delete warning popup */}
             {showDeleteWarning ? (
@@ -240,16 +228,16 @@ const handleSave = async () => {
 
                         <div className={styles.popupButtons}>
                             <button
-                            className={styles.cancelPopupButton}
-                            onClick={handleCancelDelete}
+                                className={styles.cancelPopupButton}
+                                onClick={handleCancelDelete}
                             >
                                 Cancel
                             </button>
 
                             <button
-                            className={styles.confirmDeleteButton}
-                            onClick={handleConfirmDelete}
-                            disabled={deleteLoading}
+                                className={styles.confirmDeleteButton}
+                                onClick={handleConfirmDelete}
+                                disabled={deleteLoading}
                             >
                                 {deleteLoading ? "Deleting..." : "Yes, Delete"}
                             </button>
@@ -259,6 +247,6 @@ const handleSave = async () => {
             ) : null}
         </div>
     );
-}
+};
 
 export default CategoryManager;

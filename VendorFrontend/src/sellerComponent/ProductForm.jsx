@@ -1,43 +1,30 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "../context/AuthContext";
 import { createProduct, updateProduct, getCategories } from "../api/api";
 import imageCompression from "browser-image-compression";
 import styles from "./ProductForm.module.css";
 
-function ProductForm ({ editingProduct, onSaved, onCancel }) {
-    const { seller } = useAuth();
+const ProductForm = ({ editingProduct, onSaved, onCancel }) => {
+    const maxImages = 5;
 
-    // figure out how many this plan allows
-    let maxImages;
-    if(seller?.plan === "basic") {
-        maxImages = 1;
-    } else if ( seller?.plan === "pro"){
-        maxImages = 2;
-    } else if ( seller?.plan === "premium"){
-        maxImages = 3;
-    } else{
-        maxImages = 1;
-    }
-
-    const[name, setName] = useState("");
-    const[description, setDescription] = useState("");
-    const[categoryId, setCategoryId] = useState("");
-    const[images, setImages] = useState([]);
-    const[colors, setColors] = useState([]);
-    const[sizes, setSizes] = useState([]);
-    const[colorInput, setColorInput] = useState("");
-    const[sizeInput, setSizeInput] = useState("");
-    const[categories, setCategories] = useState([]);
-    const[loading, setLoading] = useState(false);
-    const[error, setError] = useState(null);
+    const [name, setName] = useState("");
+    const [description, setDescription] = useState("");
+    const [categoryId, setCategoryId] = useState("");
+    const [images, setImages] = useState([]);
+    const [colors, setColors] = useState([]);
+    const [sizes, setSizes] = useState([]);
+    const [colorInput, setColorInput] = useState("");
+    const [sizeInput, setSizeInput] = useState("");
+    const [categories, setCategories] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
     const [originalPrice, setOriginalPrice] = useState("");
     const [displayPrice, setDisplayPrice] = useState(null);
 
     // load categories for the dropdown
-    useEffect(() =>{
-        const loadCategories = async() =>{
+    useEffect(() => {
+        const loadCategories = async () => {
             const data = await getCategories();
-            if (!data.error){
+            if (!data.error) {
                 setCategories(data);
             }
         };
@@ -45,7 +32,7 @@ function ProductForm ({ editingProduct, onSaved, onCancel }) {
     }, []);
 
     // if editing, fill the form with existing product data
-    useEffect(() =>{
+    useEffect(() => {
         if (editingProduct) {
             setName(editingProduct.name || "");
             setOriginalPrice(editingProduct.price || "");
@@ -73,7 +60,7 @@ function ProductForm ({ editingProduct, onSaved, onCancel }) {
     }, [editingProduct]);
 
     // add a color tag
-    const handleAddColor = () =>{
+    const handleAddColor = () => {
         const trimmed = colorInput.trim();
         if (!trimmed || colors.includes(trimmed)) return;
 
@@ -82,12 +69,12 @@ function ProductForm ({ editingProduct, onSaved, onCancel }) {
     };
 
     // remove a color tag
-    const handleRemoveColor = (colorToRemove) =>{
+    const handleRemoveColor = (colorToRemove) => {
         setColors(colors.filter((color) => color !== colorToRemove));
     };
 
     // add a size tag
-    const handleAddSize = () =>{
+    const handleAddSize = () => {
         const trimmed = sizeInput.trim();
         if (!trimmed || sizes.includes(trimmed)) return;
 
@@ -96,17 +83,17 @@ function ProductForm ({ editingProduct, onSaved, onCancel }) {
     };
 
     // remove a size tag
-    const handleRemoveSize = (sizeToRemove) =>{
+    const handleRemoveSize = (sizeToRemove) => {
         setSizes(sizes.filter((size) => size !== sizeToRemove));
     };
 
     // handle image file selection
-    const handleImageChange = (e) =>{
+    const handleImageChange = (e) => {
         const selectedFiles = Array.from(e.target.files);
         const totalImageCount = images.length + selectedFiles.length;
-        
+
         if (totalImageCount > maxImages) {
-            setError(`Your current plan only allows a maximum of ${maxImages} image(s).`);
+            setError(`You can only upload a maximum of ${maxImages} images per product.`);
             e.target.value = null; // Clear input element safely
             return;
         }
@@ -119,7 +106,7 @@ function ProductForm ({ editingProduct, onSaved, onCancel }) {
         setImages(images.filter((_, index) => index !== indexToRemove));
     };
 
-    const handleSave = async (e) =>{
+    const handleSave = async (e) => {
         if (e) e.preventDefault(); // Guard against unintended page refreshes
         setError(null);
 
@@ -129,17 +116,17 @@ function ProductForm ({ editingProduct, onSaved, onCancel }) {
             return;
         }
 
-        if(!originalPrice) {
+        if (!originalPrice) {
             setError("Price is required.");
             return;
         }
 
-        if(!categoryId){
+        if (!categoryId) {
             setError("Please select a category.");
             return;
         }
 
-        if(!editingProduct && images.length === 0){
+        if (!editingProduct && images.length === 0) {
             setError("Please upload at least one image.");
             return;
         }
@@ -156,17 +143,17 @@ function ProductForm ({ editingProduct, onSaved, onCancel }) {
 
         if (images.length > 0) {
             const compressionOptions = {
-                maxSizeMB: 1,             
-                maxWidthOrHeight: 1200,   
-                useWebWorker: true,       
-                initialQuality: 0.85      
+                maxSizeMB: 1,
+                maxWidthOrHeight: 1200,
+                useWebWorker: true,
+                initialQuality: 0.85
             };
 
             try {
                 // Loop through each selected image, compress it, and append it
                 for (let i = 0; i < images.length; i++) {
                     const originalImage = images[i];
-                    
+
                     if (originalImage.size > 400 * 1024) {
                         const compressedFile = await imageCompression(originalImage, compressionOptions);
                         formData.append("images", compressedFile, originalImage.name);
@@ -183,7 +170,7 @@ function ProductForm ({ editingProduct, onSaved, onCancel }) {
         }
 
         let data;
-        if(editingProduct){
+        if (editingProduct) {
             data = await updateProduct(editingProduct._id, formData);
         } else {
             data = await createProduct(formData);
@@ -191,7 +178,7 @@ function ProductForm ({ editingProduct, onSaved, onCancel }) {
 
         setLoading(false);
 
-        if(data.error){
+        if (data.error) {
             setError(data.error);
             return;
         }
@@ -271,10 +258,10 @@ function ProductForm ({ editingProduct, onSaved, onCancel }) {
                 <select
                     value={categoryId}
                     className={styles.select}
-                    onChange={(e) => setCategoryId(e.target.value)} 
+                    onChange={(e) => setCategoryId(e.target.value)}
                 >
                     <option value="">Select a category</option>
-                    {categories.map((cat) =>(
+                    {categories.map((cat) => (
                         <option key={cat._id} value={cat._id}>
                             {cat.name}
                         </option>
@@ -284,7 +271,7 @@ function ProductForm ({ editingProduct, onSaved, onCancel }) {
 
             {/* images */}
             <div className={styles.field}>
-                <label className={styles.label}>Images (max {maxImages} for your plan)</label>
+                <label className={styles.label}>Images (max {maxImages})</label>
                 <input
                     type="file"
                     accept="image/*"
@@ -294,7 +281,7 @@ function ProductForm ({ editingProduct, onSaved, onCancel }) {
                     disabled={images.length >= maxImages}
                 />
                 <p className={styles.hint}>
-                    Your plan allows {maxImages} image{maxImages > 1 ? "s" : ""} per product
+                    Maximum of {maxImages} images per product
                 </p>
 
                 {/* Staged new files display panel */}
@@ -304,9 +291,9 @@ function ProductForm ({ editingProduct, onSaved, onCancel }) {
                         {images.map((img, idx) => (
                             <div key={idx} className={styles.stagedRow}>
                                 <span className={styles.fileName}>{img.name}</span>
-                                <button 
-                                    type="button" 
-                                    className={styles.removeFileBtn} 
+                                <button
+                                    type="button"
+                                    className={styles.removeFileBtn}
                                     onClick={() => handleRemoveStagedImage(idx)}
                                 >
                                     Remove
@@ -328,14 +315,14 @@ function ProductForm ({ editingProduct, onSaved, onCancel }) {
                         onChange={(e) => setColorInput(e.target.value)}
                         placeholder="e.g Red"
                         onKeyDown={(e) => {
-                            if (e.key === "Enter"){
-                                e.preventDefault(); // 💥 FIX: Stops form from auto-saving
+                            if (e.key === "Enter") {
+                                e.preventDefault();
                                 handleAddColor();
                             }
                         }}
                     />
                     <button
-                        type="button" // 💥 FIX: Changes default form submit type behaviors
+                        type="button"
                         className={styles.addTagButton}
                         onClick={handleAddColor}
                     >
@@ -345,10 +332,10 @@ function ProductForm ({ editingProduct, onSaved, onCancel }) {
 
                 {colors.length > 0 ? (
                     <div className={styles.tags}>
-                        {colors.map((color) =>(
+                        {colors.map((color) => (
                             <div key={color} className={styles.tag}>
                                 <span>{color}</span>
-                                <button 
+                                <button
                                     type="button"
                                     className={styles.removeTag}
                                     onClick={() => handleRemoveColor(color)}
@@ -366,20 +353,20 @@ function ProductForm ({ editingProduct, onSaved, onCancel }) {
                 <label className={styles.label}>Sizes (optional)</label>
                 <div className={styles.tagInput}>
                     <input
-                        type="text" 
+                        type="text"
                         className={styles.input}
                         value={sizeInput}
                         onChange={(e) => setSizeInput(e.target.value)}
                         placeholder="e.g M, XL"
-                        onKeyDown={(e) =>{
-                            if(e.key === "Enter"){
-                                e.preventDefault(); // 💥 FIX: Stops form from auto-saving
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                                e.preventDefault();
                                 handleAddSize();
                             }
                         }}
                     />
                     <button
-                        type="button" // 💥 FIX: Changes default form submit type behaviors
+                        type="button"
                         className={styles.addTagButton}
                         onClick={handleAddSize}
                     >
@@ -389,12 +376,12 @@ function ProductForm ({ editingProduct, onSaved, onCancel }) {
 
                 {sizes.length > 0 ? (
                     <div className={styles.tags}>
-                        {sizes.map((size) =>(
+                        {sizes.map((size) => (
                             <div key={size} className={styles.tag}>
                                 <span>{size}</span>
-                                <button 
-                                    type="button" 
-                                    className={styles.removeTag} 
+                                <button
+                                    type="button"
+                                    className={styles.removeTag}
                                     onClick={() => handleRemoveSize(size)}
                                 >
                                     x
@@ -417,6 +404,6 @@ function ProductForm ({ editingProduct, onSaved, onCancel }) {
             </div>
         </div>
     );
-}
+};
 
 export default ProductForm;

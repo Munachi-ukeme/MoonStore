@@ -125,10 +125,13 @@
 .bubble {
   max-width: 75%;
   padding: 10px 14px;
-  border-radius: 16px;
-  font-size: 13px;
-  line-height: 1.5;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.4;
   position: relative;
+
+  word-wrap: break-word;
+  word-break: break-word;
 }
 
 .bubble p {
@@ -489,8 +492,8 @@
 }
 
 .thumbnailImg {
-    width: 56px;
-    height: 56px;
+    width: 100%;
+    height: auto;
     border-radius: 8px;
     object-fit: cover;
     cursor: pointer;
@@ -564,4 +567,18 @@
   color: #7c3aed;
   font-weight: 700;
   text-decoration: underline;
+}
+
+.messageContentWrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.imageWrapper {
+    width: 100%;
+}
+
+.textContent {
+    word-break: break-word;
 }

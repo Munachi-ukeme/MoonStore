@@ -39,7 +39,6 @@ const compressImage = (file) => {
                 const ctx = canvas.getContext("2d");
                 ctx.drawImage(img, 0, 0, width, height);
 
-                // try compressing at decreasing quality levels
                 const qualities = [0.7, 0.5, 0.3, 0.15];
 
                 for (let i = 0; i < qualities.length; i++) {
@@ -52,7 +51,6 @@ const compressImage = (file) => {
                     }
                 }
 
-                // if still too large after all quality levels — reject
                 reject("Image is too large even after compression. Please use a smaller photo.");
             };
             img.onerror = () => reject("Failed to load image.");
@@ -68,7 +66,7 @@ const SellerChatThreadPage = () => {
     const [conversation, setConversation] = useState(null);
     const [input, setInput] = useState("");
     const [imagePreview, setImagePreview] = useState(null);
-const [pendingImage, setPendingImage] = useState(null);
+    const [pendingImage, setPendingImage] = useState(null);
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
     const [generatingLink, setGeneratingLink] = useState(false);
@@ -100,148 +98,116 @@ const [pendingImage, setPendingImage] = useState(null);
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
-   
-const handleSendImage = async () => {
-  if (!pendingImage) return;
+    const handleSendAll = async () => {
+        const typedText = input.trim();
+        if (!typedText && !pendingImage) return;
 
-  if (!navigator.onLine) {
-    setImageError("No internet connection. Please check your network and try again.");
-    return;
-  }
-
-  const wrapped = `[img]${pendingImage}[/img]`;
-  setImageError("");
-
-  try {
-    const result = await sendImageMessage(conversationId, null, wrapped, "seller");
-
-    if (result?.status === 413) {
-  setImageError("Image is too large. Please choose a smaller image.");
-  return;
-}
-
-if (result?.error || result?.message?.blocked || typeof result?.message === "string") {
-  setImageError(result?.error || result?.message || "Image could not be sent.");
-  return;
-}
-
-const data = result;
-
-    let safeMessage;
-    if (data && data.message && typeof data.message === "object") {
-      safeMessage = data.message;
-    } else {
-      safeMessage = {
-        _id: data?._id || `temp-img-${Date.now()}`,
-        sender: "seller",
-        content: wrapped,
-        createdAt: new Date().toISOString()
-      };
-    }
-
-    if (!safeMessage.content) safeMessage.content = wrapped;
-
-    setMessages((prev) => [...prev, safeMessage]);
-    setImagePreview(null);
-    setPendingImage(null);
-
-  } catch (err) {
-    console.error("Image send error:", err);
-    const isNetworkError =
-      err instanceof TypeError ||
-      (err?.message && err.message.toLowerCase().includes("fetch")) ||
-      !navigator.onLine;
-
-    if (isNetworkError) {
-      setImageError("Network connection failed. Please check your internet and try again.");
-    } else {
-      setImageError(typeof err === "string" ? err : "Failed to send image. Please try again.");
-    }
-  }
-};
-
-const handleSend = async () => {
-    if (!input.trim()) return;
-    const typedText = input.trim();
-
-    try {
-        const data = await sendSellerMessage(conversationId, typedText);
-
-        if (data?.error || typeof data?.message === "string") {
-            setError(data.error || data.message);
+        if (!navigator.onLine) {
+            setImageError("No internet connection. Please check your network and try again.");
             return;
         }
 
-        let safeMessage;
-        if (data && data.message && typeof data.message === "object") {
-            safeMessage = data.message;
-        } else {
-            safeMessage = {
-                _id: `temp-${Date.now()}`,
-                sender: "seller",
-                content: typedText,
-                createdAt: new Date().toISOString()
-            };
+        setSending(true);
+        setImageError("");
+        setError("");
+
+        try {
+            // Combine image tag and typed text into single string if both exist
+            let finalPayload = "";
+            if (pendingImage) {
+                finalPayload += `[img]${pendingImage}[/img]`;
+            }
+            if (typedText) {
+                finalPayload += (finalPayload ? "\n" : "") + typedText;
+            }
+
+            let result;
+            if (pendingImage) {
+                result = await sendImageMessage(conversationId, null, finalPayload, "seller");
+            } else {
+                result = await sendSellerMessage(conversationId, finalPayload);
+            }
+
+            if (result?.status === 413) {
+                setImageError("Image is too large. Please choose a smaller image.");
+                setSending(false);
+                return;
+            }
+
+            if (result?.error || result?.message?.blocked || typeof result?.message === "string") {
+                setImageError(result?.error || result?.message || "Message could not be sent.");
+                setSending(false);
+                return;
+            }
+
+            const data = result;
+            let safeMessage;
+            if (data && data.message && typeof data.message === "object") {
+                safeMessage = data.message;
+            } else {
+                safeMessage = {
+                    _id: data?._id || `temp-${Date.now()}`,
+                    sender: "seller",
+                    content: finalPayload,
+                    createdAt: new Date().toISOString(),
+                };
+            }
+
+            if (!safeMessage.content) safeMessage.content = finalPayload;
+
+            setMessages((prev) => [...prev, safeMessage]);
+            
+            // Clear inputs upon successful send
+            setInput("");
+            setImagePreview(null);
+            setPendingImage(null);
+
+        } catch (err) {
+            console.error("Send error:", err);
+            const isNetworkError =
+                err instanceof TypeError ||
+                (err?.message && err.message.toLowerCase().includes("fetch")) ||
+                !navigator.onLine;
+
+            if (isNetworkError) {
+                setImageError("Network connection failed. Please check your internet and try again.");
+            } else {
+                setImageError(typeof err === "string" ? err : "Failed to send message. Please try again.");
+            }
+        } finally {
+            setSending(false);
         }
+    };
 
-        if (!safeMessage.content) {
-            safeMessage.content = typedText;
+    const handleKeyDown = (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            handleSendAll();
         }
-
-        setMessages((prev) => [...prev, safeMessage]);
-        setInput("");
-
-    } catch (err) {
-        console.error("Chat send error:", err);
-        setError("Failed to send message. Please try again.");
-    }
-};
-
-const handleSendAll = async () => {
-  if (!input.trim() && !pendingImage) return;
-  setSending(true);
-
-  try {
-    if (pendingImage) {
-      await handleSendImage();
-    }
-    if (input.trim()) {
-      await handleSend();
-    }
-  } finally {
-    setSending(false);
-  }
-};
-
-   const handleKeyDown = (e) => {
-  if (e.key === "Enter" && !e.shiftKey) {
-    e.preventDefault();
-    handleSendAll();
-  }
-};
+    };
 
     const handleImagePick = () => {
         setImageError("");
         fileInputRef.current.click();
     };
 
-   const handleImageChange = async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  if (!file.type.startsWith("image/")) {
-    setImageError("Only image files are allowed.");
-    return;
-  }
-  setImageError("");
-  try {
-    const base64 = await compressImage(file);
-    setImagePreview(base64);
-    setPendingImage(base64);
-  } catch (err) {
-    setImageError(typeof err === "string" ? err : "Failed to load image.");
-  }
-  e.target.value = "";
-};
+    const handleImageChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (!file.type.startsWith("image/")) {
+            setImageError("Only image files are allowed.");
+            return;
+        }
+        setImageError("");
+        try {
+            const base64 = await compressImage(file);
+            setImagePreview(base64);
+            setPendingImage(base64);
+        } catch (err) {
+            setImageError(typeof err === "string" ? err : "Failed to load image.");
+        }
+        e.target.value = "";
+    };
 
     const handleGeneratePaymentLink = async () => {
         setGeneratingLink(true);
@@ -259,42 +225,47 @@ const handleSendAll = async () => {
         }
     };
 
-   const renderMessageContent = (content, msgId) => {
-  if (!content) return <span key={`${msgId}-empty`} style={{ display: "none" }} />;
+    const renderMessageContent = (content, msgId) => {
+        if (!content) return <span key={`${msgId}-empty`} style={{ display: "none" }} />;
 
-  let decodedContent = content;
-  try {
-    decodedContent = decodeURIComponent(content);
-  } catch (e) {
-    decodedContent = content;
-  }
+        let decodedContent = content;
+        try {
+            decodedContent = decodeURIComponent(content);
+        } catch (e) {
+            decodedContent = content;
+        }
 
-  const parts = decodedContent.split(/(\[img\].*?\[\/img\]|\\n|\n)/g);
+        const parts = decodedContent.split(/(\[img\].*?\[\/img\]|\\n|\n)/g);
 
-  return parts
-    .filter((part) => part !== "")
-    .map((part, index) => {
-      const imgMatch = part.match(/\[img\](.*?)\[\/img\]/);
-      const itemKey = `${msgId}-part-${index}`;
-
-      if (imgMatch) {
-        const url = imgMatch[1];
         return (
-          <img 
-            key={itemKey} 
-            src={url} 
-            alt="sent image" 
-            className={styles.thumbnailImg} 
-            onClick={() => setFullscreenImage(url)} 
-          />
+            <div className={styles.messageContentWrapper}>
+                {parts
+                    .filter((part) => part !== "")
+                    .map((part, index) => {
+                        const imgMatch = part.match(/\[img\](.*?)\[\/img\]/);
+                        const itemKey = `${msgId}-part-${index}`;
+
+                        if (imgMatch) {
+                            const url = imgMatch[1];
+                            return (
+                                <div key={itemKey} className={styles.imageWrapper}>
+                                    <img
+                                        src={url}
+                                        alt="sent item"
+                                        className={styles.thumbnailImg}
+                                        onClick={() => setFullscreenImage(url)}
+                                    />
+                                </div>
+                            );
+                        }
+
+                        if (part === "\n" || part === "\\n") return <br key={itemKey} />;
+
+                        return <span key={itemKey} className={styles.textContent}>{part}</span>;
+                    })}
+            </div>
         );
-      }
-
-      if (part === "\n" || part === "\\n") return <br key={itemKey} />;
-
-      return <span key={itemKey}>{part}</span>;
-    });
-};
+    };
 
     const renderMessage = (msg) => {
         if (msg.sender === "system") {
@@ -320,20 +291,14 @@ const handleSendAll = async () => {
             );
         }
 
-        if (msg.sender === "seller") {
-            return (
-                <div key={msg._id} className={`${styles.bubble} ${styles.sellerBubble}`}>
-                    <div>{renderMessageContent(msg.content, msg._id)}</div>
-                    <span className={styles.time}>
-                        {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                    </span>
-                </div>
-            );
-        }
+        const isSeller = msg.sender === "seller";
 
         return (
-            <div key={msg._id} className={`${styles.bubble} ${styles.buyerBubble}`}>
-                <div>{renderMessageContent(msg.content, msg._id)}</div>
+            <div
+                key={msg._id}
+                className={`${styles.bubble} ${isSeller ? styles.sellerBubble : styles.buyerBubble}`}
+            >
+                {renderMessageContent(msg.content, msg._id)}
                 <span className={styles.time}>
                     {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 </span>
@@ -351,7 +316,7 @@ const handleSendAll = async () => {
         );
     }
 
-    const isPaid = conversation.status === "paid";
+    const isPaid = conversation?.status === "paid";
 
     return (
         <div className={styles.page}>
@@ -374,64 +339,69 @@ const handleSendAll = async () => {
                 <div ref={bottomRef} />
             </div>
 
-      <div className={styles.bottomBar}>
-  {!isPaid ? (
-    <>
-      {linkError ? <p className={styles.linkError}>{linkError}</p> : null}
-      <button
-        className={styles.generateBtn}
-        onClick={handleGeneratePaymentLink}
-        disabled={generatingLink}
-      >
-        {generatingLink ? "Generating..." : "💳 Generate Payment Link"}
-      </button>
-    </>
-  ) : null}
+            <div className={styles.bottomBar}>
+                {!isPaid ? (
+                    <>
+                        {linkError ? <p className={styles.linkError}>{linkError}</p> : null}
+                        <button
+                            className={styles.generateBtn}
+                            onClick={handleGeneratePaymentLink}
+                            disabled={generatingLink}
+                        >
+                            {generatingLink ? "Generating..." : "💳 Generate Payment Link"}
+                        </button>
+                    </>
+                ) : null}
 
-  {imageError ? <p className={styles.imageError}>{imageError}</p> : null}
+                {imageError ? <p className={styles.imageError}>{imageError}</p> : null}
 
-  {imagePreview ? (
-    <div className={styles.imagePreviewBox}>
-      <img src={imagePreview} alt="preview" className={styles.previewThumb} />
-      <span className={styles.previewLabel}>Ready to send</span>
-      <button className={styles.cancelPreviewBtn} onClick={() => {
-        setImagePreview(null);
-        setPendingImage(null);
-      }}>✕</button>
-    </div>
-  ) : null}
+                {imagePreview ? (
+                    <div className={styles.imagePreviewBox}>
+                        <img src={imagePreview} alt="preview" className={styles.previewThumb} />
+                        <span className={styles.previewLabel}>Ready to send</span>
+                        <button
+                            className={styles.cancelPreviewBtn}
+                            onClick={() => {
+                                setImagePreview(null);
+                                setPendingImage(null);
+                            }}
+                        >
+                            ✕
+                        </button>
+                    </div>
+                ) : null}
 
-  <div className={styles.inputRow}>
-    <input
-      type="file"
-      accept="image/*"
-      ref={fileInputRef}
-      onChange={handleImageChange}
-      className={styles.hiddenFileInput}
-    />
-    <div className={styles.inputWrapper}>
-      <button
-        className={styles.imageBtn}
-        onClick={handleImagePick}
-        disabled={sending}
-        title="Send image"
-      >
-        <GrAttachment size={18} color="#000000" />
-      </button>
-      <textarea
-        className={styles.input}
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder="Type a message..."
-        rows={1}
-      />
-    </div>
-    <button className={styles.sendBtn} onClick={handleSendAll} disabled={sending}>
-      <IoSend size={18} color="#fff" />
-    </button>
-  </div>
-</div>      
+                <div className={styles.inputRow}>
+                    <input
+                        type="file"
+                        accept="image/*"
+                        ref={fileInputRef}
+                        onChange={handleImageChange}
+                        className={styles.hiddenFileInput}
+                    />
+                    <div className={styles.inputWrapper}>
+                        <button
+                            className={styles.imageBtn}
+                            onClick={handleImagePick}
+                            disabled={sending}
+                            title="Send image"
+                        >
+                            <GrAttachment size={18} color="#000000" />
+                        </button>
+                        <textarea
+                            className={styles.input}
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            placeholder="Type a message..."
+                            rows={1}
+                        />
+                    </div>
+                    <button className={styles.sendBtn} onClick={handleSendAll} disabled={sending}>
+                        <IoSend size={18} color="#fff" />
+                    </button>
+                </div>
+            </div>
 
             {fullscreenImage ? (
                 <div className={styles.fullscreenOverlay} onClick={() => setFullscreenImage(null)}>

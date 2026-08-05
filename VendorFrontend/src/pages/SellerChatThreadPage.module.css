@@ -444,12 +444,13 @@
 }
 
 .thumbnailImg {
-    width: 56px;
-    height: 56px;
+    width: 100%;
+    height: auto;
     border-radius: 8px;
     object-fit: cover;
     cursor: pointer;
     display: block;
+    max-width: 260px;
     margin: 4px 0;
     border: 2px solid rgba(255, 255, 255, 0.3);
 }
@@ -487,4 +488,28 @@
     max-height: 90vh;
     object-fit: contain;
     border-radius: 8px;
+}
+
+.messageContentWrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.imageWrapper {
+    width: 100%;
+    display: flex;
+}
+
+.thumbnailImg {
+    max-width: 260px;
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    cursor: pointer;
+    display: block;
+}
+
+.textContent {
+    word-break: break-word;
 }
