@@ -2,7 +2,6 @@ import Sidebar from "./Sidebar";
 import styles from "./DashboardLayout.module.css";
 import { useState, useEffect } from "react";
 import Topbar from "./Topbar";
-import TrialBanner from "../sellerComponent/TrialBanner";
 
 const WIDE_BREAKPOINT = 900;
 
@@ -39,7 +38,7 @@ function DashboardLayout({ children, hideTopbar }) {
                 style={{ marginLeft: isWide && sidebarOpen ? "210px" : "0" }}
             >
                 {!hideTopbar && <Topbar onOpen={handleOpen} onToggle={handleToggle} isWide={isWide} sidebarOpen={sidebarOpen} />}
-                <TrialBanner />
+                
                 <div className={styles.pageContent}>
                     {children}
                 </div>
