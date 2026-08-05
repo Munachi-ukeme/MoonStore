@@ -120,12 +120,13 @@ const HomePage = () => {
 
     return (
         <div className={styles.page}>
-            {/* brand */}
-         {/* brand */}
+           {/* brand */}
             <div className={styles.brand}>
-                <img src={logo} alt="MoonStore logo" className={styles.logoImg} />
-                <h1 className={styles.logo}>MoonStore</h1>
-                <p className={styles.tagline}> Your Store. Your Rules.</p>
+                <div className={styles.brandRow}>
+                    <img src={logo} alt="MoonStore logo" className={styles.logoImg} />
+                    <h1 className={styles.logo}>MoonStore</h1>
+                </div>
+                <p className={styles.tagline}>Your Store. Your Rules.</p>
             </div>
 
             {/* toggle tabs */}

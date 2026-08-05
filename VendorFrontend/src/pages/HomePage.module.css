@@ -17,28 +17,36 @@
 
 /* ── brand ── */
 .brand {
-    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 0 8px;
+}
+
+.brandRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .logoImg {
-    width: 56px;
-    height: 56px;
+    width: 32px;
+    height: 32px;
     display: block;
-    /* margin: 0 auto 8px; */
 }
 
-/* logo is purple — MoonStore brand color */
 .logo {
-    font-size: 20px;
-    font-weight: 600;
+    font-size: 22px;
+    font-weight: 700;
     color: #6d28d9;
-    margin: 0 0 4px;
+    letter-spacing: -0.3px;
+    margin: 0;
 }
 
 .tagline {
-    font-size: 13px;
-    color: #9ca3af;
-    margin: 0;
+    font-size: 12px;
+    color: #6b7280;
+    margin: 4px 0 0;
 }
 
 /* ── tabs ── */
