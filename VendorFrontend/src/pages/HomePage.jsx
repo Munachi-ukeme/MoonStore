@@ -5,7 +5,7 @@ import { saveBuyerEmailLocally } from "../utils/session";
 import styles from "./HomePage.module.css";
 import StepsSection from "../sellerComponent/StepsSection";
 import FAQSection from "../sellerComponent/FAQSection";
-
+import logo from "../assets/logo.png";
 const HomePage = () => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState("seller");
@@ -121,7 +121,9 @@ const HomePage = () => {
     return (
         <div className={styles.page}>
             {/* brand */}
+         {/* brand */}
             <div className={styles.brand}>
+                <img src={logo} alt="MoonStore logo" className={styles.logoImg} />
                 <h1 className={styles.logo}>MoonStore</h1>
                 <p className={styles.tagline}> Your Store. Your Rules.</p>
             </div>
