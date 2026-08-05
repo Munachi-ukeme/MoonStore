@@ -155,10 +155,6 @@ const HomePage = () => {
                 {activeTab === "buyer" ? renderBuyerTab() : renderSellerTab()}
             </div>
 
-<div className={styles.card}>
-                {activeTab === "buyer" ? renderBuyerTab() : renderSellerTab()}
-            </div>
-
             <StepsSection />
             <FAQSection />
 
