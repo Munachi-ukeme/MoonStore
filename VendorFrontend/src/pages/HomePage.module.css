@@ -27,7 +27,8 @@
     width: 140px;
     height: 140px;
     display: block;
-    margin-bottom: -6px;
+    margin-bottom: -15px;
+    margin-top: -20px;
 }
 
 .logo {
