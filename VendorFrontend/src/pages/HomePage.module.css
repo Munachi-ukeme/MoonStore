@@ -24,13 +24,13 @@
     width: 56px;
     height: 56px;
     display: block;
-    margin: 0 auto 8px;
+    /* margin: 0 auto 8px; */
 }
 
 /* logo is purple — MoonStore brand color */
 .logo {
-    font-size: 28px;
-    font-weight: 800;
+    font-size: 20px;
+    font-weight: 600;
     color: #6d28d9;
     margin: 0 0 4px;
 }
