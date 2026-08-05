@@ -20,13 +20,14 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 20px 0 4px;
+    padding: 24px 0 8px;
 }
 
 .logoImg {
-    width: 130px;
-    height: 130px;
+    width: 140px;
+    height: 140px;
     display: block;
+    margin-bottom: -6px;
 }
 
 .logo {
@@ -34,6 +35,7 @@
     font-weight: 700;
     color: #6d28d9;
     letter-spacing: -0.3px;
+    margin: 0;
 }
 
 .tagline {
