@@ -87,6 +87,7 @@ const CategoryManager = () => {
             setEditingCategory(null);
             setInput("");
             setSuccess("Category updated successfully.");
+            setSuccess("")
         } else {
             // ADD NEW CATEGORY
             const data = await createCategory(trimmed);
@@ -101,6 +102,7 @@ const CategoryManager = () => {
             setCategories([data, ...currentCategories]);
             setInput("");
             setSuccess("Category added successfully.");
+            setSuccess("")
         }
     };
 
@@ -127,6 +129,7 @@ const CategoryManager = () => {
         setShowDeleteWarning(false);
         setSelectedCategory(null);
         setSuccess("Category deleted successfully");
+        setSuccess("")
     };
 
     // seller cancels delete popup
