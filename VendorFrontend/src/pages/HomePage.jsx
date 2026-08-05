@@ -122,10 +122,8 @@ const HomePage = () => {
         <div className={styles.page}>
            {/* brand */}
             <div className={styles.brand}>
-                <div className={styles.brandRow}>
-                    <img src={logo} alt="MoonStore logo" className={styles.logoImg} />
-                    <h1 className={styles.logo}>MoonStore</h1>
-                </div>
+                <img src={logo} alt="MoonStore logo" className={styles.logoImg} />
+                <h1 className={styles.logo}>MoonStore</h1>
                 <p className={styles.tagline}>Your Store. Your Rules.</p>
             </div>
 

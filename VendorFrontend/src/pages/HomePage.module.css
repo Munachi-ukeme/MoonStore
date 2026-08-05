@@ -23,16 +23,11 @@
     padding: 24px 0 8px;
 }
 
-.brandRow {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
 .logoImg {
-    width: 32px;
-    height: 32px;
+    width: 64px;
+    height: 64px;
     display: block;
+    margin-bottom: 6px;
 }
 
 .logo {
