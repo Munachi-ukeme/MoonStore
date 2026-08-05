@@ -46,13 +46,6 @@ const sellerSchema = new mongoose.Schema(
             required: true,
         },
 
-
-        plan: {
-            type: String,
-            enum: ["basic", "pro", "premium"],
-            default: "basic",
-        },
-
         address: {
                 type: String,
                 default: "",
@@ -75,23 +68,7 @@ resetPasswordExpires: {
 
     isActive: {
       type: Boolean,
-      default: false, // store is not active by default when created
-    },
-
-    subscriptionStart: {
-      type: Date,
-      default: null, // set when seller first pays
-    },
-
-    subscriptionEnd: {
-      type: Date,
-      default: null, // null until i activate their subscription
-    },
-
-
-    trialEnd: {
-    type: Date,
-    default: null,
+      default: true, 
     },
 
     //referral field

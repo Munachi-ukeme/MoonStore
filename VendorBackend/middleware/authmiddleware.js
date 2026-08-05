@@ -1,14 +1,17 @@
 const jwt = require("jsonwebtoken")
 const Seller = require("../models/Seller")
 
+// ── PROTECT MIDDLEWARE ──
+// Verifies JWT token and attaches seller instance to req.seller
 const protect = async (req, res, next) => {
   try {
     let token
 
     // 1. Check if token exists in request headers
-    if (req.headers.authorization && 
-        req.headers.authorization.startsWith("Bearer")) {
-      
+    if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith("Bearer")
+    ) {
       // 2. Extract token from "Bearer <token>"
       token = req.headers.authorization.split(" ")[1]
     }
@@ -18,16 +21,18 @@ const protect = async (req, res, next) => {
       return res.status(401).json({ message: "Not authorized, no token" })
     }
 
-    // 4. Verify the token is valid
+    // 4. Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
 
     // 5. Find the seller attached to this token
-    // and attach them to the request object
     req.seller = await Seller.findById(decoded.id).select("-password")
 
-    // 6. Move on to the next function (the controller)
-    next()
+    if (!req.seller) {
+      return res.status(401).json({ message: "Not authorized, user not found" })
+    }
 
+    // 6. Proceed to controller
+    next()
   } catch (error) {
     res.status(401).json({ message: "Not authorized, invalid token" })
   }

@@ -2,11 +2,11 @@ const Category = require("../models/Category")
 
 // -----------------------------------
 // GET ALL CATEGORIES
-// GET /api/categories
+// GET /api/categories (protected - seller only)
 // -----------------------------------
 const getCategories = async (req, res) => {
   try {
-    const categories = await Category.find({ sellerId: req.seller._id})
+    const categories = await Category.find({ sellerId: req.seller._id })
     res.json(categories)
   } catch (error) {
     res.status(500).json({ message: error.message })
@@ -15,19 +15,24 @@ const getCategories = async (req, res) => {
 
 // -----------------------------------
 // ADD CATEGORY
-// POST /api/categories
+// POST /api/categories (protected - seller only)
 // -----------------------------------
 const addCategory = async (req, res) => {
   try {
     const { name } = req.body
 
-    // check if category name already exists for this seller
-    const existing = await Category.findOne({ sellerId: req.seller._id, name})
+    if (!name) {
+      return res.status(400).json({ message: "Category name is required" })
+    }
+
+    // Check if category name already exists for this seller
+    const existing = await Category.findOne({ sellerId: req.seller._id, name })
     if (existing) {
       return res.status(400).json({ message: "Category already exists" })
     }
 
-    const category = await Category.create({ sellerId: req.seller._id, name})
+    // Note: 30-category limit is checked by checkCategoryLimit middleware before this function runs
+    const category = await Category.create({ sellerId: req.seller._id, name })
 
     res.status(201).json(category)
   } catch (error) {
@@ -35,56 +40,60 @@ const addCategory = async (req, res) => {
   }
 }
 
+// -----------------------------------
 // UPDATE CATEGORY
-const updateCategory = async (req, res) =>{
-  try{
-    const {name} = req.body
+// PUT /api/categories/:id (protected - seller only)
+// -----------------------------------
+const updateCategory = async (req, res) => {
+  try {
+    const { name } = req.body
 
-    // check if new name is provided
-    if(!name){
-      return res.status(400).json({message: "Category name is required"})
+    if (!name) {
+      return res.status(400).json({ message: "Category name is required" })
     }
 
-    // find the category and make sure it belongs to this seller
-    const catagory = await Category.findOne({
+    // Find the category and verify seller ownership
+    const category = await Category.findOne({
       _id: req.params.id,
       sellerId: req.seller._id,
     })
 
-    if (!category){
-      return res.status(404).json({ message: "Category not found"})
+    if (!category) {
+      return res.status(404).json({ message: "Category not found" })
     }
 
-    // check if another category with the same name already exists
+    // Check if another category with the same name already exists for this seller
     const existing = await Category.findOne({
       sellerId: req.seller._id,
       name,
       _id: { $ne: req.params.id },
     })
 
-    if (existing){
-      return res.status(400).json({ message: "Category name already exists"})
+    if (existing) {
+      return res.status(400).json({ message: "Category name already exists" })
     }
 
-    // update the name
     category.name = name
     await category.save()
 
     res.json(category)
-  } catch (error){
+  } catch (error) {
     res.status(500).json({ message: error.message })
   }
 }
 
 // -----------------------------------
 // DELETE CATEGORY
-// DELETE /api/categories/:id
+// DELETE /api/categories/:id (protected - seller only)
 // -----------------------------------
 const deleteCategory = async (req, res) => {
   try {
-    const category = await Category.findById(req.params.id)
+    // Find category and verify seller ownership
+    const category = await Category.findOne({
+      _id: req.params.id,
+      sellerId: req.seller._id,
+    })
 
-    // check if category exists
     if (!category) {
       return res.status(404).json({ message: "Category not found" })
     }

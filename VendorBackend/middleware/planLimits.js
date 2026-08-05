@@ -1,65 +1,75 @@
-// the middleware that enforces your pricing tiers.
-
 const Product = require("../models/Product")
 const Category = require("../models/Category")
 
-// Plan limits definition
-const limits = {
-  basic:   { products: 25, categories: 3 },
-  pro:     { products: 60, categories: 6 },
-  premium: { products: Infinity, categories: Infinity },
-}
+const MAX_PRODUCTS = 200
+const MAX_CATEGORIES = 30
+const MAX_IMAGES_PER_PRODUCT = 5
 
-// Check product limit
+// ── Check product limit (200 max) ──
 const checkProductLimit = async (req, res, next) => {
   try {
-    const seller = req.seller // comes from auth middleware
-    const plan = seller.plan
-
-    // count how many products this seller already has
-    const productCount = await Product.countDocuments({ 
-      sellerId: seller._id 
+    const seller = req.seller
+    const productCount = await Product.countDocuments({
+      sellerId: seller._id,
     })
 
-    // check if they've hit their limit
-    if (productCount >= limits[plan].products) {
+    if (productCount >= MAX_PRODUCTS) {
       return res.status(403).json({
-        message: `You have reached the product limit for the ${plan} plan. Upgrade to add more products.`,
+        message: `You have reached the maximum limit of ${MAX_PRODUCTS} products for your store.`,
       })
     }
 
-    // limit not reached — move to controller
     next()
-
   } catch (error) {
     res.status(500).json({ message: error.message })
   }
 }
 
-// Check category limit
+// ── Check category limit (30 max) ──
 const checkCategoryLimit = async (req, res, next) => {
   try {
     const seller = req.seller
-    const plan = seller.plan
-
-    // count how many categories this seller already has
-    const categoryCount = await Category.countDocuments({ 
-      sellerId: seller._id 
+    const categoryCount = await Category.countDocuments({
+      sellerId: seller._id,
     })
 
-    // check if they've hit their limit
-    if (categoryCount >= limits[plan].categories) {
+    if (categoryCount >= MAX_CATEGORIES) {
       return res.status(403).json({
-        message: `You have reached the category limit for the ${plan} plan. Upgrade to add more categories.`,
+        message: `You have reached the maximum limit of ${MAX_CATEGORIES} categories for your store.`,
       })
     }
 
-    // limit not reached — move to controller
     next()
-
   } catch (error) {
     res.status(500).json({ message: error.message })
   }
 }
 
-module.exports = { checkProductLimit, checkCategoryLimit }
+// ── Check image limit (5 max per product) ──
+const checkImageLimit = (req, res, next) => {
+  try {
+    let count = 0
+
+    if (req.files) {
+      if (Array.isArray(req.files)) {
+        count = req.files.length
+      } else if (req.files.images && Array.isArray(req.files.images)) {
+        count = req.files.images.length
+      }
+    } else if (req.body.images && Array.isArray(req.body.images)) {
+      count = req.body.images.length
+    }
+
+    if (count > MAX_IMAGES_PER_PRODUCT) {
+      return res.status(400).json({
+        message: `You can upload a maximum of ${MAX_IMAGES_PER_PRODUCT} images per product.`,
+      })
+    }
+
+    next()
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}
+
+module.exports = { checkProductLimit, checkCategoryLimit, checkImageLimit }

@@ -43,12 +43,12 @@ const productSchema = new mongoose.Schema(
         images: {
             type: [String], // array of cloudinary URLs
             default: [],
-            //Basic: 1 images, pro: 2 images, Premium: 3 images
+            
         },
 
         inStock: {
             type: Boolean,
-            default: true, // product is available by default
+            default: true, 
         },
 
         slug: {

@@ -9,7 +9,7 @@ const transactionSchema = new mongoose.Schema(
         },
         type: {
             type: String,
-            enum: ["order", "subscription"],
+            enum: ["order"],
             required: true,
         },
         amount: {
@@ -19,10 +19,6 @@ const transactionSchema = new mongoose.Schema(
         platformFee: {
             type: Number,
             default: 0,
-        },
-        plan: {
-            type: String,
-            default: null,
         },
         reference: {
             type: String,

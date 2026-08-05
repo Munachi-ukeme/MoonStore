@@ -1,13 +1,33 @@
-const Seller = require("../models/Seller")
+const Seller = require("../models/Seller");
 const Conversation = require("../models/Conversation");
 const Message = require("../models/Message");
 const PDFDocument = require("pdfkit");
-const Product = require("../models/Product")
-const Category = require("../models/Category")
+const Product = require("../models/Product");
+const Category = require("../models/Category");
 const ExitSurvey = require("../models/ExitSurvey");
-const bcrypt = require("bcryptjs")
+const bcrypt = require("bcryptjs");
 const Transaction = require("../models/Transaction");
+const crypto = require("crypto");
 
+let activeAdminToken = null;
+let adminTokenExpires = null;
+
+// Reusable admin verification helper
+const verifyAdmin = (req, res) => {
+  const providedToken = req.headers["admin-key"];
+
+  if (!activeAdminToken || Date.now() > adminTokenExpires) {
+    res.status(401).json({ message: "Session expired, please log in again" });
+    return false;
+  }
+
+  if (providedToken !== activeAdminToken) {
+    res.status(401).json({ message: "Unauthorized" });
+    return false;
+  }
+
+  return true;
+};
 
 // -----------------------------------
 // ACTIVATE ONE STORE
@@ -15,25 +35,25 @@ const Transaction = require("../models/Transaction");
 // -----------------------------------
 const activateStore = async (req, res) => {
   try {
-    if (!verifyAdmin(req, res)) return
+    if (!verifyAdmin(req, res)) return;
 
-    const { email } = req.body
+    const { email } = req.body;
 
     const seller = await Seller.findOneAndUpdate(
       { email },
       { isActive: true },
       { new: true }
-    )
+    );
 
     if (!seller) {
-      return res.status(404).json({ message: "Seller not found" })
+      return res.status(404).json({ message: "Seller not found" });
     }
 
-    res.json({ message: `${seller.businessName} store activated successfully` })
+    res.json({ message: `${seller.businessName} store activated successfully` });
   } catch (error) {
-    res.status(500).json({ message: error.message })
+    res.status(500).json({ message: error.message });
   }
-}
+};
 
 // -----------------------------------
 // DEACTIVATE ONE STORE
@@ -41,102 +61,98 @@ const activateStore = async (req, res) => {
 // -----------------------------------
 const deactivateStore = async (req, res) => {
   try {
-    if (!verifyAdmin(req, res)) return
+    if (!verifyAdmin(req, res)) return;
 
-    const { email } = req.body
+    const { email } = req.body;
 
     const seller = await Seller.findOneAndUpdate(
       { email },
       { isActive: false },
       { new: true }
-    )
+    );
 
     if (!seller) {
-      return res.status(404).json({ message: "Seller not found" })
+      return res.status(404).json({ message: "Seller not found" });
     }
 
-    res.json({ message: `${seller.businessName} store deactivated successfully` })
+    res.json({ message: `${seller.businessName} store deactivated successfully` });
   } catch (error) {
-    res.status(500).json({ message: error.message })
+    res.status(500).json({ message: error.message });
   }
-}
+};
 
-
-// deactivateSubaccount is a helper function — not a route handler.
-// it lives in the same file and gets called from inside deleteSeller
+// Deactivates Paystack subaccount when a seller account is deleted
 const deactivateSubaccount = async (subaccountCode) => {
-    try {
-        const response = await fetch(
-            `https://api.paystack.co/subaccount/${subaccountCode}`,
-            {
-                method: "PUT",
-                headers: {
-                    Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ active: false }),
-            }
-        );
+  try {
+    const response = await fetch(
+      `https://api.paystack.co/subaccount/${subaccountCode}`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ active: false }),
+      }
+    );
 
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            throw new Error(`Paystack error ${response.status}: ${errorData.message || "Unknown error"}`);
-        }
- 
-        console.log(`Subaccount deactivated: ${subaccountCode}`);
-    } catch (err){
-        console.error("Subaccount deactivation failed:", err.message);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        `Paystack error ${response.status}: ${errorData.message || "Unknown error"}`
+      );
     }
+
+    console.log(`Subaccount deactivated: ${subaccountCode}`);
+  } catch (err) {
+    console.error("Subaccount deactivation failed:", err.message);
+  }
 };
 
 // DELETE SELLER ACCOUNT
 // DELETE /api/admin/delete-seller
 const deleteSeller = async (req, res) => {
-    try {
-        if (!verifyAdmin(req, res)) return;
+  try {
+    if (!verifyAdmin(req, res)) return;
 
-        const { email } = req.body;
+    const { email } = req.body;
 
-        const seller = await Seller.findOne({ email });
-        if (!seller) {
-            return res.status(404).json({ message: "Seller not found" });
-        }
-
-        if (seller.paystackSubaccountCode) {
-            await deactivateSubaccount(seller.paystackSubaccountCode);
-        }
-
-        // find all conversations for this seller first, so we can delete their messages too
-        const conversations = await Conversation.find({ sellerId: seller._id });
-        const conversationIds = conversations.map((c) => c._id);
-
-        await Message.deleteMany({ conversationId: { $in: conversationIds } });
-        await Conversation.deleteMany({ sellerId: seller._id });
-
-        await Product.deleteMany({ sellerId: seller._id });
-        await Category.deleteMany({ sellerId: seller._id });
-        await seller.deleteOne();
-
-        res.json({ message: "Seller account and all data deleted successfully" });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+    const seller = await Seller.findOne({ email });
+    if (!seller) {
+      return res.status(404).json({ message: "Seller not found" });
     }
-};
 
+    if (seller.paystackSubaccountCode) {
+      await deactivateSubaccount(seller.paystackSubaccountCode);
+    }
+
+    const conversations = await Conversation.find({ sellerId: seller._id });
+    const conversationIds = conversations.map((c) => c._id);
+
+    await Message.deleteMany({ conversationId: { $in: conversationIds } });
+    await Conversation.deleteMany({ sellerId: seller._id });
+
+    await Product.deleteMany({ sellerId: seller._id });
+    await Category.deleteMany({ sellerId: seller._id });
+    await seller.deleteOne();
+
+    res.json({ message: "Seller account and all data deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 // GET ALL SELLERS
 // GET /api/admin/sellers
 const getAllSellers = async (req, res) => {
   try {
-    if (!verifyAdmin(req, res)) return
+    if (!verifyAdmin(req, res)) return;
 
-    const sellers = await Seller.find().select("-password")
+    const sellers = await Seller.find().select("-password");
 
-    //format response to show most useful fields clearly
-    const formatted = sellers.map((seller) =>({
+    const formatted = sellers.map((seller) => ({
       businessName: seller.businessName,
       email: seller.email,
-      plan: seller.plan,
       isActive: seller.isActive,
       slug: seller.slug,
       whatsappNumber: seller.whatsappNumber,
@@ -146,271 +162,249 @@ const getAllSellers = async (req, res) => {
       totalEarned: seller.totalEarned,
       totalPaid: seller.totalPaid,
       bankDetails: seller.bankDetails,
-      subscriptionStart: seller.subscriptionStart,
-      subscriptionEnd: seller.subscriptionEnd,
-      joinedDate: seller.createdAt,      
-    }))
+      joinedDate: seller.createdAt,
+    }));
 
     res.json({
       total: sellers.length,
       sellers: formatted,
-    })
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message })
+    res.status(500).json({ message: error.message });
   }
-}
+};
 
+// Mark referral commission as paid
+const markCommissionPaid = async (req, res) => {
+  try {
+    if (!verifyAdmin(req, res)) return;
 
-//Mark commission as paid
-const markCommissionPaid = async(req, res) =>{
-  try{
-    if(!verifyAdmin(req, res)) return
+    const { email } = req.body;
 
-    const { email } = req.body
-
-    const seller = await Seller.findOne({email})
-    if(!seller){
-      return res.status(404).json({ message: "Seller not found"})
+    const seller = await Seller.findOne({ email });
+    if (!seller) {
+      return res.status(404).json({ message: "Seller not found" });
     }
 
-    // check if there is any pending commission
-    if (seller.commissionBalance === 0){
-      return res.status(400).json({ message: "No pending commission for this seller"})
+    if (seller.commissionBalance === 0) {
+      return res
+        .status(400)
+        .json({ message: "No pending commission for this seller" });
     }
 
-    // move commissionBalance into totalpaid - add up each time
-    seller.totalPaid = seller.totalPaid + seller.commissionBalance
-    seller.commissionBalance = 0
-    await seller.save()
+    seller.totalPaid = seller.totalPaid + seller.commissionBalance;
+    seller.commissionBalance = 0;
+    await seller.save();
 
     res.json({
       message: `Commission marked as paid for ${seller.businessName}`,
       totalPaid: seller.totalPaid,
       pendingBalance: seller.commissionBalance,
-    })
-  } catch (error){
-    res.status(500).json({ message: error.message })
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
-}
+};
 
-//get all referrals
-const getAllReferrals = async(req, res) =>{
-  try{
-    if(!verifyAdmin(req, res)) return
+// Get all referral relationships
+const getAllReferrals = async (req, res) => {
+  try {
+    if (!verifyAdmin(req, res)) return;
 
-    // get all sellers who were referred by someone
     const referredSellers = await Seller.find({
-        referredBy: {$ne: null}
-      }).select("-password")
+      referredBy: { $ne: null },
+    }).select("-password");
 
-      //build referral list with referrer details
-      const referrals = await Promise.all(
-        referredSellers.map(async (referred) =>{
-          const referrer = await Seller.findOne({
-            referralCode: referred.referredBy
-          }).select("businessName email commissionBalance totalEarned totalPaid")
+    const referrals = await Promise.all(
+      referredSellers.map(async (referred) => {
+        const referrer = await Seller.findOne({
+          referralCode: referred.referredBy,
+        }).select("businessName email commissionBalance totalEarned totalPaid");
 
-          return{
-            referrer: referrer ? referrer.businessName : "Unknown",
-            referrerEmail: referrer ? referrer.email : "Unknown",
-            referrerCommissionBalance: referrer ? referrer.commissionBalance : 0,
-            referredSeller: referred.businessName,
-            referredEmail: referred.email,
-            referralCode: referred.referredBy,
-            joinedDate: referred.createdAt,
-          }
-        })
-      )
-      res.json({
-        total: referrals.length,
-        referrals,
+        return {
+          referrer: referrer ? referrer.businessName : "Unknown",
+          referrerEmail: referrer ? referrer.email : "Unknown",
+          referrerCommissionBalance: referrer ? referrer.commissionBalance : 0,
+          referredSeller: referred.businessName,
+          referredEmail: referred.email,
+          referralCode: referred.referredBy,
+          joinedDate: referred.createdAt,
+        };
       })
-  } catch (error){
-    res.status(500).json({ message: error.message})
-  }
-}
+    );
 
-const crypto = require("crypto");
-let activeAdminToken = null;
-let adminTokenExpires = null;
+    res.json({
+      total: referrals.length,
+      referrals,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 const adminLogin = async (req, res) => {
-    const { passkey } = req.body;
+  const { passkey } = req.body;
 
-    if (!passkey || passkey !== process.env.ADMIN_SECRET) {
-        return res.status(401).json({ message: "Incorrect passkey" });
-    }
+  if (!passkey || passkey !== process.env.ADMIN_SECRET) {
+    return res.status(401).json({ message: "Incorrect passkey" });
+  }
 
-    activeAdminToken = crypto.randomBytes(32).toString("hex");
-    adminTokenExpires = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
+  activeAdminToken = crypto.randomBytes(32).toString("hex");
+  adminTokenExpires = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
 
-    res.json({ success: true, token: activeAdminToken });
+  res.json({ success: true, token: activeAdminToken });
 };
 
 const adminLogout = async (req, res) => {
-    activeAdminToken = null;
-    adminTokenExpires = null;
-    res.json({ message: "Logged out" });
-};
-
-// replaces verifyAdmin everywhere
-const verifyAdmin = (req, res) => {
-    const providedToken = req.headers["admin-key"];
-
-    if (!activeAdminToken || Date.now() > adminTokenExpires) {
-        res.status(401).json({ message: "Session expired, please log in again" });
-        return false;
-    }
-
-    if (providedToken !== activeAdminToken) {
-        res.status(401).json({ message: "Unauthorized" });
-        return false;
-    }
-
-    return true;
+  activeAdminToken = null;
+  adminTokenExpires = null;
+  res.json({ message: "Logged out" });
 };
 
 const getReportedConversations = async (req, res) => {
-    try {
-        if (!verifyAdmin(req, res)) return;
+  try {
+    if (!verifyAdmin(req, res)) return;
 
-        const reportedConversations = await Conversation.find({ isReported: true })
-            .populate("sellerId", "businessName slug email whatsappNumber isActive")
-            .populate("productIds", "name")
-            .sort({ updatedAt: -1 });
+    const reportedConversations = await Conversation.find({ isReported: true })
+      .populate("sellerId", "businessName slug email whatsappNumber isActive")
+      .populate("productIds", "name")
+      .sort({ updatedAt: -1 });
 
-        res.json({ reports: reportedConversations });
-    } catch (err) {
-        res.status(500).json({ message: "Server error" });
-    }
+    res.json({ reports: reportedConversations });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
 };
-
 
 const exportConversationPdf = async (req, res) => {
-    try {
-        if (!verifyAdmin(req, res)) return;
+  try {
+    if (!verifyAdmin(req, res)) return;
 
-        const { conversationId } = req.params;
+    const { conversationId } = req.params;
 
-        const conversation = await Conversation.findById(conversationId)
-            .populate("sellerId", "businessName slug email whatsappNumber");
+    const conversation = await Conversation.findById(conversationId).populate(
+      "sellerId",
+      "businessName slug email whatsappNumber"
+    );
 
-        if (!conversation) {
-            return res.status(404).json({ message: "Conversation not found" });
-        }
-
-        const messages = await Message.find({ conversationId }).sort({ createdAt: 1 });
-
-        res.setHeader("Content-Type", "application/pdf");
-        res.setHeader("Content-Disposition", `attachment; filename=conversation-${conversationId}.pdf`);
-
-        const doc = new PDFDocument({ margin: 40 });
-        doc.pipe(res);
-
-        doc.fontSize(16).text("MoonStore — Conversation Export", { align: "center" });
-        doc.moveDown();
-
-        doc.fontSize(11);
-        doc.text(`Seller: ${conversation.sellerId?.businessName || "Unknown"}`);
-        doc.text(`Store: /${conversation.sellerId?.slug || "—"}`);
-        doc.text(`Buyer name: ${conversation.buyerName || "—"}`);
-        doc.text(`Buyer email: ${conversation.buyerEmail || "—"}`);
-        doc.text(`Buyer phone: ${conversation.buyerPhone || "—"}`);
-        doc.text(`Delivery: ${conversation.deliveryAddress || "—"}, ${conversation.deliveryCity || "—"}`);
-        doc.text(`Amount: NGN ${conversation.amount?.toLocaleString() || 0}`);
-        doc.text(`Report reason: ${conversation.reportReason || "Not specified"}`);
-        doc.moveDown();
-
-        doc.fontSize(13).text("Message History", { underline: true });
-        doc.moveDown(0.5);
-
-        doc.fontSize(10);
-        messages.forEach((msg) => {
-            const time = new Date(msg.createdAt).toLocaleString("en-NG");
-            const sender = msg.sender === "buyer" ? "Buyer" : msg.sender === "seller" ? "Seller" : "System";
-            const cleanContent = msg.content.replace(/\[img\].*?\[\/img\]/gs, "[Image attached]");
-            doc.text(`[${time}] ${sender}: ${cleanContent}`);
-            doc.moveDown(0.3);
-        });
-
-        doc.end();
-    } catch (err) {
-        res.status(500).json({ message: "Server error" });
+    if (!conversation) {
+      return res.status(404).json({ message: "Conversation not found" });
     }
+
+    const messages = await Message.find({ conversationId }).sort({
+      createdAt: 1,
+    });
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=conversation-${conversationId}.pdf`
+    );
+
+    const doc = new PDFDocument({ margin: 40 });
+    doc.pipe(res);
+
+    doc.fontSize(16).text("MoonStore — Conversation Export", { align: "center" });
+    doc.moveDown();
+
+    doc.fontSize(11);
+    doc.text(`Seller: ${conversation.sellerId?.businessName || "Unknown"}`);
+    doc.text(`Store: /${conversation.sellerId?.slug || "—"}`);
+    doc.text(`Buyer name: ${conversation.buyerName || "—"}`);
+    doc.text(`Buyer email: ${conversation.buyerEmail || "—"}`);
+    doc.text(`Buyer phone: ${conversation.buyerPhone || "—"}`);
+    doc.text(
+      `Delivery: ${conversation.deliveryAddress || "—"}, ${conversation.deliveryCity || "—"}`
+    );
+    doc.text(`Amount: NGN ${conversation.amount?.toLocaleString() || 0}`);
+    doc.text(`Report reason: ${conversation.reportReason || "Not specified"}`);
+    doc.moveDown();
+
+    doc.fontSize(13).text("Message History", { underline: true });
+    doc.moveDown(0.5);
+
+    doc.fontSize(10);
+    messages.forEach((msg) => {
+      const time = new Date(msg.createdAt).toLocaleString("en-NG");
+      const sender =
+        msg.sender === "buyer"
+          ? "Buyer"
+          : msg.sender === "seller"
+          ? "Seller"
+          : "System";
+      const cleanContent = msg.content.replace(
+        /\[img\].*?\[\/img\]/gs,
+        "[Image attached]"
+      );
+      doc.text(`[${time}] ${sender}: ${cleanContent}`);
+      doc.moveDown(0.3);
+    });
+
+    doc.end();
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
 };
 
-
 const getRevenueSummary = async (req, res) => {
-    try {
-        if (!verifyAdmin(req, res)) return;
+  try {
+    if (!verifyAdmin(req, res)) return;
 
-        const { startDate, endDate } = req.query;
+    const { startDate, endDate } = req.query;
 
-        const dateFilter = {};
-        if (startDate) dateFilter.$gte = new Date(startDate);
-        if (endDate) dateFilter.$lte = new Date(endDate);
+    const dateFilter = {};
+    if (startDate) dateFilter.$gte = new Date(startDate);
+    if (endDate) dateFilter.$lte = new Date(endDate);
 
-        const matchStage = Object.keys(dateFilter).length > 0
-            ? { createdAt: dateFilter }
-            : {};
+    const matchStage =
+      Object.keys(dateFilter).length > 0 ? { createdAt: dateFilter } : {};
 
-        const summary = await Transaction.aggregate([
-            { $match: matchStage },
-            {
-                $group: {
-                    _id: "$type",
-                    totalAmount: { $sum: "$amount" },
-                    totalFee: { $sum: "$platformFee" },
-                    count: { $sum: 1 },
-                },
-            },
-        ]);
+    const summary = await Transaction.aggregate([
+      { $match: matchStage },
+      {
+        $group: {
+          _id: "$type",
+          totalAmount: { $sum: "$amount" },
+          totalFee: { $sum: "$platformFee" },
+          count: { $sum: 1 },
+        },
+      },
+    ]);
 
-        // summary is an array like [{ _id: "order", totalAmount: ..., totalFee: ... }, { _id: "subscription", ... }]
-        // turn it into a clean, predictable object instead of an array we'd have to search through
-        let gmv = 0;
-        let transactionFeeRevenue = 0;
-        let subscriptionRevenue = 0;
-        let orderCount = 0;
-        let subscriptionCount = 0;
+    let gmv = 0;
+    let transactionFeeRevenue = 0;
+    let orderCount = 0;
 
-        summary.forEach((group) => {
-            if (group._id === "order") {
-                gmv = group.totalAmount;
-                transactionFeeRevenue = group.totalFee;
-                orderCount = group.count;
-            }
-            if (group._id === "subscription") {
-                subscriptionRevenue = group.totalAmount;
-                subscriptionCount = group.count;
-            }
-        });
+    summary.forEach((group) => {
+      if (group._id === "order") {
+        gmv = group.totalAmount;
+        transactionFeeRevenue = group.totalFee;
+        orderCount = group.count;
+      }
+    });
 
-        res.json({
-            gmv,
-            transactionFeeRevenue,
-            subscriptionRevenue,
-            totalRevenue: transactionFeeRevenue + subscriptionRevenue,
-            orderCount,
-            subscriptionCount,
-        });
-    } catch (err) {
-        res.status(500).json({ message: "Server error" });
-    }
+    res.json({
+      gmv,
+      transactionFeeRevenue,
+      totalRevenue: transactionFeeRevenue,
+      orderCount,
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
 };
 
 const getExitSurveys = async (req, res) => {
-    try {
-        if (!verifyAdmin(req, res)) return;
+  try {
+    if (!verifyAdmin(req, res)) return;
 
-        const exitSurveys = await ExitSurvey.find({}).sort({ createdAt: -1 });
+    const exitSurveys = await ExitSurvey.find({}).sort({ createdAt: -1 });
 
-        res.json({ exitSurveys });
-    } catch (err) {
-        res.status(500).json({ message: "Server error" });
-    }
+    res.json({ exitSurveys });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
 };
-
 
 module.exports = {
   activateStore,
@@ -426,4 +420,4 @@ module.exports = {
   exportConversationPdf,
   getRevenueSummary,
   getExitSurveys,
-}
+};

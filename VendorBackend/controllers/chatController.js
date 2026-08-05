@@ -410,46 +410,6 @@ const getSellerInbox = async (req, res) => {
     }
 };
 
-
-// ── POST /api/chat/:conversationId/report ──
-// buyer reports seller for trying to move conversation off platform
-// public route — buyer uses their sessionId to verify identity
-// const reportConversation = async (req, res) => {
-//     try {
-//         const { sessionId, reason } = req.body;
-//         const conversation = await Conversation.findById(req.params.conversationId);
-
-//         if (!conversation) {
-//             return res.status(404).json({ message: "Conversation not found" });
-//         }
-
-//         // only the buyer in this conversation can report it
-//         if (conversation.buyerSessionId !== sessionId) {
-//             return res.status(403).json({ message: "Access denied" });
-//         }
-
-//         conversation.isReported = true;
-//         conversation.reportReason = reason || "Seller requested off-platform payment";
-//         await conversation.save();
-
-//         // insert system message so both buyer and seller see that a report was filed
-//         await Message.create({
-//             conversationId: conversation._id,
-//             sender: "system",
-//             content:
-//                 "⚠️ This conversation has been reported to MoonStore for review. " +
-//                 "Our team will investigate within 24 hours.",
-//         });
-
-//         res.json({ message: "Report submitted. Our team will review this conversation." });
-//     } catch (err) {
-//         res.status(500).json({ message: err.message });
-//     }
-// };
-
-// ── POST /api/chat/:conversationId/generate-payment-link ──
-// seller clicks Generate Payment Link — initializes Paystack transaction
-// returns a payment URL that appears in chat as a system message
 const initializeOrderPayment = async (req, res) => {
     try {
         const { conversationId } = req.params;
