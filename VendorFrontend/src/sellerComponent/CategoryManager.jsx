@@ -87,7 +87,9 @@ const CategoryManager = () => {
             setEditingCategory(null);
             setInput("");
             setSuccess("Category updated successfully.");
-            setSuccess("")
+           setTimeout(() => {
+  setSuccess("");
+}, 1500);
         } else {
             // ADD NEW CATEGORY
             const data = await createCategory(trimmed);
@@ -102,7 +104,9 @@ const CategoryManager = () => {
             setCategories([data, ...currentCategories]);
             setInput("");
             setSuccess("Category added successfully.");
-            setSuccess("")
+            setTimeout(() => {
+  setSuccess("");
+}, 1500);
         }
     };
 
@@ -129,7 +133,9 @@ const CategoryManager = () => {
         setShowDeleteWarning(false);
         setSelectedCategory(null);
         setSuccess("Category deleted successfully");
-        setSuccess("")
+        setTimeout(() => {
+  setSuccess(""); 
+}, 1500);
     };
 
     // seller cancels delete popup
