@@ -111,7 +111,7 @@ const BuyerOrdersPage = () => {
                     className={styles.backBtn}
                     onClick={() => navigate(`/${slug}`)}
                 >
-                    ←
+                    ←s
                 </button>
                 <p className={styles.title}>My Orders</p>
                 <button

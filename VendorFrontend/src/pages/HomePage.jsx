@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { buyerLogin } from "../api/api";
 import { saveBuyerEmailLocally } from "../utils/session";
 import styles from "./HomePage.module.css";
+import StepsSection from "../sellerComponent/StepsSection";
+import FAQSection from "../sellerComponent/FAQSection";
 
 const HomePage = () => {
     const navigate = useNavigate();
@@ -152,6 +154,13 @@ const HomePage = () => {
             <div className={styles.card}>
                 {activeTab === "buyer" ? renderBuyerTab() : renderSellerTab()}
             </div>
+
+<div className={styles.card}>
+                {activeTab === "buyer" ? renderBuyerTab() : renderSellerTab()}
+            </div>
+
+            <StepsSection />
+            <FAQSection />
 
         
             <div className={styles.footer}>
