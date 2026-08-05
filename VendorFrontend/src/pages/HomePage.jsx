@@ -150,7 +150,7 @@ const HomePage = () => {
 
             {/* content */}
             <div className={styles.card}>
-                {activeTab === "seller" ? renderBuyerTab() : renderSellerTab()}
+                {activeTab === "buyer" ? renderBuyerTab() : renderSellerTab()}
             </div>
 
         
