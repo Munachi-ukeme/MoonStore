@@ -45,6 +45,21 @@ const registerSeller = async (req, res) => {
       });
     }
 
+    // Confirm the account actually resolves on Paystack before creating anything
+    const resolveResponse = await fetch(
+      `${process.env.PAYSTACK_BASE_KEY}/bank/resolve?account_number=${bankDetails.accountNumber}&bank_code=${bankDetails.bankCode}`,
+      {
+        headers: { Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}` },
+      }
+    );
+    const resolveData = await resolveResponse.json();
+
+    if (!resolveData.status) {
+      return res.status(400).json({
+        message: "Bank account could not be verified. Check the account number and bank.",
+      });
+    }
+
     const existingSeller = await Seller.findOne({ email });
     if (existingSeller) {
       return res.status(400).json({ message: "Email already registered" });
@@ -83,7 +98,10 @@ const registerSeller = async (req, res) => {
       password: hashedPassword,
       whatsappNumber,
       slug,
-      bankDetails,
+      bankDetails: {
+        ...bankDetails,
+        accountName: resolveData.data.account_name,
+      },
       referralCode,
       referredBy: validReferredBy,
       isActive: true,
@@ -127,11 +145,9 @@ const registerSeller = async (req, res) => {
       }
     }
 
-    const token = jwt.sign(
-      { id: seller._id },
-      process.env.JWT_SECRET,
-      { expiresIn: "30d" }
-    );
+    const token = jwt.sign({ id: seller._id }, process.env.JWT_SECRET, {
+      expiresIn: "30d",
+    });
 
     res.status(201).json({
       message: "Seller registered successfully",

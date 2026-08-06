@@ -37,7 +37,7 @@ const ProductForm = ({ editingProduct, onSaved, onCancel }) => {
             setName(editingProduct.name || "");
             setOriginalPrice(editingProduct.price || "");
             setDescription(editingProduct.description || "");
-            setCategoryId(editingProduct.categoryId || "");
+          setCategoryId(editingProduct.categoryId?._id || editingProduct.categoryId || "");
             setColors(editingProduct.colors || []);
             setSizes(editingProduct.sizes || []);
 
