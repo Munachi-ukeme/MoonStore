@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
 import { IoSend } from "react-icons/io5";
+import { io } from "socket.io-client";
 import { GrAttachment } from "react-icons/gr";
-import { getConversationMessages, sendBuyerMessage, reportConversation, sendImageMessage } from "../api/api";
+import { getConversationMessages, sendBuyerMessage, reportConversation, sendImageMessage, BASE_URL } from "../api/api";
 import { getOrCreateSessionId } from "../utils/session";
 import styles from "./BuyerChatPage.module.css";
 
@@ -75,8 +76,10 @@ const BuyerChatPage = () => {
 
     const fileInputRef = useRef(null);
     const bottomRef = useRef(null);
+    const socketRef = useRef(null);
     const location = useLocation();
     const sessionId = location.state?.sessionId || getOrCreateSessionId();
+    const SOCKET_URL = BASE_URL.replace(/\/api$/, "");
 
     const navigate = useNavigate();
 
@@ -96,6 +99,27 @@ const BuyerChatPage = () => {
     useEffect(() => {
         fetchMessages();
     }, [fetchMessages]);
+
+    useEffect(() => {
+    socketRef.current = io(SOCKET_URL, {
+        transports: ["websocket"],
+    });
+
+    socketRef.current.emit("join_conversation", conversationId);
+
+    socketRef.current.on("new_message", (incomingMessage) => {
+        setMessages((prev) => {
+            const alreadyExists = prev.some((m) => m._id === incomingMessage._id);
+            if (alreadyExists) return prev;
+            return [...prev, incomingMessage];
+        });
+    });
+
+    return () => {
+        socketRef.current.disconnect();
+    };
+}, [conversationId]);
+
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });

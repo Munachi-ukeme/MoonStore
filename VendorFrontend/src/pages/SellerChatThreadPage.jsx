@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { IoSend } from "react-icons/io5";
 import { GrAttachment } from "react-icons/gr";
+import { io } from "socket.io-client";
 import { useParams, useNavigate } from "react-router-dom";
 import {
     getSellerChatMessages,
     sendSellerMessage,
     generatePaymentLink,
     sendImageMessage,
+    BASE_URL,
 } from "../api/api";
 import styles from "./SellerChatThreadPage.module.css";
 
@@ -76,6 +78,7 @@ const SellerChatThreadPage = () => {
     const [imageError, setImageError] = useState("");
     const bottomRef = useRef(null);
     const fileInputRef = useRef(null);
+    const socketRef = useRef(null);
 
     const fetchThread = useCallback(async () => {
         setError("");
@@ -93,6 +96,28 @@ const SellerChatThreadPage = () => {
     useEffect(() => {
         fetchThread();
     }, [fetchThread]);
+
+    useEffect(() => {
+    const SOCKET_URL = BASE_URL.replace(/\/api$/, "");
+
+    socketRef.current = io(SOCKET_URL, {
+        transports: ["websocket"],
+    });
+
+    socketRef.current.emit("join_conversation", conversationId);
+
+    socketRef.current.on("new_message", (incomingMessage) => {
+        setMessages((prev) => {
+            const alreadyExists = prev.some((m) => m._id === incomingMessage._id);
+            if (alreadyExists) return prev;
+            return [...prev, incomingMessage];
+        });
+    });
+
+    return () => {
+        socketRef.current.disconnect();
+    };
+}, [conversationId]);
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
