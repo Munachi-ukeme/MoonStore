@@ -28,7 +28,7 @@ const sendSellerNewChatEmail = async (sellerEmail, sellerBusinessName, productNa
             style="display:inline-block;padding:10px 20px;background:#6d28d9;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;">
             View Conversation
           </a>
-          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore, Your store, your rules.</p>
+          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore, Your store. your rules.</p>
         </div>
       `,
     });
@@ -52,7 +52,7 @@ const sendBuyerReplyEmail = async (buyerEmail, sellerBusinessName, storeSlug, se
             style="display:inline-block;padding:10px 20px;background:#6d28d9;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;">
             View Reply
           </a>
-          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore — Your store, your rules.</p>
+          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore — Your store. your rules.</p>
         </div>
       `,
     });
@@ -85,4 +85,27 @@ const sendPasswordResetEmail = async (sellerEmail, sellerBusinessName, resetToke
   }
 };
 
-module.exports = { sendSellerNewChatEmail, sendBuyerReplyEmail, sendPasswordResetEmail };
+const sendSubaccountVerifiedEmail = async (sellerEmail, sellerBusinessName) => {
+  try {
+    await resend.emails.send({
+      from: "MoonStore <noreply@moonstore.ng>",
+      to: sellerEmail,
+      subject: "Your MoonStore account is now fully active",
+      html: `
+        <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+          <h2 style="color: #6d28d9;">You're all set! ✅</h2>
+          <p>Hi ${sellerBusinessName}, your account has been verified. You can now add products and categories to your store.</p>
+          <a href="${process.env.FRONTEND_URL}/dashboard/products"
+            style="display:inline-block;padding:10px 20px;background:#6d28d9;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;">
+            Add Your First Product
+          </a>
+          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore — Your store. your rules.</p>
+        </div>
+      `,
+    });
+  } catch (err) {
+    console.error("Subaccount verified email error:", err.message);
+  }
+};
+
+module.exports = { sendSellerNewChatEmail, sendBuyerReplyEmail, sendPasswordResetEmail, sendSubaccountVerifiedEmail };

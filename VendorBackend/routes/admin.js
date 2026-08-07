@@ -14,6 +14,8 @@ const {
   exportConversationPdf,
   getRevenueSummary,
   getExitSurveys,
+  getUnverifiedSellers,
+  verifySubaccount,
 } = require("../controllers/adminController")
 
 // PUT /api/admin/activate → activate one store
@@ -45,5 +47,11 @@ router.get("/reports/:conversationId/export", exportConversationPdf);
 router.get("/revenue-summary", getRevenueSummary);
 
 router.get("/exit-surveys", getExitSurveys);
+
+// GET /api/admin/unverified-sellers → list sellers awaiting subaccount verification
+router.get("/unverified-sellers", getUnverifiedSellers)
+
+// PUT /api/admin/verify-subaccount → unlock Products/Categories for a seller
+router.put("/verify-subaccount", verifySubaccount)
 
 module.exports = router

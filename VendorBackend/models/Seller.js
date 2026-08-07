@@ -71,6 +71,14 @@ resetPasswordExpires: {
       default: true, 
     },
 
+    // Gates Products/Categories creation until admin manually verifies
+    // the seller's Paystack subaccount in the admin dashboard
+    subaccountVerified: {
+      type: Boolean,
+      default: false,
+    },
+
+    
     //referral field
     referralCode: {
         type: String,

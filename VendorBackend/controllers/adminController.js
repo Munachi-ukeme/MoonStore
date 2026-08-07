@@ -81,6 +81,63 @@ const deactivateStore = async (req, res) => {
   }
 };
 
+// -----------------------------------
+// GET UNVERIFIED SELLERS (subaccount not yet verified by admin)
+// GET /api/admin/unverified-sellers
+// -----------------------------------
+const getUnverifiedSellers = async (req, res) => {
+  try {
+    if (!verifyAdmin(req, res)) return;
+
+    const sellers = await Seller.find({ subaccountVerified: false }).select("-password");
+
+    const formatted = sellers.map((seller) => ({
+      businessName: seller.businessName,
+      email: seller.email,
+      slug: seller.slug,
+      whatsappNumber: seller.whatsappNumber,
+      paystackSubaccountCode: seller.paystackSubaccountCode,
+      bankDetails: seller.bankDetails,
+      joinedDate: seller.createdAt,
+    }));
+
+    res.json({ total: formatted.length, sellers: formatted });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// -----------------------------------
+// VERIFY SUBACCOUNT — unlocks Products/Categories for the seller
+// PUT /api/admin/verify-subaccount
+// -----------------------------------
+const verifySubaccount = async (req, res) => {
+  try {
+    if (!verifyAdmin(req, res)) return;
+
+    const { email } = req.body;
+
+    const seller = await Seller.findOneAndUpdate(
+      { email },
+      { subaccountVerified: true },
+      { new: true }
+    );
+
+    if (!seller) {
+      return res.status(404).json({ message: "Seller not found" });
+    }
+
+    const { sendSubaccountVerifiedEmail } = require("../utils/mailer");
+    sendSubaccountVerifiedEmail(seller.email, seller.businessName).catch((err) => {
+      console.error("Verification email error:", err.message);
+    });
+
+    res.json({ message: `${seller.businessName} subaccount verified and unlocked` });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // Deactivates Paystack subaccount when a seller account is deleted
 const deactivateSubaccount = async (subaccountCode) => {
   try {
@@ -420,4 +477,6 @@ module.exports = {
   exportConversationPdf,
   getRevenueSummary,
   getExitSurveys,
+  getUnverifiedSellers,
+  verifySubaccount,
 };

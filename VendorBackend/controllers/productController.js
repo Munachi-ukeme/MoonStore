@@ -34,6 +34,13 @@ const getProducts = async (req, res) => {
 // -----------------------------------
 const addProduct = async (req, res) => {
   try {
+
+     if (!req.seller.subaccountVerified) {
+      return res.status(403).json({
+        message: "Your store is under review. Please try again once your account is verified.",
+      })
+    }
+
     const { name, price, description, categoryId } = req.body
 
     // 1. Check if category exists

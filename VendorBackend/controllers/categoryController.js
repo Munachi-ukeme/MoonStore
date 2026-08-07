@@ -19,6 +19,13 @@ const getCategories = async (req, res) => {
 // -----------------------------------
 const addCategory = async (req, res) => {
   try {
+
+    if (!req.seller.subaccountVerified) {
+      return res.status(403).json({
+        message: "Your store is under review. Please try again once your account is verified.",
+      })
+    }
+    
     const { name } = req.body
 
     if (!name) {
