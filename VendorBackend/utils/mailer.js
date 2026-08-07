@@ -28,7 +28,7 @@ const sendSellerNewChatEmail = async (sellerEmail, sellerBusinessName, productNa
             style="display:inline-block;padding:10px 20px;background:#6d28d9;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;">
             View Conversation
           </a>
-          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore, Your store. your rules.</p>
+          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore, Your Store. Your Rules.</p>
         </div>
       `,
     });
@@ -52,7 +52,7 @@ const sendBuyerReplyEmail = async (buyerEmail, sellerBusinessName, storeSlug, se
             style="display:inline-block;padding:10px 20px;background:#6d28d9;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;">
             View Reply
           </a>
-          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore — Your store. your rules.</p>
+          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore — Your Store. your Rules.</p>
         </div>
       `,
     });
@@ -95,11 +95,11 @@ const sendSubaccountVerifiedEmail = async (sellerEmail, sellerBusinessName) => {
         <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
           <h2 style="color: #6d28d9;">You're all set! ✅</h2>
           <p>Hi ${sellerBusinessName}, your account has been verified. You can now add products and categories to your store.</p>
-          <a href="${process.env.FRONTEND_URL}/dashboard/products"
+          <a href="${process.env.FRONTEND_URL}/login"
             style="display:inline-block;padding:10px 20px;background:#6d28d9;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;">
-            Add Your First Product
+            Login to add your first product
           </a>
-          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore — Your store. your rules.</p>
+          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore — Your Store. your Rules.</p>
         </div>
       `,
     });
