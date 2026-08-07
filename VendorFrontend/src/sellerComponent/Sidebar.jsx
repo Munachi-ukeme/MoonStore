@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import styles from "./Sidebar.module.css";
@@ -5,6 +6,9 @@ import styles from "./Sidebar.module.css";
 const Sidebar = ({ isOpen, onClose, onToggle, isWide }) => {
     const { seller, logout } = useAuth();
     const navigate = useNavigate();
+    const [showLockedPopup, setShowLockedPopup] = useState(false);
+
+    const isLocked = !seller?.subaccountVerified;
 
     const handleLogout = () => {
         logout();
@@ -13,6 +17,15 @@ const Sidebar = ({ isOpen, onClose, onToggle, isWide }) => {
 
     const handleLinkClick = () => {
         onClose();
+    };
+
+    const handleLockedLinkClick = (e) => {
+        if (isLocked) {
+            e.preventDefault();
+            setShowLockedPopup(true);
+        } else {
+            handleLinkClick();
+        }
     };
 
     return (
@@ -50,22 +63,28 @@ const Sidebar = ({ isOpen, onClose, onToggle, isWide }) => {
 
                     <NavLink
                         to="/dashboard/products"
-                        className={({ isActive }) =>
-                            isActive ? `${styles.link} ${styles.activeLink}` : styles.link
+                        className={
+                            isLocked
+                                ? `${styles.link} ${styles.lockedLink}`
+                                : ({ isActive }) =>
+                                      isActive ? `${styles.link} ${styles.activeLink}` : styles.link
                         }
-                        onClick={handleLinkClick}
+                        onClick={handleLockedLinkClick}
                     >
-                        Products
+                        Products {isLocked ? "🔒" : ""}
                     </NavLink>
 
                     <NavLink
                         to="/dashboard/categories"
-                        className={({ isActive }) =>
-                            isActive ? `${styles.link} ${styles.activeLink}` : styles.link
+                        className={
+                            isLocked
+                                ? `${styles.link} ${styles.lockedLink}`
+                                : ({ isActive }) =>
+                                      isActive ? `${styles.link} ${styles.activeLink}` : styles.link
                         }
-                        onClick={handleLinkClick}
+                        onClick={handleLockedLinkClick}
                     >
-                        Categories
+                        Categories {isLocked ? "🔒" : ""}
                     </NavLink>
 
                     <NavLink
@@ -105,6 +124,35 @@ const Sidebar = ({ isOpen, onClose, onToggle, isWide }) => {
                     </button>
                 </div>
             </div>
+
+            {/* Locked feature popup */}
+            {showLockedPopup ? (
+                <div className={styles.popupOverlay}>
+                    <div className={styles.popup}>
+                        <button
+                            className={styles.popupClose}
+                            onClick={() => setShowLockedPopup(false)}
+                        >
+                            ✕
+                        </button>
+                        <p className={styles.popupTitle}>Your store is under review</p>
+                        <p className={styles.popupText}>
+                            It will be unlocked within the next 24 hours. Use this time to set
+                            your store up properly by adding your business logo, banner, and
+                            other details in Settings if you have not done so.
+                        </p>
+                        <button
+                            className={styles.popupBtn}
+                            onClick={() => {
+                                setShowLockedPopup(false);
+                                navigate("/dashboard/settings");
+                            }}
+                        >
+                            Go to Settings
+                        </button>
+                    </div>
+                </div>
+            ) : null}
         </>
     );
 };

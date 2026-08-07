@@ -119,10 +119,7 @@ const [endDate, setEndDate] = useState("");
                     <thead>
                         <tr>
                             <th>Business</th>
-                            <th>Plan</th>
                             <th>Status</th>
-                            <th>Subscription Start</th>
-                            <th>Subscription Ends</th>
                             <th>Joined</th>
                             <th>Actions</th>
                         </tr>
@@ -134,7 +131,7 @@ const [endDate, setEndDate] = useState("");
                                     <p className={styles.bizName}>{seller.businessName}</p>
                                     <p className={styles.slugText}>/{seller.slug}</p>
                                 </td>
-                                <td className={styles.planCell}>{seller.plan}</td>
+                                
                                 <td>
                                     <span
                                         className={
@@ -144,8 +141,7 @@ const [endDate, setEndDate] = useState("");
                                         {seller.isActive ? "Active" : "Inactive"}
                                     </span>
                                 </td>
-                                <td>{formatDate(seller.subscriptionStart)}</td>
-                                <td>{formatDate(seller.subscriptionEnd)}</td>
+                                
                                 <td>{formatDate(seller.joinedDate)}</td>
                                 <td className={styles.actionsCell}>
                                     {seller.isActive ? (

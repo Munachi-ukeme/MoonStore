@@ -788,3 +788,31 @@ export const getExitSurveys = async () => {
     return { error: err.message || "Failed to fetch exit surveys." };
   }
 };
+
+export const getUnverifiedSellersAdmin = async () => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/admin/unverified-sellers`, {
+      headers: getAdminHeaders(),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Could not load unverified sellers" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Could not load unverified sellers. Please try again." };
+  }
+};
+
+export const verifySubaccountAdmin = async (email) => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/admin/verify-subaccount`, {
+      method: "PUT",
+      headers: getAdminHeaders(),
+      body: JSON.stringify({ email }),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Could not verify subaccount" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Could not verify subaccount. Please try again." };
+  }
+};

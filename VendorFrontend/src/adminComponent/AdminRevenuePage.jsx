@@ -48,11 +48,7 @@ if (error) return <p className={styles.errorText}>{error}</p>;
                     <p className={styles.cardLabel}>Transaction Fee Revenue</p>
                     <p className={styles.cardValue}>₦{data?.transactionFeeRevenue?.toLocaleString() || 0}</p>
                 </div>
-                <div className={styles.card}>
-                    <p className={styles.cardLabel}>Subscription Revenue</p>
-                    <p className={styles.cardValue}>₦{data?.subscriptionRevenue?.toLocaleString() || 0}</p>
-                    <p className={styles.cardHint}>{data?.subscriptionCount || 0} payments</p>
-                </div>
+                
                 <div className={`${styles.card} ${styles.totalCard}`}>
                     <p className={styles.cardLabel}>Total Revenue</p>
                     <p className={styles.cardValue}>₦{data?.totalRevenue?.toLocaleString() || 0}</p>

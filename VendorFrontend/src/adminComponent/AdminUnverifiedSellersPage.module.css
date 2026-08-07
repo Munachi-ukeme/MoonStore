@@ -1,0 +1,84 @@
+.page {
+    padding: 16px;
+}
+
+.title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0 0 4px;
+}
+
+.subtitle {
+    font-size: 13px;
+    color: #6b7280;
+    margin: 0 0 20px;
+}
+
+.stateText {
+    font-size: 13px;
+    color: #6b7280;
+    padding: 16px;
+}
+
+.errorText {
+    font-size: 13px;
+    color: #dc2626;
+    padding: 16px;
+}
+
+.list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.card {
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 14px;
+}
+
+.cardTop {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.bizName {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 0;
+}
+
+.slugText {
+    font-size: 12px;
+    color: #6b7280;
+    margin: 0;
+}
+
+.meta {
+    font-size: 12px;
+    color: #4b5563;
+    margin: 2px 0;
+}
+
+.verifyBtn {
+    margin-top: 10px;
+    width: 100%;
+    padding: 9px;
+    background: #6d28d9;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.verifyBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}

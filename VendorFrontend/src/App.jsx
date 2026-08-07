@@ -33,6 +33,7 @@ import AdminReferralsPage from "./adminComponent/AdminReferralsPage";
 import AdminReportsPage from "./adminComponent/AdminReportsPage";
 import AdminRevenuePage from "./adminComponent/AdminRevenuePage";
 import AdminExitSurveysPage from "./adminComponent/AdminExitSurveysPage";
+import AdminUnverifiedSellersPage from "./adminComponent/AdminUnverifiedSellersPage";
 
 function App(){
   return (
@@ -210,6 +211,16 @@ function App(){
         <AdminProtectedRoute>
             <AdminLayout>
                 <AdminExitSurveysPage />
+            </AdminLayout>
+        </AdminProtectedRoute>
+    }
+/>
+<Route
+    path="/admin/unverifiedsellers"
+    element={
+        <AdminProtectedRoute>
+            <AdminLayout>
+                <AdminUnverifiedSellersPage />
             </AdminLayout>
         </AdminProtectedRoute>
     }
