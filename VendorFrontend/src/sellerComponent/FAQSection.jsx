@@ -2,9 +2,19 @@ import { useState } from "react";
 import styles from "./FAQSection.module.css";
 
 const faqs = [
+
+     {
+        question: "What is MoonStore?",
+        answer: "MoonStore is a platform that gives Nigerian and African vendors their own branded online store, where buyers browse, chat, and pay directly — no WhatsApp stress, no marketplace competing for attention.",
+    },
+    {
+        question: "Is MoonStore a registered business?",
+        answer: "Yes. MoonStore is registered with the Corporate Affairs Commission under MoonStore Branded Stores Technologies.",
+    },
+
     {
         question: "When will I receive my money?",
-        answer: "As soon as a buyer pays through your Paystack link, the payment settles directly to your linked bank account based on Paystack's standard settlement schedule.",
+        answer: "As soon as a buyer pays through your Paystack link, the payment settles directly to your linked bank account within 24 hours.",
     },
     {
         question: "How much does MoonStore charge?",
@@ -18,6 +28,17 @@ const faqs = [
         question: "Is my money safe?",
         answer: "Yes. Payments go through Paystack directly into your own bank account. MoonStore does not hold your money.",
     },
+
+     {
+        question: "Does MoonStore ask for my BVN or NIN?",
+        answer: "No. MoonStore never asks for your BVN, NIN, or any sensitive personal ID. We only collect your bank account number and bank name to set up payouts, the same details Paystack itself verifies to confirm your account.",
+    },
+
+   {
+        question: "Is my business information kept private?",
+        answer: "Yes. MoonStore never sells or shares your account details, sales data, or buyer information with third parties. As the platform, MoonStore can see this data to run your dashboard and process payments, but it stays internal and is never exposed publicly beyond what you choose to show on your storefront.",
+    },
+
     {
         question: "What happens if a buyer doesn't pay?",
         answer: "Nothing is charged. The conversation simply stays unpaid until the buyer completes payment.",

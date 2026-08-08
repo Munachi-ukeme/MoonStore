@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate} from "react-router-dom";
 import styles from "./ProductCard.module.css";
+import { grossUpPrice } from "../utils/pricing";
 
 function ProductCard({ product, slug}){
     const navigate = useNavigate();
@@ -42,7 +43,7 @@ function ProductCard({ product, slug}){
             <div className={styles.info}>
                 <p className={styles.name}>{product.name}</p>
                 <p className={styles.price}>
-                    ₦{product.price.toLocaleString()}
+                    ₦{grossUpPrice(product.price).toLocaleString()}
                 </p>
 
                 {/* view product button */}

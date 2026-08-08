@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { createProduct, updateProduct, getCategories } from "../api/api";
 import imageCompression from "browser-image-compression";
 import styles from "./ProductForm.module.css";
+import { grossUpPrice } from "../utils/pricing";
 
 const ProductForm = ({ editingProduct, onSaved, onCancel }) => {
     const maxImages = 5;
@@ -135,7 +136,7 @@ const ProductForm = ({ editingProduct, onSaved, onCancel }) => {
 
         const formData = new FormData();
         formData.append("name", name);
-        formData.append("price", displayPrice);
+        formData.append("price", originalPrice);
         formData.append("description", description);
         formData.append("categoryId", categoryId);
         formData.append("colors", JSON.stringify(colors));
@@ -184,13 +185,6 @@ const ProductForm = ({ editingProduct, onSaved, onCancel }) => {
         }
 
         onSaved(data);
-    };
-
-    const grossUpPrice = (originalPrice) => {
-        if (originalPrice >= 126667) {
-            return originalPrice + 2000;
-        }
-        return Math.ceil((originalPrice + 100) / (1 - 0.015));
     };
 
     const handlePriceChange = (e) => {

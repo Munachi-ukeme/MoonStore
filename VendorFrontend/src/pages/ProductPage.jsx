@@ -4,6 +4,7 @@ import { trackProductClick, getProduct, getStore, getReviewEligibility, submitRe
 import { getOrCreateSessionId, getSavedEmail, saveBuyerEmailLocally } from "../utils/session";
 import styles from "./ProductPage.module.css";
 import Navbar from "../buyerComponent/Navbar";
+import { grossUpPrice } from "../utils/pricing";
 
 const TRAY_KEY = (slug) => `moonstore_order_${slug}`;
 
@@ -137,7 +138,7 @@ const ProductPage = () => {
             el.setAttribute("content", content);
         };
 
-        const description = product.description || `₦${product.price.toLocaleString()}`;
+        const description = product.description || `₦${grossUpPrice(product.price).toLocaleString()}`;
         const image = product.images && product.images.length > 0 ? product.images[0] : "";
 
         setMetaProperty("og:title", product.name);
@@ -315,7 +316,8 @@ const ProductPage = () => {
         );
     }
 
-    const total = product.price * quantity;
+    const buyerUnitPrice = grossUpPrice(product.price);
+    const total = buyerUnitPrice * quantity;
 
     return (
         <div className={styles.page}>
@@ -366,7 +368,7 @@ const ProductPage = () => {
                     )}
 
                     <h1 className={styles.name}>{product.name}</h1>
-                    <p className={styles.price}>₦{product.price.toLocaleString()}</p>
+                    <p className={styles.price}>₦{buyerUnitPrice.toLocaleString()}</p>
 
                     {product.description ? (
                         <p className={styles.description}>{product.description}</p>

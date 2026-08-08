@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { startConversation } from "../api/api";
+import { grossUpPrice } from "../utils/pricing";
 import { getOrCreateSessionId } from "../utils/session";
 import styles from "./OrderTray.module.css";
 
@@ -122,7 +123,7 @@ const OrderTray = ({ slug }) => {
 
     if (!tray || !tray.items || tray.items.length === 0) return null;
 
-    const total = tray.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+   const total = tray.items.reduce((sum, item) => sum + grossUpPrice(item.price) * item.quantity, 0);
     const itemCount = tray.items.length;
 
     return (
@@ -199,8 +200,8 @@ const OrderTray = ({ slug }) => {
     {item.colors && item.colors.length > 0 ? ` · ${item.colors.join(", ")}` : ""}
     {item.sizes && item.sizes.length > 0 ? ` · Size: ${item.sizes.join(", ")}` : ""}
 </p>
-                                    <p className={styles.itemPrice}>
-                                        ₦{(item.price * item.quantity).toLocaleString()}
+                                   <p className={styles.itemPrice}>
+                                        ₦{(grossUpPrice(item.price) * item.quantity).toLocaleString()}
                                     </p>
                                 </div>
                                 <button

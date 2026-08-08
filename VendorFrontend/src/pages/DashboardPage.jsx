@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { getProducts, getCategories } from "../api/api";
 import styles from "./DashboardPage.module.css";
 import AnalyticsSection from "./AnalyticsSection";
@@ -8,6 +8,7 @@ import AnalyticsSection from "./AnalyticsSection";
 function DashboardPage() {
     const { seller } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
 
     const referralLink = `https://moonstore.ng/register?ref=${seller?.referralCode || ""}`;
     const storeLink = `moonstore.ng/${seller?.slug || ""}`;
@@ -22,18 +23,14 @@ function DashboardPage() {
 
     const isInactive = !seller?.isActive;
 
-    // First-time seller welcome modal check
+
+    // Show welcome popup only immediately after signup — no localStorage,
+    // no dependency on browser history at all
     useEffect(() => {
-        if (!seller?._id) return;
-
-        const welcomeKey = `moonstore_welcome_seen_${seller._id}`;
-        const hasSeenWelcome = localStorage.getItem(welcomeKey);
-
-        if (!hasSeenWelcome) {
+        if (location.state?.justSignedUp) {
             setShowWelcomePopup(true);
-            localStorage.setItem(welcomeKey, "true");
         }
-    }, [seller]);
+    }, [location.state]);
 
     const loadProducts = async () => {
         setError(null);

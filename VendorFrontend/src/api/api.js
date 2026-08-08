@@ -816,3 +816,30 @@ export const verifySubaccountAdmin = async (email) => {
     return { error: err.message || "Could not verify subaccount. Please try again." };
   }
 };
+
+
+export const requestSignupConfirmation = async (payload) => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/auth/request-signup-confirmation`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Could not send confirmation email." };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Could not send confirmation email." };
+  }
+};
+
+export const verifySignupToken = async (token) => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/auth/verify-signup-token?token=${encodeURIComponent(token)}`);
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "This link is invalid or has expired." };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Could not verify this link." };
+  }
+};
