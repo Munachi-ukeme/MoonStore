@@ -1,6 +1,13 @@
 const express = require("express")
 const router = express.Router()
-const { registerSeller, loginSeller, resetPassword, forgotPassword } = require("../controllers/authController")
+const {
+  requestSignupConfirmation,
+  verifySignupToken,
+  registerSeller,
+  loginSeller,
+  resetPassword,
+  forgotPassword,
+} = require("../controllers/authController")
 const rateLimit = require("express-rate-limit")
 const { body } = require("express-validator")
 
@@ -13,8 +20,8 @@ const loginLimiter = rateLimit({
   }
 })
 
-// register validation rules
-const registerValidation = [
+// register validation rules — password now checked before hashing at step 1
+const signupRequestValidation = [
   body("businessName")
     .trim()
     .notEmpty().withMessage("Business name is required"),
@@ -37,8 +44,14 @@ const loginValidation = [
     .notEmpty().withMessage("Password is required"),
 ]
 
-// POST /api/auth/register
-router.post("/register", registerValidation, registerSeller)
+// POST /api/auth/request-signup-confirmation — step 1 complete, sends email
+router.post("/request-signup-confirmation", signupRequestValidation, requestSignupConfirmation)
+
+// GET /api/auth/verify-signup-token — confirms email link, returns step 1 data
+router.get("/verify-signup-token", verifySignupToken)
+
+// POST /api/auth/register — final step, saves the seller
+router.post("/register", registerSeller)
 
 // POST /api/auth/login
 router.post("/login", loginLimiter, loginValidation, loginSeller)

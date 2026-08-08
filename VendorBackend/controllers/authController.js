@@ -20,7 +20,84 @@ const generateReferralCode = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
-// REGISTER SELLER
+// REQUEST SIGNUP CONFIRMATION — step 1 complete, hash password, email a signed link
+// POST /api/auth/request-signup-confirmation
+const requestSignupConfirmation = async (req, res) => {
+  try {
+    const { businessName, email, password, whatsappNumber, referredBy } = req.body;
+
+    if (!businessName || !email || !password || !whatsappNumber) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    const existingSeller = await Seller.findOne({ email });
+    if (existingSeller) {
+      return res.status(400).json({ message: "Email already registered" });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const signupToken = jwt.sign(
+      {
+        businessName,
+        email,
+        hashedPassword,
+        whatsappNumber,
+        referredBy: referredBy || null,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "10m" }
+    );
+
+    const { sendSignupConfirmationEmail } = require("../utils/mailer");
+    sendSignupConfirmationEmail(email, businessName, signupToken).catch((err) => {
+      console.error("Signup confirmation email error:", err.message);
+    });
+
+    res.status(200).json({ message: "Confirmation email sent" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// VERIFY SIGNUP TOKEN — confirms the emailed link, returns step 1 data
+// GET /api/auth/verify-signup-token?token=xyz
+const verifySignupToken = async (req, res) => {
+  try {
+    const { token } = req.query;
+
+    if (!token) {
+      return res.status(400).json({ message: "Missing token" });
+    }
+
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (err) {
+      return res.status(400).json({ message: "This link is invalid or has expired" });
+    }
+
+    // Confirm the email still isn't registered (in case they verified twice, or
+    // registered through another tab while this link was open)
+    const existingSeller = await Seller.findOne({ email: decoded.email });
+    if (existingSeller) {
+      return res.status(400).json({ message: "Email already registered" });
+    }
+
+    res.status(200).json({
+      businessName: decoded.businessName,
+      email: decoded.email,
+      hashedPassword: decoded.hashedPassword,
+      whatsappNumber: decoded.whatsappNumber,
+      referredBy: decoded.referredBy,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// REGISTER SELLER — final step, password already hashed at step 1
 // POST /api/auth/register
 const registerSeller = async (req, res) => {
   try {
@@ -32,11 +109,17 @@ const registerSeller = async (req, res) => {
     const {
       businessName,
       email,
-      password,
+      hashedPassword,
       whatsappNumber,
       referredBy,
       bankDetails,
     } = req.body;
+
+    if (!hashedPassword) {
+      return res.status(400).json({
+        message: "Email confirmation is required before completing registration.",
+      });
+    }
 
     if (!bankDetails || !bankDetails.accountNumber || !bankDetails.bankCode) {
       return res.status(400).json({
@@ -75,9 +158,6 @@ const registerSeller = async (req, res) => {
       existingSlug = await Seller.findOne({ slug });
     }
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
     let referralCode = generateReferralCode();
     const existingCode = await Seller.findOne({ referralCode });
     if (existingCode) {
@@ -113,7 +193,7 @@ const registerSeller = async (req, res) => {
       seller.bankDetails.bankCode
     ) {
       const subResult = await createSubaccount(
-        seller.businessName,
+        resolveData.data.account_name,
         seller.bankDetails.accountNumber,
         seller.bankDetails.bankCode
       );
@@ -284,6 +364,8 @@ const resetPassword = async (req, res) => {
 };
 
 module.exports = {
+  requestSignupConfirmation,
+  verifySignupToken,
   registerSeller,
   loginSeller,
   resetPassword,

@@ -108,4 +108,28 @@ const sendSubaccountVerifiedEmail = async (sellerEmail, sellerBusinessName) => {
   }
 };
 
-module.exports = { sendSellerNewChatEmail, sendBuyerReplyEmail, sendPasswordResetEmail, sendSubaccountVerifiedEmail };
+const sendSignupConfirmationEmail = async (email, businessName, signupToken) => {
+  try {
+    const confirmLink = `${process.env.FRONTEND_URL}/register?token=${signupToken}`;
+    await resend.emails.send({
+      from: "MoonStore <noreply@moonstore.ng>",
+      to: email,
+      subject: "Confirm your email to finish creating your MoonStore",
+      html: `
+        <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+          <h2 style="color: #6d28d9;">Confirm your email</h2>
+          <p>Hi ${businessName}, click below to confirm your email and continue setting up your store. This link expires in 10 minutes.</p>
+          <a href="${confirmLink}"
+            style="display:inline-block;padding:10px 20px;background:#6d28d9;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;">
+            Confirm Email & Continue
+          </a>
+          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">If you didn't request this, ignore this email.</p>
+        </div>
+      `,
+    });
+  } catch (err) {
+    console.error("Signup confirmation email error:", err.message);
+  }
+};
+
+module.exports = { sendSellerNewChatEmail, sendBuyerReplyEmail, sendPasswordResetEmail, sendSubaccountVerifiedEmail, sendSignupConfirmationEmail };
