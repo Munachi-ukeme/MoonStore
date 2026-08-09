@@ -4,6 +4,7 @@ const Seller = require("../models/Seller");
 const Product = require("../models/Product");
 const { sendSellerNewChatEmail } = require("../utils/mailer");
 const { getIO } = require("../utils/socket");
+const { grossUpPrice } = require("../utils/pricing");
 const MAX_IMAGE_SIZE_BYTES = 300 * 1024; // 300KB limit after Base64
 
 
@@ -156,7 +157,7 @@ const startConversation = async (req, res) => {
         line += ` — Size: ${chosenSizes}`;
       }
 
-      line += ` — ₦${itemTotal.toLocaleString()}`;
+      line += ` — ₦${grossUpPrice(itemTotal).toLocaleString()}`;
 
       if (product.images && product.images.length > 0) {
         line += `\n[img]${product.images[0]}[/img]`;
@@ -165,7 +166,7 @@ const startConversation = async (req, res) => {
       orderLines += line + "\n";
     });
 
-        let orderMessage = `New Order Request\n\n${orderLines}\nTotal: ₦${totalAmount.toLocaleString()}`;
+        let orderMessage = `New Order Request\n\n${orderLines}\nTotal: ₦${grossUpPrice(totalAmount).toLocaleString()}`;
 
         if (deliveryAddress) {
             orderMessage += `\n\n Deliver to: ${deliveryAddress}`;
@@ -437,6 +438,13 @@ const initializeOrderPayment = async (req, res) => {
             });
         }
 
+        // conversation.amount holds the REAL price total (sum of product prices)
+        const realPrice = conversation.amount;
+        const buyerChargeAmount = grossUpPrice(realPrice);
+
+        // MoonStore's cut: 4% of the REAL price only, never the inflated total
+        const platformFeeAmount = Math.round(realPrice * 0.04);
+
         const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY;
         const PAYSTACK_BASE = "https://api.paystack.co";
 
@@ -448,12 +456,15 @@ const initializeOrderPayment = async (req, res) => {
             },
             body: JSON.stringify({
                 email: seller.email,
-                amount: conversation.amount * 100, // use conversation.amount — already grossed up
+                amount: buyerChargeAmount * 100, // kobo — total the buyer is charged
                 subaccount: seller.paystackSubaccountCode,
+                transaction_charge: platformFeeAmount * 100, // kobo — MoonStore's exact fixed cut
                 bearer: "account",
                 metadata: {
                     sellerId: seller._id,
                     conversationId: conversation._id,
+                    realPrice,
+                    platformFeeAmount,
                 },
                 callback_url: `${process.env.FRONTEND_URL}/${seller.slug}/chat/${conversationId}`,
             }),

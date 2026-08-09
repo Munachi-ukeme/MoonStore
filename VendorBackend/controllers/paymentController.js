@@ -125,15 +125,16 @@ const paystackWebhook = async (req, res) => {
         if (conversation && conversation.status !== "paid") {
           conversation.status = "paid";
           conversation.paidAt = new Date();
-          conversation.amount = event.data.amount / 100;
+          // conversation.amount stays as the REAL price — never overwrite it
+          // with event.data.amount, which is the grossed-up buyer charge
           await conversation.save();
 
           const Transaction = require("../models/Transaction");
           await Transaction.create({
             sellerId: conversation.sellerId,
             type: "order",
-            amount: conversation.amount,
-            platformFee: conversation.amount * 0.04, // 4% platform fee
+            amount: metadata.realPrice,
+            platformFee: metadata.platformFeeAmount,
             reference: event.data.reference,
             productIds: conversation.productIds,
             buyerEmail: conversation.buyerEmail,
