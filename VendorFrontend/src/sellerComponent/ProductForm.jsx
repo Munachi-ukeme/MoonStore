@@ -229,7 +229,7 @@ const ProductForm = ({ editingProduct, onSaved, onCancel }) => {
                 />
                 {displayPrice ? (
                     <p className={styles.priceNote}>
-                        Buyer will pay <strong>₦{displayPrice.toLocaleString()}</strong> (includes Paystack gateway processing fee). You receive ₦{Number(originalPrice).toLocaleString()} exactly.
+                        Buyer will pay <strong>₦{displayPrice.toLocaleString()}</strong> (₦{(displayPrice - Number(originalPrice)).toLocaleString()} includes Paystack gateway processing fee).
                     </p>
                 ) : null}
             </div>
