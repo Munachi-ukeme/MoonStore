@@ -113,4 +113,17 @@ const deleteSeller = async (req, res) => {
   }
 }
 
-module.exports = { deleteSeller, changePassword }
+// GET CURRENT SELLER — returns fresh seller data from the database
+// GET /api/seller/me
+// Protected — seller must be logged in
+const getMe = async (req, res) => {
+  try {
+    // req.seller is already the full seller doc (minus password),
+    // freshly fetched from the DB by the protect middleware on this request
+    res.json({ seller: req.seller })
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}
+
+module.exports = { deleteSeller, changePassword, getMe }
