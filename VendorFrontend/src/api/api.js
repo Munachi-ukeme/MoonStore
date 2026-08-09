@@ -843,3 +843,17 @@ export const verifySignupToken = async (token) => {
     return { error: err.message || "Could not verify this link." };
   }
 };
+
+
+export const getCurrentSeller = async () => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/seller/me`, {
+      headers: getAuthHeaders(),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Could not load seller data." };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Could not load seller data." };
+  }
+};

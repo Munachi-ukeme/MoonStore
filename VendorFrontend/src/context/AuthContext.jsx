@@ -16,16 +16,34 @@ export const AuthProvider = ({ children }) =>{
     const [loading, setLoading] = useState(true); 
 
     useEffect(() => {
-        try {
-            const stored = localStorage.getItem("seller");
-            if (stored) {
-                setSeller(JSON.parse(stored));
+        const restoreSession = async () => {
+            try {
+                const stored = localStorage.getItem("seller");
+                if (stored) {
+                    // Show the cached copy immediately so the UI doesn't flash empty
+                    setSeller(JSON.parse(stored));
+                }
+            } catch (err) {
+                console.error("Failed to parse seller session data:", err);
             }
-        } catch (err) {
-            console.error("Failed to parse seller session data:", err);
-        } finally {
-            setLoading(false); 
-        }
+
+            const token = localStorage.getItem("token");
+            if (token) {
+                // Then quietly replace it with the real, current data from the
+                // database — this is what makes admin changes (like verifying
+                // a subaccount) show up on refresh without needing to log out
+                const { getCurrentSeller } = await import("../api/api");
+                const result = await getCurrentSeller();
+                if (!result.error && result.seller) {
+                    localStorage.setItem("seller", JSON.stringify(result.seller));
+                    setSeller(result.seller);
+                }
+            }
+
+            setLoading(false);
+        };
+
+        restoreSession();
     }, []);
 
     // Called after a successful login
