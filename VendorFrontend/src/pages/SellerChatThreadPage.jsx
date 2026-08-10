@@ -61,6 +61,27 @@ const compressImage = (file) => {
     });
 };
 
+
+// Calculates the next working day after a paid date (skips Sat/Sun) —
+// matches Paystack's automated payout schedule
+const getExpectedPayoutDate = (paidAtString) => {
+    const paidDate = new Date(paidAtString);
+    const payoutDate = new Date(paidDate);
+    payoutDate.setDate(payoutDate.getDate() + 1);
+
+    // if the next day lands on Sat (6) or Sun (0), push forward to Monday
+    while (payoutDate.getDay() === 0 || payoutDate.getDay() === 6) {
+        payoutDate.setDate(payoutDate.getDate() + 1);
+    }
+
+    return payoutDate.toLocaleDateString("en-NG", {
+        weekday: "long",
+        day: "numeric",
+        month: "short",
+    });
+};
+
+
 const SellerChatThreadPage = () => {
     const { conversationId } = useParams();
     const navigate = useNavigate();
@@ -346,7 +367,14 @@ const SellerChatThreadPage = () => {
     return (
         <div className={styles.page}>
             {isPaid ? (
-                <div className={styles.paidBanner}>✓ This order has been marked as paid</div>
+                <div className={styles.paidBanner}>
+                    ✓ This order has been marked as paid
+                    {conversation?.paidAt ? (
+                        <span className={styles.payoutNote}>
+                            {" "}· Expected in your bank account by {getExpectedPayoutDate(conversation.paidAt)}
+                        </span>
+                    ) : null}
+                </div>
             ) : null}
 
             <div className={styles.header}>

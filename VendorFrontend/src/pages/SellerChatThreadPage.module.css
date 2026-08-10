@@ -455,6 +455,12 @@
     border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
+.payoutNote {
+    font-weight: normal;
+    font-size: 12px;
+    opacity: 0.85;
+}
+
 .fullscreenOverlay {
     position: fixed;
     inset: 0;

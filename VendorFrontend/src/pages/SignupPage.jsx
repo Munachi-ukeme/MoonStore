@@ -325,6 +325,15 @@ const SignupPage = () => {
                     recover funds sent to the wrong account.
                 </div>
 
+                <div className={styles.infoBox}>
+                    💡 Money from your sales settles to your bank account the next
+                    working day. For example: sell on Monday, get paid Tuesday. But
+                    Saturdays, Sundays, and Nigerian public holidays don't count as
+                    working days, so a sale made on a Friday, Saturday, or Sunday
+                    all settle on the following Monday (or Tuesday if Monday is a
+                    public holiday).
+                </div>
+
                 <div className={styles.field}>
                     <label className={styles.label}>Select Bank</label>
                     {banksLoading ? (

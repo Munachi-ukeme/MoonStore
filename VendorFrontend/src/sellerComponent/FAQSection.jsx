@@ -14,8 +14,9 @@ const faqs = [
 
     {
         question: "When will I receive my money?",
-        answer: "As soon as a buyer pays through your Paystack link, the payment settles directly to your linked bank account within 24 hours.",
+        answer: "Paystack pays out on the next working day after a sale, for example, a sale made on Monday settles Tuesday. Saturdays, Sundays, and Nigerian public holidays don't count as working days, so a sale made Friday, Saturday, or Sunday all settle the following Monday (or Tuesday if Monday is a public holiday).",
     },
+
     {
         question: "How much does MoonStore charge?",
         answer: "MoonStore takes a 4% platform fee from each completed sale. There is no subscription, no setup fee, and no monthly charge.",
