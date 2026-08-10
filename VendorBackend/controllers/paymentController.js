@@ -153,7 +153,7 @@ const paystackWebhook = async (req, res) => {
           await Message.create({
             conversationId: conversation._id,
             sender: "system",
-            content: `✅ Thank you for your order! Payment is confirmed. Once you receive ${productLinks}, come back and tap this product link to leave a review, it will be available in 24 hours after payment. Note that this conversation will be deleted in 7 days.`,
+            content: `✅ Thank you for your order! Payment is confirmed. Once you receive ${productLinks}, come back to this chat and tap this product link to leave a review. Note that this conversation will be deleted in 7 days.`,
           });
 
           try {

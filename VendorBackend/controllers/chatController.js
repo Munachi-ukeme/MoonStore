@@ -277,7 +277,11 @@ const getMessagesAsSeller = async (req, res) => {
         const messages = await Message.find({ conversationId })
             .sort({ createdAt: 1 });
 
-        res.json({ conversation, messages });
+        const sellerVisibleMessages = messages.filter(
+            (msg) => !msg.content.includes("come back to this chat and tap this product link to leave a review")
+        );
+
+        res.json({ conversation, messages: sellerVisibleMessages });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
