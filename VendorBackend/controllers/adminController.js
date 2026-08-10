@@ -249,9 +249,16 @@ const markCommissionPaid = async (req, res) => {
         .json({ message: "No pending commission for this seller" });
     }
 
+    const amountPaid = seller.commissionBalance;
+
     seller.totalPaid = seller.totalPaid + seller.commissionBalance;
     seller.commissionBalance = 0;
     await seller.save();
+
+    const { sendCommissionPaidEmail } = require("../utils/mailer");
+    sendCommissionPaidEmail(seller.email, seller.businessName, amountPaid).catch((err) => {
+      console.error("Commission paid email error:", err.message);
+    });
 
     res.json({
       message: `Commission marked as paid for ${seller.businessName}`,

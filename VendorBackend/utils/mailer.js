@@ -132,4 +132,27 @@ const sendSignupConfirmationEmail = async (email, businessName, signupToken) => 
   }
 };
 
-module.exports = { sendSellerNewChatEmail, sendBuyerReplyEmail, sendPasswordResetEmail, sendSubaccountVerifiedEmail, sendSignupConfirmationEmail };
+const sendCommissionPaidEmail = async (sellerEmail, sellerBusinessName, amountPaid) => {
+  try {
+    await resend.emails.send({
+      from: "MoonStore <noreply@moonstore.ng>",
+      to: sellerEmail,
+      subject: "Your MoonStore referral commission has been paid",
+      html: `
+        <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+          <h2 style="color: #6d28d9;">You've been paid! 💰</h2>
+          <p>Hi ${sellerBusinessName}, your referral commission of <strong>₦${amountPaid.toLocaleString()}</strong> has been sent to your bank account.</p>
+          <a href="${process.env.FRONTEND_URL}/dashboard"
+            style="display:inline-block;padding:10px 20px;background:#6d28d9;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;">
+            View Your Dashboard
+          </a>
+          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore — Your store, your rules.</p>
+        </div>
+      `,
+    });
+  } catch (err) {
+    console.error("Commission paid email error:", err.message);
+  }
+};
+
+module.exports = { sendSellerNewChatEmail, sendBuyerReplyEmail, sendPasswordResetEmail, sendSubaccountVerifiedEmail, sendSignupConfirmationEmail, sendCommissionPaidEmail };

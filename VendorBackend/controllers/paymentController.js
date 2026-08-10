@@ -141,6 +141,41 @@ const paystackWebhook = async (req, res) => {
             buyerSessionId: conversation.buyerSessionId,
           });
 
+          // ── Referral commission check ──
+          // If this seller was referred and hasn't triggered commission yet,
+          // check whether their cumulative real sales just crossed ₦500,000
+          try {
+            const Referral = require("../models/Referral");
+            const pendingReferral = await Referral.findOne({
+              referredSellerId: conversation.sellerId,
+              status: "pending",
+            });
+
+            if (pendingReferral) {
+              const salesAggregate = await Transaction.aggregate([
+                { $match: { sellerId: conversation.sellerId, type: "order" } },
+                { $group: { _id: null, total: { $sum: "$amount" } } },
+              ]);
+
+              const cumulativeSales = salesAggregate[0]?.total || 0;
+
+              if (cumulativeSales >= 500000) {
+                const referrer = await Seller.findById(pendingReferral.referrerId);
+                if (referrer) {
+                  referrer.commissionBalance += pendingReferral.commissionAmount;
+                  referrer.totalEarned += pendingReferral.commissionAmount;
+                  await referrer.save();
+                }
+
+                pendingReferral.status = "earned";
+                pendingReferral.paidAt = new Date();
+                await pendingReferral.save();
+              }
+            }
+          } catch (err) {
+            console.error("Referral commission check failed:", err.message);
+          }
+
           const seller = await Seller.findById(conversation.sellerId);
           const products = await Product.find({
             _id: { $in: conversation.productIds },

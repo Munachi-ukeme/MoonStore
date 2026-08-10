@@ -204,14 +204,13 @@ const registerSeller = async (req, res) => {
       }
     }
 
-    if (validReferredBy) {
+   if (validReferredBy) {
       try {
         const referrer = await Seller.findOne({ referralCode: validReferredBy });
         if (referrer) {
-          referrer.commissionBalance += 3000;
-          referrer.totalEarned += 3000;
-          await referrer.save();
-
+          // No commission paid yet — this just records the relationship.
+          // Commission is only paid once the referred seller reaches
+          // ₦500,000 in cumulative real sales (see paystackWebhook).
           await Referral.create({
             referrerId: referrer._id,
             referredSellerId: seller._id,
@@ -221,9 +220,9 @@ const registerSeller = async (req, res) => {
           });
         }
       } catch (err) {
-        console.error("Referral commission error:", err.message);
+        console.error("Referral record error:", err.message);
       }
-    }
+    } 
 
     const token = jwt.sign({ id: seller._id }, process.env.JWT_SECRET, {
       expiresIn: "30d",
@@ -238,6 +237,7 @@ const registerSeller = async (req, res) => {
         email: seller.email,
         slug: seller.slug,
         isActive: seller.isActive,
+        subaccountVerified: seller.subaccountVerified,
         referralCode: seller.referralCode,
         referredBy: seller.referredBy,
         commissionBalance: seller.commissionBalance,
@@ -287,6 +287,7 @@ const loginSeller = async (req, res) => {
         email: seller.email,
         slug: seller.slug,
         isActive: seller.isActive,
+        subaccountVerified: seller.subaccountVerified,
         tagline: seller.tagline,
         whatsappNumber: seller.whatsappNumber,
         phoneNumber: seller.phoneNumber,

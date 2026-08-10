@@ -21,7 +21,7 @@ const referralSchema = new mongoose.Schema(
 
         status: {
             type: String,
-            enum: ["pending", "paid", "cancelled"],
+            enum: ["pending", "earned", "cancelled"],
             default: "pending",
         },
 
