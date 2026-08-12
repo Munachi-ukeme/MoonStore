@@ -56,6 +56,12 @@ const conversationSchema = new mongoose.Schema(
             type: Date,
             default: null,
         },
+
+        paystackReference: {
+            type: String,
+            default: null,
+        },
+        
         lastMessage: {
             type: String,
             default: "",

@@ -5,6 +5,7 @@ const Product = require("../models/Product");
 const { sendSellerNewChatEmail } = require("../utils/mailer");
 const { getIO } = require("../utils/socket");
 const { grossUpPrice } = require("../utils/pricing");
+const { markOrderPaid } = require("../utils/markOrderPaid");
 const MAX_IMAGE_SIZE_BYTES = 300 * 1024; // 300KB limit after Base64
 
 
@@ -243,6 +244,8 @@ const getMessages = async (req, res) => {
             return res.status(403).json({ message: "Access denied" });
         }
 
+         await verifyPaymentIfStuck(conversation);
+
         const messages = await Message.find({ conversationId })
             .sort({ createdAt: 1 }); // oldest first — like any chat app
 
@@ -273,6 +276,8 @@ const getMessagesAsSeller = async (req, res) => {
         if (conversation.sellerId._id.toString() !== req.seller._id.toString()) {
             return res.status(403).json({ message: "Access denied" });
         }
+
+        await verifyPaymentIfStuck(conversation);
 
         const messages = await Message.find({ conversationId })
             .sort({ createdAt: 1 });
@@ -447,7 +452,7 @@ const initializeOrderPayment = async (req, res) => {
         const buyerChargeAmount = grossUpPrice(realPrice);
 
         // MoonStore's cut: 4% of the REAL price only, never the inflated total
-        const platformFeeAmount = Math.round(realPrice * 0.04);
+        const platformFeeAmount = Math.min(Math.round(realPrice * 0.04), 2000);
 
         const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY;
         const PAYSTACK_BASE = "https://api.paystack.co";
@@ -483,6 +488,7 @@ const initializeOrderPayment = async (req, res) => {
         } 
 
         const paymentUrl = data.data.authorization_url;
+        conversation.paystackReference = data.data.reference;
 
         const systemMessage = await Message.create({
             conversationId: conversation._id,
@@ -502,6 +508,34 @@ const initializeOrderPayment = async (req, res) => {
         res.json({ message: "Payment link generated", paymentUrl });
     } catch (err) {
         res.status(500).json({ message: err.message });
+    }
+};
+
+// Checks Paystack directly to confirm whether an "active" conversation
+// with a payment link was actually paid — self-heals if the webhook
+// never fired or failed silently.
+const verifyPaymentIfStuck = async (conversation) => {
+    if (conversation.status === "paid") return;
+    if (!conversation.paystackReference) return;
+
+    try {
+        const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY;
+        const response = await fetch(
+            `https://api.paystack.co/transaction/verify/${conversation.paystackReference}`,
+            { headers: { Authorization: `Bearer ${PAYSTACK_SECRET}` } }
+        );
+        const data = await response.json();
+
+        if (data.status && data.data.status === "success") {
+            await markOrderPaid({
+                conversation,
+                realPrice: data.data.metadata.realPrice,
+                platformFeeAmount: data.data.metadata.platformFeeAmount,
+                reference: data.data.reference,
+            });
+        }
+    } catch (err) {
+        console.error("Payment verify check failed:", err.message);
     }
 };
 
@@ -552,4 +586,5 @@ module.exports = {
     sendMessage,
     getSellerInbox,
     initializeOrderPayment,
+    verifyPaymentIfStuck,
 };

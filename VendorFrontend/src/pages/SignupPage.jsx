@@ -139,13 +139,16 @@ const SignupPage = () => {
         }
     };
 
-    const validateStep1 = () => {
+   const validateStep1 = () => {
         if (!formDetails.businessName.trim()) return "Business name is required";
         if (!formDetails.email.trim()) return "Email is required";
         if (!formDetails.password || formDetails.password.length < 6) return "Password must be at least 6 characters";
         if (!formDetails.whatsappNumber.trim()) return "WhatsApp number is required";
         if (formDetails.whatsappNumber.length !== 13) {
             return "WhatsApp number must be exactly 13 digits";
+        }
+        if (!formDetails.whatsappNumber.startsWith("234")) {
+            return "MoonStore is currently only available to sellers in Nigeria.";
         }
     };
 

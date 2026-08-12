@@ -115,91 +115,17 @@ const paystackWebhook = async (req, res) => {
     if (conversationId) {
       try {
         const Conversation = require("../models/Conversation");
-        const Message = require("../models/Message");
-        const Product = require("../models/Product");
-        const Seller = require("../models/Seller");
-        const { getIO } = require("../utils/socket");
 
         const conversation = await Conversation.findById(conversationId);
 
         if (conversation && conversation.status !== "paid") {
-          conversation.status = "paid";
-          conversation.paidAt = new Date();
-          // conversation.amount stays as the REAL price — never overwrite it
-          // with event.data.amount, which is the grossed-up buyer charge
-          await conversation.save();
-
-          const Transaction = require("../models/Transaction");
-          await Transaction.create({
-            sellerId: conversation.sellerId,
-            type: "order",
-            amount: metadata.realPrice,
-            platformFee: metadata.platformFeeAmount,
+          const { markOrderPaid } = require("../utils/markOrderPaid");
+          await markOrderPaid({
+            conversation,
+            realPrice: metadata.realPrice,
+            platformFeeAmount: metadata.platformFeeAmount,
             reference: event.data.reference,
-            productIds: conversation.productIds,
-            buyerEmail: conversation.buyerEmail,
-            buyerSessionId: conversation.buyerSessionId,
           });
-
-          // ── Referral commission check ──
-          // If this seller was referred and hasn't triggered commission yet,
-          // check whether their cumulative real sales just crossed ₦500,000
-          try {
-            const Referral = require("../models/Referral");
-            const pendingReferral = await Referral.findOne({
-              referredSellerId: conversation.sellerId,
-              status: "pending",
-            });
-
-            if (pendingReferral) {
-              const salesAggregate = await Transaction.aggregate([
-                { $match: { sellerId: conversation.sellerId, type: "order" } },
-                { $group: { _id: null, total: { $sum: "$amount" } } },
-              ]);
-
-              const cumulativeSales = salesAggregate[0]?.total || 0;
-
-              if (cumulativeSales >= 500000) {
-                const referrer = await Seller.findById(pendingReferral.referrerId);
-                if (referrer) {
-                  referrer.commissionBalance += pendingReferral.commissionAmount;
-                  referrer.totalEarned += pendingReferral.commissionAmount;
-                  await referrer.save();
-                }
-
-                pendingReferral.status = "earned";
-                pendingReferral.paidAt = new Date();
-                await pendingReferral.save();
-              }
-            }
-          } catch (err) {
-            console.error("Referral commission check failed:", err.message);
-          }
-
-          const seller = await Seller.findById(conversation.sellerId);
-          const products = await Product.find({
-            _id: { $in: conversation.productIds },
-          });
-
-          const productLinks = products
-            .map((p) => `[product]${seller.slug}/${p.slug}|${p.name}[/product]`)
-            .join(", ");
-
-          await Message.create({
-            conversationId: conversation._id,
-            sender: "system",
-            content: `✅ Thank you for your order! Payment is confirmed. Once you receive ${productLinks}, come back to this chat and tap this product link to leave a review. Note that this conversation will be deleted in 7 days.`,
-          });
-
-          try {
-            getIO()
-              .to(conversationId.toString())
-              .emit("conversation_paid", {
-                conversationId,
-              });
-          } catch (err) {
-            console.error("Socket emit error:", err.message);
-          }
         }
       } catch (err) {
         console.error("Webhook order update failed:", err.message);

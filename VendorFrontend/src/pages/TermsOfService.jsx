@@ -80,10 +80,10 @@ function TermsOfServicePage() {
                     </p>
                     <p className={styles.sectionText}>
                         A platform service fee of 4% is deducted directly from the
-                        seller's share of every completed sale processed through your store. 
-                        Payment processing fees charged by our payment gateway partner, 
-                        Paystack, are added directly to the total price paid by the buyer 
-                        at checkout.
+                        seller's share of every completed sale processed through your store,
+                        capped at a maximum of ₦2,000 per transaction. Payment processing fees 
+                        charged by our payment gateway partner, Paystack, are added directly to 
+                        the total price paid by the buyer at checkout.
                     </p>
                     <p className={styles.sectionText}>
                         All customer payments are processed through Paystack and settled

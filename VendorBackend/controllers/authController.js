@@ -26,8 +26,14 @@ const requestSignupConfirmation = async (req, res) => {
   try {
     const { businessName, email, password, whatsappNumber, referredBy } = req.body;
 
-    if (!businessName || !email || !password || !whatsappNumber) {
+   if (!businessName || !email || !password || !whatsappNumber) {
       return res.status(400).json({ message: "All fields are required" });
+    }
+
+    if (!whatsappNumber.startsWith("234")) {
+      return res.status(400).json({
+        message: "MoonStore is currently only available to sellers in Nigeria.",
+      });
     }
 
     const existingSeller = await Seller.findOne({ email });
@@ -118,6 +124,12 @@ const registerSeller = async (req, res) => {
     if (!hashedPassword) {
       return res.status(400).json({
         message: "Email confirmation is required before completing registration.",
+      });
+    }
+
+    if (!whatsappNumber || !whatsappNumber.startsWith("234")) {
+      return res.status(400).json({
+        message: "MoonStore is currently only available to sellers in Nigeria.",
       });
     }
 

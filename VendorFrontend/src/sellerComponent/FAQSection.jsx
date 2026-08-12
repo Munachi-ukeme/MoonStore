@@ -19,7 +19,7 @@ const faqs = [
 
     {
         question: "How much does MoonStore charge?",
-        answer: "MoonStore takes a 4% platform fee from each completed sale. There is no subscription, no setup fee, and no monthly charge.",
+        answer: "MoonStore takes a 4% platform fee from each completed sale, capped at ₦2,000 per transaction, so on larger sales, you keep more. There is no subscription, no setup fee, and no monthly charge.",
     },
     {
         question: "Is it free to create a store?",
