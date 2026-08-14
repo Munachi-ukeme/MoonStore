@@ -1,3 +1,7 @@
+
+
+
+import { grossUpPrice } from "../src/utils/pricing";
 export default async function handler(req, res) {
   try {
     const { slug, productSlug } = req.query;
@@ -13,7 +17,7 @@ export default async function handler(req, res) {
     const product = data.product || data;
 
     const title = product.name
-  ? `${product.name} — ₦${product.price?.toLocaleString()}`
+  ? `${product.name} — ₦${grossUpPrice(product.price).toLocaleString()}`
   : "MoonStore Product";
     const description = product.description
       ? product.description.slice(0, 150)
