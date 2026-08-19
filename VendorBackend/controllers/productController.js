@@ -2,8 +2,6 @@ const Product = require("../models/Product")
 const Category = require("../models/Category")
 const { cloudinary } = require("../config/cloudinary")
 
-// Helper function - converts product name to slug
-// "Ankara Gown" → "ankara-gown"
 const generateSlug = (name) => {
   return name
     .toLowerCase()
@@ -12,10 +10,6 @@ const generateSlug = (name) => {
     .replace(/\s+/g, "-")
 }
 
-// -----------------------------------
-// GET ALL PRODUCTS
-// GET /api/products (protected - seller only)
-// -----------------------------------
 const getProducts = async (req, res) => {
   try {
     const products = await Product.find({ sellerId: req.seller._id }).populate(
@@ -28,10 +22,6 @@ const getProducts = async (req, res) => {
   }
 }
 
-// -----------------------------------
-// ADD PRODUCT
-// POST /api/products (protected - seller only)
-// -----------------------------------
 const addProduct = async (req, res) => {
   try {
 
@@ -41,15 +31,13 @@ const addProduct = async (req, res) => {
       })
     }
 
-    const { name, price, description, categoryId } = req.body
+    const { name, price, description, categoryId, stockCount } = req.body
 
-    // 1. Check if category exists
     const category = await Category.findById(categoryId)
     if (!category) {
       return res.status(404).json({ message: "Category not found" })
     }
 
-    // 2. Generate slug from product name
     let slug = generateSlug(name)
 
     const RESERVED_SLUGS = ["orders", "chat"]
@@ -57,7 +45,6 @@ const addProduct = async (req, res) => {
       slug = `${slug}-item`
     }
 
-    // 3. Check if slug already exists for this seller
     const existingSlug = await Product.findOne({
       sellerId: req.seller._id,
       slug,
@@ -66,13 +53,11 @@ const addProduct = async (req, res) => {
       slug = `${slug}-${Date.now()}`
     }
 
-    // 4. Map uploaded images (image count limit enforced by checkImageLimit middleware)
     let images = []
     if (req.files && req.files.length > 0) {
       images = req.files.map((file) => file.path)
     }
 
-    // Parse colors and sizes safely
     let colors = []
     let sizes = []
     if (req.body.colors) {
@@ -82,8 +67,7 @@ const addProduct = async (req, res) => {
       sizes = typeof req.body.sizes === "string" ? JSON.parse(req.body.sizes) : req.body.sizes
     }
 
-    // 5. Create product
-    const product = await Product.create({
+    const productData = {
       sellerId: req.seller._id,
       categoryId,
       name,
@@ -93,7 +77,14 @@ const addProduct = async (req, res) => {
       slug,
       colors,
       sizes,
-    })
+    }
+
+    if (stockCount !== undefined && stockCount !== "") {
+      productData.stockCount = Number(stockCount)
+      productData.inStock = Number(stockCount) > 0
+    }
+
+    const product = await Product.create(productData)
 
     res.status(201).json(product)
   } catch (error) {
@@ -101,13 +92,9 @@ const addProduct = async (req, res) => {
   }
 }
 
-// -----------------------------------
-// EDIT PRODUCT
-// PUT /api/products/:id (protected - seller only)
-// -----------------------------------
 const editProduct = async (req, res) => {
   try {
-    const { name, price, description, categoryId, inStock } = req.body
+    const { name, price, description, categoryId, inStock, stockCount } = req.body
 
     const product = await Product.findById(req.params.id)
     if (!product) {
@@ -118,12 +105,24 @@ const editProduct = async (req, res) => {
       return res.status(403).json({ message: "Access denied" })
     }
 
-    // Update fields
     product.name = name || product.name
     product.price = price !== undefined ? price : product.price
     product.description = description !== undefined ? description : product.description
     product.categoryId = categoryId || product.categoryId
-    product.inStock = inStock !== undefined ? inStock : product.inStock
+
+    if (stockCount !== undefined && stockCount !== "") {
+      const newStock = Number(stockCount)
+      product.stockCount = newStock
+      product.inStock = newStock > 0
+
+      // seller restocked above the low threshold — reset the notify flag
+      // so a future dip to low stock sends a fresh email
+      if (newStock > 5) {
+        product.lowStockNotified = false
+      }
+    } else if (inStock !== undefined) {
+      product.inStock = inStock
+    }
 
     if (req.body.colors) {
       product.colors = typeof req.body.colors === "string" ? JSON.parse(req.body.colors) : req.body.colors
@@ -133,9 +132,7 @@ const editProduct = async (req, res) => {
       product.sizes = typeof req.body.sizes === "string" ? JSON.parse(req.body.sizes) : req.body.sizes
     }
 
-    // Handle new images (image limit enforced by checkImageLimit middleware)
     if (req.files && req.files.length > 0) {
-      // Delete old images from Cloudinary
       for (const imageUrl of product.images) {
         const publicId = imageUrl.split("/").pop().split(".")[0]
         await cloudinary.uploader.destroy(`moonstore/${publicId}`).catch((err) => {
@@ -146,7 +143,6 @@ const editProduct = async (req, res) => {
       product.images = req.files.map((file) => file.path)
     }
 
-    // Update slug if name changed
     if (name && name !== product.name) {
       let slug = generateSlug(name)
       const RESERVED_SLUGS = ["orders", "chat"]
@@ -175,10 +171,6 @@ const editProduct = async (req, res) => {
   }
 }
 
-// -----------------------------------
-// DELETE PRODUCT
-// DELETE /api/products/:id (protected - seller only)
-// -----------------------------------
 const deleteProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id)
@@ -190,7 +182,6 @@ const deleteProduct = async (req, res) => {
       return res.status(403).json({ message: "Access denied" })
     }
 
-    // Delete images from Cloudinary
     for (const imageUrl of product.images) {
       const publicId = imageUrl.split("/").pop().split(".")[0]
       await cloudinary.uploader.destroy(`moonstore/${publicId}`).catch((err) => {

@@ -155,4 +155,28 @@ const sendCommissionPaidEmail = async (sellerEmail, sellerBusinessName, amountPa
   }
 };
 
-module.exports = { sendSellerNewChatEmail, sendBuyerReplyEmail, sendPasswordResetEmail, sendSubaccountVerifiedEmail, sendSignupConfirmationEmail, sendCommissionPaidEmail };
+const sendLowStockEmail = async (sellerEmail, sellerBusinessName, productName, stockLeft) => {
+  try {
+    await resend.emails.send({
+      from: "MoonStore <noreply@moonstore.ng>",
+      to: sellerEmail,
+      subject: `Low stock alert: ${productName}`,
+      html: `
+        <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+          <h2 style="color: #6d28d9;">Running low on stock ⚠️</h2>
+          <p>Hi ${sellerBusinessName}, <strong>${productName}</strong> has only <strong>${stockLeft}</strong> left in stock.</p>
+          <p>Restock soon to avoid missing out on sales.</p>
+          <a href="${process.env.FRONTEND_URL}/dashboard/products"
+            style="display:inline-block;padding:10px 20px;background:#6d28d9;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;">
+            Update Stock
+          </a>
+          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore — Your Store. Your Rules.</p>
+        </div>
+      `,
+    });
+  } catch (err) {
+    console.error("Low stock email error:", err.message);
+  }
+};
+
+module.exports = { sendSellerNewChatEmail, sendBuyerReplyEmail, sendPasswordResetEmail, sendSubaccountVerifiedEmail, sendSignupConfirmationEmail, sendCommissionPaidEmail, sendLowStockEmail };

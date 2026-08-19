@@ -1,6 +1,3 @@
-// Shared logic for marking a conversation as paid — used by both the
-// Paystack webhook AND the automatic verify-on-open safety net, so both
-// paths do exactly the same thing and can never drift out of sync.
 const markOrderPaid = async ({ conversation, realPrice, platformFeeAmount, reference }) => {
     const Message = require("../models/Message");
     const Product = require("../models/Product");
@@ -8,12 +5,15 @@ const markOrderPaid = async ({ conversation, realPrice, platformFeeAmount, refer
     const Transaction = require("../models/Transaction");
     const Referral = require("../models/Referral");
     const { getIO } = require("./socket");
+    const { sendLowStockEmail } = require("./mailer");
 
-    if (conversation.status === "paid") return; // already handled, do nothing
+    if (conversation.status === "paid") return;
 
     conversation.status = "paid";
     conversation.paidAt = new Date();
     await conversation.save();
+
+    const seller = await Seller.findById(conversation.sellerId);
 
     await Transaction.create({
         sellerId: conversation.sellerId,
@@ -26,7 +26,32 @@ const markOrderPaid = async ({ conversation, realPrice, platformFeeAmount, refer
         buyerSessionId: conversation.buyerSessionId,
     });
 
-    // ── Referral commission check ──
+    try {
+        for (const [productId, quantityOrdered] of Object.entries(conversation.productQuantities || {})) {
+            const product = await Product.findById(productId);
+
+            if (!product || product.stockCount === undefined || product.stockCount === null) {
+                continue;
+            }
+
+            const newStock = Math.max(product.stockCount - quantityOrdered, 0);
+            product.stockCount = newStock;
+            product.inStock = newStock > 0;
+
+            if (newStock <= 5 && !product.lowStockNotified && seller) {
+                sendLowStockEmail(seller.email, seller.businessName, product.name, newStock)
+                    .catch((err) => console.error("Low stock email error:", err.message));
+                product.lowStockNotified = true;
+            } else if (newStock > 5) {
+                product.lowStockNotified = false;
+            }
+
+            await product.save();
+        }
+    } catch (err) {
+        console.error("Stock decrement failed:", err.message);
+    }
+
     try {
         const pendingReferral = await Referral.findOne({
             referredSellerId: conversation.sellerId,
@@ -58,7 +83,6 @@ const markOrderPaid = async ({ conversation, realPrice, platformFeeAmount, refer
         console.error("Referral commission check failed:", err.message);
     }
 
-    const seller = await Seller.findById(conversation.sellerId);
     const products = await Product.find({ _id: { $in: conversation.productIds } });
 
     const productLinks = products

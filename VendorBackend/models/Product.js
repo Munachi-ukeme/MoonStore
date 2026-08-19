@@ -51,6 +51,18 @@ const productSchema = new mongoose.Schema(
             default: true, 
         },
 
+        stockCount: {
+           type: Number,
+            default: undefined,
+        },
+
+        lowStockNotified: {
+            type: Boolean,
+            default: false,
+        },
+
+        
+
         slug: {
             type: String,
             required: true, // e.g "ankara-gown" -> individual product URL
