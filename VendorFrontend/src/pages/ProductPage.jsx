@@ -370,6 +370,16 @@ const ProductPage = () => {
                     <h1 className={styles.name}>{product.name}</h1>
                     <p className={styles.price}>₦{buyerUnitPrice.toLocaleString()}</p>
 
+                    {/* ─── reviews section ─── */}
+            <div className={styles.reviewsSection}>
+                <div className={styles.reviewsHeader}>
+                    <p className={styles.reviewsTitle}>
+                        {totalReviews > 0
+                            ? `★ ${averageRating.toFixed(1)} · ${totalReviews} review${totalReviews === 1 ? "" : "s"}`
+                            : "No reviews yet"}
+                    </p>
+                </div>
+
                     {product.description ? (
                         <p className={styles.description}>{product.description}</p>
                     ) : null}
@@ -499,15 +509,7 @@ const ProductPage = () => {
                 </div>
             </div>
 
-            {/* ─── reviews section ─── */}
-            <div className={styles.reviewsSection}>
-                <div className={styles.reviewsHeader}>
-                    <p className={styles.reviewsTitle}>
-                        {totalReviews > 0
-                            ? `★ ${averageRating.toFixed(1)} · ${totalReviews} review${totalReviews === 1 ? "" : "s"}`
-                            : "No reviews yet"}
-                    </p>
-                </div>
+            
 
                 {hasNoSavedEmail && !eligible && !reviewSubmitted ? (
                     <div className={styles.reviewEmailCheck}>
