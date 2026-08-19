@@ -362,10 +362,14 @@ const ProductPage = () => {
 
                 <div className={styles.info}>
                     {product.inStock ? (
-                        <span className={styles.inStockBadge}>In Stock</span>
-                    ) : (
-                        <span className={styles.soldOutBadge}>Sold Out</span>
-                    )}
+    <span className={styles.inStockBadge}>In Stock</span>
+) : (
+    <span className={styles.soldOutBadge}>Sold Out</span>
+)}
+
+{product.stockCount !== undefined && product.stockCount !== null && product.inStock && product.stockCount <= 5 ? (
+    <p className={styles.lowStockText}>Only {product.stockCount} left</p>
+) : null}
 
                     <h1 className={styles.name}>{product.name}</h1>
                     <p className={styles.price}>₦{buyerUnitPrice.toLocaleString()}</p>

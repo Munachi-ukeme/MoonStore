@@ -7,6 +7,9 @@ function ProductCard({ product, slug}){
     const navigate = useNavigate();
     const [showOutOfStock, setShowOutOfStock] = useState(false);
 
+    const hasStockTracking = product.stockCount !== undefined && product.stockCount !== null;
+    const showLowStockText = hasStockTracking && product.inStock && product.stockCount <= 5;
+
     const handleClick = () => {
         if (!product.inStock){
             setShowOutOfStock(true);
@@ -19,7 +22,6 @@ function ProductCard({ product, slug}){
     return(
         <>
         <div className={styles.card}>
-            {/* product image */}
             <div className={styles.imageWrapper}>
                 {product.images && product.images[0] ? (
                     <img
@@ -31,7 +33,6 @@ function ProductCard({ product, slug}){
                     <div className={styles.noImage}>No Image</div>
                 )}
 
-                {/* stock badge */}
                 <div className={
                     product.inStock ? styles.inStockBadge : styles.soldOutBadge
                 }>
@@ -39,14 +40,18 @@ function ProductCard({ product, slug}){
                 </div>
             </div>
 
-            {/* product info */}
             <div className={styles.info}>
                 <p className={styles.name}>{product.name}</p>
                 <p className={styles.price}>
                     ₦{grossUpPrice(product.price).toLocaleString()}
                 </p>
 
-                {/* view product button */}
+                {showLowStockText ? (
+                    <p className={styles.lowStockText}>
+                        Only {product.stockCount} left
+                    </p>
+                ) : null}
+
                 <button
                 className={
                     product.inStock ? styles.viewButton : styles.viewButtonDisabled
@@ -58,7 +63,6 @@ function ProductCard({ product, slug}){
             </div>
         </div>
 
-        {/* out of stock toast pop up */}
         {showOutOfStock ? (
             <div className={styles.outOfStockPopup}>
             <p className={styles.outOfStockText}> Out of stock. Check back later</p>

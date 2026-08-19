@@ -20,8 +20,8 @@ const ProductForm = ({ editingProduct, onSaved, onCancel }) => {
     const [error, setError] = useState(null);
     const [originalPrice, setOriginalPrice] = useState("");
     const [displayPrice, setDisplayPrice] = useState(null);
+    const [stockCount, setStockCount] = useState("");
 
-    // load categories for the dropdown
     useEffect(() => {
         const loadCategories = async () => {
             const data = await getCategories();
@@ -32,15 +32,19 @@ const ProductForm = ({ editingProduct, onSaved, onCancel }) => {
         loadCategories();
     }, []);
 
-    // if editing, fill the form with existing product data
     useEffect(() => {
         if (editingProduct) {
             setName(editingProduct.name || "");
             setOriginalPrice(editingProduct.price || "");
             setDescription(editingProduct.description || "");
-          setCategoryId(editingProduct.categoryId?._id || editingProduct.categoryId || "");
+            setCategoryId(editingProduct.categoryId?._id || editingProduct.categoryId || "");
             setColors(editingProduct.colors || []);
             setSizes(editingProduct.sizes || []);
+            setStockCount(
+                editingProduct.stockCount === undefined || editingProduct.stockCount === null
+                    ? ""
+                    : String(editingProduct.stockCount)
+            );
 
             if (editingProduct.price) {
                 setDisplayPrice(grossUpPrice(Number(editingProduct.price)));
@@ -48,7 +52,6 @@ const ProductForm = ({ editingProduct, onSaved, onCancel }) => {
                 setDisplayPrice(null);
             }
         } else {
-            // reset form when adding new product
             setName("");
             setOriginalPrice("");
             setDisplayPrice(null);
@@ -57,61 +60,53 @@ const ProductForm = ({ editingProduct, onSaved, onCancel }) => {
             setImages([]);
             setColors([]);
             setSizes([]);
+            setStockCount("");
         }
     }, [editingProduct]);
 
-    // add a color tag
     const handleAddColor = () => {
         const trimmed = colorInput.trim();
         if (!trimmed || colors.includes(trimmed)) return;
-
         setColors([...colors, trimmed]);
         setColorInput("");
     };
 
-    // remove a color tag
     const handleRemoveColor = (colorToRemove) => {
         setColors(colors.filter((color) => color !== colorToRemove));
     };
 
-    // add a size tag
     const handleAddSize = () => {
         const trimmed = sizeInput.trim();
         if (!trimmed || sizes.includes(trimmed)) return;
-
         setSizes([...sizes, trimmed]);
         setSizeInput("");
     };
 
-    // remove a size tag
     const handleRemoveSize = (sizeToRemove) => {
         setSizes(sizes.filter((size) => size !== sizeToRemove));
     };
 
-    // handle image file selection
     const handleImageChange = (e) => {
         const selectedFiles = Array.from(e.target.files);
         const totalImageCount = images.length + selectedFiles.length;
 
         if (totalImageCount > maxImages) {
             setError(`You can only upload a maximum of ${maxImages} images per product.`);
-            e.target.value = null; // Clear input element safely
+            e.target.value = null;
             return;
         }
         setError(null);
         setImages([...images, ...selectedFiles]);
     };
 
-    // remove a staged file from state before uploading
     const handleRemoveStagedImage = (indexToRemove) => {
         setImages(images.filter((_, index) => index !== indexToRemove));
     };
 
     const handleSave = async (e) => {
-        if (e) e.preventDefault(); // Guard against unintended page refreshes
+        if (e) e.preventDefault();
         setError(null);
 
-        // basic validation
         if (!name) {
             setError("Product name is required.");
             return;
@@ -132,6 +127,11 @@ const ProductForm = ({ editingProduct, onSaved, onCancel }) => {
             return;
         }
 
+        if (stockCount !== "" && (isNaN(stockCount) || Number(stockCount) < 0)) {
+            setError("Stock count must be a valid number (0 or more).");
+            return;
+        }
+
         setLoading(true);
 
         const formData = new FormData();
@@ -142,6 +142,10 @@ const ProductForm = ({ editingProduct, onSaved, onCancel }) => {
         formData.append("colors", JSON.stringify(colors));
         formData.append("sizes", JSON.stringify(sizes));
 
+        if (stockCount !== "") {
+            formData.append("stockCount", stockCount);
+        }
+
         if (images.length > 0) {
             const compressionOptions = {
                 maxSizeMB: 1,
@@ -151,7 +155,6 @@ const ProductForm = ({ editingProduct, onSaved, onCancel }) => {
             };
 
             try {
-                // Loop through each selected image, compress it, and append it
                 for (let i = 0; i < images.length; i++) {
                     const originalImage = images[i];
 
@@ -205,7 +208,6 @@ const ProductForm = ({ editingProduct, onSaved, onCancel }) => {
 
             {error && <p className={styles.error}>{error}</p>}
 
-            {/* product name */}
             <div className={styles.field}>
                 <label className={styles.label}>Product Name</label>
                 <input
@@ -217,7 +219,6 @@ const ProductForm = ({ editingProduct, onSaved, onCancel }) => {
                 />
             </div>
 
-            {/* price */}
             <div className={styles.field}>
                 <label className={styles.label}>Price (₦)</label>
                 <input
@@ -234,7 +235,21 @@ const ProductForm = ({ editingProduct, onSaved, onCancel }) => {
                 ) : null}
             </div>
 
-            {/* description */}
+            <div className={styles.field}>
+                <label className={styles.label}>Stock Count (optional)</label>
+                <input
+                    type="number"
+                    value={stockCount}
+                    className={styles.input}
+                    onChange={(e) => setStockCount(e.target.value)}
+                    placeholder="e.g 20"
+                    min="0"
+                />
+                <p className={styles.hint}>
+                    Leave blank if you don't want to track stock for this product. Once set, we'll show buyers how many are left and email you when stock is low.
+                </p>
+            </div>
+
             <div className={styles.field}>
                 <label className={styles.label}>Description</label>
                 <textarea
@@ -246,7 +261,6 @@ const ProductForm = ({ editingProduct, onSaved, onCancel }) => {
                 />
             </div>
 
-            {/* category dropdown */}
             <div className={styles.field}>
                 <label className={styles.label}>Category</label>
                 <select
@@ -263,7 +277,6 @@ const ProductForm = ({ editingProduct, onSaved, onCancel }) => {
                 </select>
             </div>
 
-            {/* images */}
             <div className={styles.field}>
                 <label className={styles.label}>Images (max {maxImages})</label>
                 <input
@@ -278,7 +291,6 @@ const ProductForm = ({ editingProduct, onSaved, onCancel }) => {
                     Maximum of {maxImages} images per product
                 </p>
 
-                {/* Staged new files display panel */}
                 {images.length > 0 && (
                     <div className={styles.stagedImages}>
                         <p className={styles.stagedTitle}>Staged for upload:</p>
@@ -298,7 +310,6 @@ const ProductForm = ({ editingProduct, onSaved, onCancel }) => {
                 )}
             </div>
 
-            {/* color */}
             <div className={styles.field}>
                 <label className={styles.label}>Colors (optional)</label>
                 <div className={styles.tagInput}>
@@ -342,7 +353,6 @@ const ProductForm = ({ editingProduct, onSaved, onCancel }) => {
                 ) : null}
             </div>
 
-            {/* sizes */}
             <div className={styles.field}>
                 <label className={styles.label}>Sizes (optional)</label>
                 <div className={styles.tagInput}>
@@ -386,7 +396,6 @@ const ProductForm = ({ editingProduct, onSaved, onCancel }) => {
                 ) : null}
             </div>
 
-            {/* buttons */}
             <div className={styles.buttons}>
                 <button type="button" className={styles.cancelButton} onClick={onCancel}>
                     Cancel

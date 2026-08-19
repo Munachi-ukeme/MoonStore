@@ -138,6 +138,12 @@
     margin-top: auto;
 }
 
+.lowStockText {
+    color: #dc2626;
+    font-size: 12px;
+    margin: 2px 0;
+}
+
 /* out of stock toast */
 .outOfStockPopup {
     position: fixed;
