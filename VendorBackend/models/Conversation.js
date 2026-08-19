@@ -27,6 +27,12 @@ const conversationSchema = new mongoose.Schema(
                 ref: "Product",
             }
         ],
+
+        productQuantities: {
+    type: Map,
+    of: Number,
+    default: {},
+},
         status: {
             type: String,
             enum: ["active", "paid"],

@@ -111,11 +111,21 @@ const startConversation = async (req, res) => {
 
         const productIds = products?.map((p) => p._id);
 
+        // build a map of productId -> total quantity ordered for that product
+const productQuantities = {};
+items?.forEach((item) => {
+    const product = productMap[item.productSlug];
+    if (!product) return;
+    const idStr = product._id.toString();
+    productQuantities[idStr] = (productQuantities[idStr] || 0) + item.quantity;
+});
+
         const conversation = await Conversation.create({
             buyerSessionId: sessionId,
             buyerEmail: buyerEmail || "",
             sellerId: seller._id,
             productIds,
+            productQuantities,
             amount: totalAmount,
             buyerName: buyerName || "",
             deliveryAddress: deliveryAddress || "",
