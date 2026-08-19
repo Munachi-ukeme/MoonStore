@@ -116,6 +116,12 @@
     width: fit-content;
 }
 
+.lowStockText {
+    color: #dc2626;
+    font-size: 12px;
+    margin: 2px 0;
+}
+
 .name {
     font-size: 20px;
     font-weight: 700;
