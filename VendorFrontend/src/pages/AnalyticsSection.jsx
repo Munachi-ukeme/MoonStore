@@ -42,6 +42,11 @@ const AnalyticsSection = () => {
          value: `₦${data.totalSales.toLocaleString()}`,
          },
 
+          {
+          label: "Your Earnings",
+          value: `₦${data.sellerEarnings.toLocaleString()}`,
+        },
+
         {
           label: "Pending Settlement",
           value: `₦${data.pendingPayments.toLocaleString()}`,

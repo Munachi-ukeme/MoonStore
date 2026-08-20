@@ -30,6 +30,8 @@ const SignupPage = () => {
         email: "",
         password: "",
         whatsappNumber: "",
+        howHeardAboutUs: "",
+         howHeardAboutUsOther: "",
         accountNumber: "",
         bankCode: "",
         bankName: "",
@@ -59,6 +61,8 @@ const SignupPage = () => {
                 businessName: result.businessName,
                 email: result.email,
                 whatsappNumber: result.whatsappNumber,
+                howHeardAboutUs: result.howHeardAboutUs || "",
+                howHeardAboutUsOther: result.howHeardAboutUsOther || "",
                 referredBy: result.referredBy || "",
             }));
             if (result.referredBy) setRefFromUrl(true);
@@ -150,6 +154,9 @@ const SignupPage = () => {
         if (!formDetails.whatsappNumber.startsWith("234")) {
             return "MoonStore is currently only available to sellers in Nigeria.";
         }
+        if (!formDetails.howHeardAboutUs) return "Please tell us how you heard about MoonStore";
+        if (formDetails.howHeardAboutUs === "Other" && !formDetails.howHeardAboutUsOther.trim()) {
+            return "Please tell us where you heard about MoonStore";
     };
 
     const validateStep2 = () => {
@@ -174,6 +181,8 @@ const SignupPage = () => {
             email: formDetails.email.trim(),
             password: formDetails.password,
             whatsappNumber: formDetails.whatsappNumber.trim(),
+            howHeardAboutUs: formDetails.howHeardAboutUs,
+            howHeardAboutUsOther: formDetails.howHeardAboutUs === "Other" ? formDetails.howHeardAboutUsOther.trim() : "",
             referredBy: formDetails.referredBy.trim() || undefined,
         });
         setLoading(false);
@@ -212,6 +221,8 @@ const SignupPage = () => {
             email: confirmedData.email,
             hashedPassword: confirmedData.hashedPassword,
             whatsappNumber: confirmedData.whatsappNumber,
+            howHeardAboutUs: confirmedData.howHeardAboutUs,
+            howHeardAboutUsOther: confirmedData.howHeardAboutUsOther || "",
             bankDetails: {
                 accountNumber: formDetails.accountNumber,
                 bankCode: formDetails.bankCode,
@@ -307,6 +318,36 @@ const SignupPage = () => {
                         onChange={handleChange}
                     />
                     <p className={styles.hint}>Include country code. No + sign. e.g. 2348012345678</p>
+                </div>
+
+                <div className={styles.field}>
+                    <label className={styles.label}>How did you hear about us?</label>
+                    <select
+                        className={styles.input}
+                        name="howHeardAboutUs"
+                        value={formDetails.howHeardAboutUs}
+                        onChange={handleChange}
+                    >
+                        <option value="">-- Select an option --</option>
+                        <option value="Facebook">Facebook</option>
+                        <option value="Threads">Threads</option>
+                        <option value="Google Search">Google Search</option>
+                        <option value="Referred by a friend">Referred by a friend</option>
+                        <option value="Instagram">Instagram</option>
+                        <option value="Other">Other</option>
+                    </select>
+
+                    {formDetails.howHeardAboutUs === "Other" ? (
+                        <input
+                            className={styles.input}
+                            style={{ marginTop: "8px" }}
+                            type="text"
+                            name="howHeardAboutUsOther"
+                            placeholder="Please tell us where"
+                            value={formDetails.howHeardAboutUsOther}
+                            onChange={handleChange}
+                        />
+                    ) : null}
                 </div>
 
                 {error ? <p className={styles.error}>{error}</p> : null}
@@ -475,5 +516,6 @@ const SignupPage = () => {
         </div>
     );
 };
+}
 
 export default SignupPage;

@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { updateStoreSettings, deleteSellerAccount } from "../api/api";
 import ChangePassword from "../sellerComponent/ChangePassword";
 import styles from "./StoreSettings.module.css";
+import InstallAppButton from "../sellerComponent/InstallAppButton";
 
 const StoreSettings = () => {
   const { seller, logout, updateSeller } = useAuth();
@@ -194,6 +195,17 @@ const StoreSettings = () => {
             <span className={styles.chevron}>›</span>
           </div>
 
+                    <div className={styles.menuItem} onClick={() => setActiveSection("installApp")}>
+            <div className={styles.menuLeft}>
+              <span className={styles.menuIcon}>📱</span>
+              <div>
+                <p className={styles.menuTitle}>Install App</p>
+                <p className={styles.menuSub}>Add MoonStore to your home screen</p>
+              </div>
+            </div>
+            <span className={styles.chevron}>›</span>
+          </div>
+
           <div className={styles.menuItem} onClick={handleWhatsappChannelButton}>
             <div className={styles.menuLeft}>
               <span className={styles.menuIcon}>📢</span>
@@ -296,6 +308,25 @@ const StoreSettings = () => {
           <h2 className={styles.sectionTitle}>Change Password</h2>
         </div>
         <ChangePassword />
+      </div>
+    );
+  }
+
+    // Install App Section
+  if (activeSection === "installApp") {
+    return (
+      <div className={styles.container}>
+        <div className={styles.sectionHeader}>
+          <button className={styles.backBtn} onClick={goBack}>←</button>
+          <h2 className={styles.sectionTitle}>Install App</h2>
+        </div>
+
+        <p className={styles.hint}>
+          Install MoonStore on your phone for quick access to your dashboard,
+          products, and chats — just like a regular app.
+        </p>
+
+        <InstallAppButton />
       </div>
     );
   }

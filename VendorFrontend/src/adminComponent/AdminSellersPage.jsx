@@ -119,6 +119,7 @@ const [endDate, setEndDate] = useState("");
                     <thead>
                         <tr>
                             <th>Business</th>
+                            <th>Heard Via</th>
                             <th>Status</th>
                             <th>Joined</th>
                             <th>Actions</th>
@@ -130,6 +131,12 @@ const [endDate, setEndDate] = useState("");
                                 <td>
                                     <p className={styles.bizName}>{seller.businessName}</p>
                                     <p className={styles.slugText}>/{seller.slug}</p>
+                                </td>
+
+                                                                <td>
+                                    {seller.howHeardAboutUs === "Other" && seller.howHeardAboutUsOther
+                                        ? `Other: ${seller.howHeardAboutUsOther}`
+                                        : seller.howHeardAboutUs || "—"}
                                 </td>
                                 
                                 <td>
