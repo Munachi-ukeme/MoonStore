@@ -207,13 +207,15 @@ const getAllSellers = async (req, res) => {
 
     const sellers = await Seller.find().select("-password");
 
-    const formatted = sellers.map((seller) => ({
+      const formatted = sellers.map((seller) => ({
       businessName: seller.businessName,
       email: seller.email,
       isActive: seller.isActive,
       slug: seller.slug,
       whatsappNumber: seller.whatsappNumber,
       phoneNumber: seller.phoneNumber,
+      howHeardAboutUs: seller.howHeardAboutUs,
+      howHeardAboutUsOther: seller.howHeardAboutUsOther,
       referralCode: seller.referralCode,
       commissionBalance: seller.commissionBalance,
       totalEarned: seller.totalEarned,

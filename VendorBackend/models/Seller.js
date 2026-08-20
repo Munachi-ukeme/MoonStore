@@ -41,9 +41,21 @@ const sellerSchema = new mongoose.Schema(
             default: "",
         },
         
-        whatsappNumber: {
+                whatsappNumber: {
             type: String,
             required: true,
+        },
+
+        howHeardAboutUs: {
+            type: String,
+            enum: ["Facebook", "Threads", "Google Search", "Referred by a friend", "Instagram", "Other"],
+            required: true,
+        },
+
+
+        howHeardAboutUsOther: {
+            type: String,
+            default: "",
         },
 
         address: {

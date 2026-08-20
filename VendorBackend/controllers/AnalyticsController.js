@@ -1,5 +1,6 @@
 const Analytics = require("../models/Analytics");
 const Conversation = require("../models/Conversation");
+const Transaction = require("../models/Transaction");
 const mongoose = require("mongoose");
 
 // POST /api/analytics/store-visit
@@ -147,13 +148,37 @@ const pendingPayments = pendingAggregate[0]?.total || 0;
 
 const totalSales = salesAggregate[0]?.total || 0;
 
+// Seller's real take-home — uses actual recorded platformFee per sale
+// (capped at ₦2,000 each), not a flat 4% guess
+const earningsAggregate = await Transaction.aggregate([
+    {
+        $match: {
+            sellerId: new mongoose.Types.ObjectId(sellerId),
+            type: "order",
+            createdAt: dateFilter,
+        },
+    },
+    {
+        $group: {
+            _id: null,
+            totalAmount: { $sum: "$amount" },
+            totalFee: { $sum: "$platformFee" },
+        },
+    },
+]);
+
+const sellerEarnings = earningsAggregate[0]
+    ? earningsAggregate[0].totalAmount - earningsAggregate[0].totalFee
+    : 0;
+
 
     res.json({
       storeVisits,
       orders,
       productsSold,
       pendingPayments,
-      totalSales
+      totalSales,
+      sellerEarnings
     });
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch analytics" });

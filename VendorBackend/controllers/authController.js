@@ -24,9 +24,9 @@ const generateReferralCode = () => {
 // POST /api/auth/request-signup-confirmation
 const requestSignupConfirmation = async (req, res) => {
   try {
-    const { businessName, email, password, whatsappNumber, referredBy } = req.body;
+        const { businessName, email, password, whatsappNumber, referredBy, howHeardAboutUs, howHeardAboutUsOther } = req.body;
 
-   if (!businessName || !email || !password || !whatsappNumber) {
+   if (!businessName || !email || !password || !whatsappNumber || !howHeardAboutUs) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -51,6 +51,8 @@ const requestSignupConfirmation = async (req, res) => {
         hashedPassword,
         whatsappNumber,
         referredBy: referredBy || null,
+        howHeardAboutUs,
+        howHeardAboutUsOther: howHeardAboutUsOther || "",
       },
       process.env.JWT_SECRET,
       { expiresIn: "10m" }
@@ -97,6 +99,8 @@ const verifySignupToken = async (req, res) => {
       hashedPassword: decoded.hashedPassword,
       whatsappNumber: decoded.whatsappNumber,
       referredBy: decoded.referredBy,
+      howHeardAboutUs: decoded.howHeardAboutUs,
+      howHeardAboutUsOther: decoded.howHeardAboutUsOther,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -118,6 +122,8 @@ const registerSeller = async (req, res) => {
       hashedPassword,
       whatsappNumber,
       referredBy,
+      howHeardAboutUs,
+      howHeardAboutUsOther,
       bankDetails,
     } = req.body;
 
@@ -189,6 +195,8 @@ const registerSeller = async (req, res) => {
       email,
       password: hashedPassword,
       whatsappNumber,
+      howHeardAboutUs,
+      howHeardAboutUsOther: howHeardAboutUsOther || "",
       slug,
       bankDetails: {
         ...bankDetails,
