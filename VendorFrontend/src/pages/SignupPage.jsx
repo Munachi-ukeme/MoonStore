@@ -157,7 +157,8 @@ const SignupPage = () => {
         if (!formDetails.howHeardAboutUs) return "Please tell us how you heard about MoonStore";
         if (formDetails.howHeardAboutUs === "Other" && !formDetails.howHeardAboutUsOther.trim()) {
             return "Please tell us where you heard about MoonStore";
-    };
+    }
+};
 
     const validateStep2 = () => {
         if (!formDetails.bankCode) return "Please select a bank";
@@ -516,6 +517,6 @@ const SignupPage = () => {
         </div>
     );
 };
-}
+
 
 export default SignupPage;

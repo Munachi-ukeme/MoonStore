@@ -323,7 +323,7 @@ const StoreSettings = () => {
 
         <p className={styles.hint}>
           Install MoonStore on your phone for quick access to your dashboard,
-          products, and chats — just like a regular app.
+          products, and chats just like a regular app.
         </p>
 
         <InstallAppButton />
