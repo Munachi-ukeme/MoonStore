@@ -12,7 +12,7 @@ export default defineConfig({
       manifest: {
         name: 'MoonStore Seller Dashboard',
         short_name: 'MoonStore',
-        description: 'Manage your MoonStore — products, orders, and chat with buyers.',
+        description: 'Manage your Store — products, orders, and chat with buyers.',
         theme_color: '#6d28d9',
         background_color: '#ffffff',
         display: 'standalone',
