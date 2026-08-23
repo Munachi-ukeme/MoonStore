@@ -37,6 +37,13 @@ const transactionSchema = new mongoose.Schema(
             type: String,
             default: null,
         },
+
+         conversationId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Conversation",
+            default: null,
+        },
+        
         paidAt: {
             type: Date,
             default: Date.now,

@@ -24,6 +24,7 @@ const markOrderPaid = async ({ conversation, realPrice, platformFeeAmount, refer
         productIds: conversation.productIds,
         buyerEmail: conversation.buyerEmail,
         buyerSessionId: conversation.buyerSessionId,
+        conversationId: conversation._id,
     });
 
     try {
