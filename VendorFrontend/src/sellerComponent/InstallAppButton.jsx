@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getInstallPrompt, clearInstallPrompt } from "../utils/installPrompt";
 import styles from "./InstallAppButton.module.css";
 
 const InstallAppButton = () => {
@@ -7,26 +8,18 @@ const InstallAppButton = () => {
     const [isIOS, setIsIOS] = useState(false);
 
     useEffect(() => {
-        // Detect iPhone/iPad — Safari never fires the install event below
         const userAgent = window.navigator.userAgent.toLowerCase();
         if (userAgent.includes("iphone") || userAgent.includes("ipad")) {
             setIsIOS(true);
         }
 
-        // Detect if already running as an installed app
         if (window.matchMedia("(display-mode: standalone)").matches) {
             setIsInstalled(true);
         }
 
-        // The browser fires this event when it decides the site can be installed.
-        // We catch it and save it, so we can trigger it later on our own button click.
-        const handlePromptReady = (event) => {
-            event.preventDefault();
-            setInstallPrompt(event);
-        };
-
-        window.addEventListener("beforeinstallprompt", handlePromptReady);
-        return () => window.removeEventListener("beforeinstallprompt", handlePromptReady);
+        // Check the shared box — was the event already caught back when
+        // App.jsx first loaded, even before this button ever mounted?
+        setInstallPrompt(getInstallPrompt());
     }, []);
 
     const handleInstallClick = async () => {
@@ -36,6 +29,7 @@ const InstallAppButton = () => {
         if (choice.outcome === "accepted") {
             setIsInstalled(true);
         }
+        clearInstallPrompt();
         setInstallPrompt(null);
     };
 

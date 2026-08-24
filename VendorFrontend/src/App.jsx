@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import { saveInstallPrompt } from "./utils/installPrompt";
 import {BrowserRouter, Routes, Route} from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./ProtectedRoute";
@@ -36,6 +38,16 @@ import AdminExitSurveysPage from "./adminComponent/AdminExitSurveysPage";
 import AdminUnverifiedSellersPage from "./adminComponent/AdminUnverifiedSellersPage";
 
 function App(){
+    useEffect(() => {
+    const handlePromptReady = (event) => {
+      event.preventDefault();
+      saveInstallPrompt(event);
+    };
+
+    window.addEventListener("beforeinstallprompt", handlePromptReady);
+    return () => window.removeEventListener("beforeinstallprompt", handlePromptReady);
+  }, []);
+  
   return (
     <AuthProvider>
     <OfflineBanner />
