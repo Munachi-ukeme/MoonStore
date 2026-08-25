@@ -75,6 +75,24 @@ function AboutUsPage() {
                 </div>
 
                 <div className={styles.section}>
+    <h2 className={styles.sectionTitle}>Meet the Founder</h2>
+    <p className={styles.sectionText}>
+        MoonStore was founded by Ukeme Munachi Favour, a cybersecurity
+        student and certified MERN Stack developer based in Lagos,
+        Nigeria. After watching vendors around him lose sales to slow
+        replies, disappearing DMs, and confusing checkout processes,
+        he built MoonStore from the ground up, alone, to give every
+        African vendor the kind of store bigger businesses take for
+        granted.
+    </p>
+    <p className={styles.sectionText}>
+        MoonStore is more than a product to him, it is the first step
+        in a long-term vision to help Africa build and own its digital
+        commerce infrastructure, one vendor at a time.
+    </p>
+</div>
+
+                <div className={styles.section}>
                     <h2 className={styles.sectionTitle}>Our Promise</h2>
                     <p className={styles.sectionText}>
                         Your store. Your rules. We are committed to
