@@ -179,4 +179,28 @@ const sendLowStockEmail = async (sellerEmail, sellerBusinessName, productName, s
   }
 };
 
-module.exports = { sendSellerNewChatEmail, sendBuyerReplyEmail, sendPasswordResetEmail, sendSubaccountVerifiedEmail, sendSignupConfirmationEmail, sendCommissionPaidEmail, sendLowStockEmail };
+const sendInactivityWarningEmail = async (sellerEmail, sellerBusinessName) => {
+  try {
+    await resend.emails.send({
+      from: "MoonStore <noreply@moonstore.ng>",
+      to: sellerEmail,
+      subject: "Your MoonStore is about to be deactivated",
+      html: `
+        <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+          <h2 style="color: #6d28d9;">Your store has been quiet 👀</h2>
+          <p>Hi ${sellerBusinessName}, your store hasn't made a sale in a while. If nothing changes in the next 3 days, your store will be automatically deactivated.</p>
+          <p>Make a sale, or reach out to support if you need help getting things moving again.</p>
+          <a href="${process.env.FRONTEND_URL}/dashboard"
+            style="display:inline-block;padding:10px 20px;background:#6d28d9;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;">
+            Go to Dashboard
+          </a>
+          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore — Your Store. Your Rules.</p>
+        </div>
+      `,
+    });
+  } catch (err) {
+    console.error("Inactivity warning email error:", err.message);
+  }
+};
+
+module.exports = { sendSellerNewChatEmail, sendBuyerReplyEmail, sendPasswordResetEmail, sendSubaccountVerifiedEmail, sendSignupConfirmationEmail, sendCommissionPaidEmail, sendLowStockEmail, sendInactivityWarningEmail };

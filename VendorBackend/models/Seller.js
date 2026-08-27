@@ -83,6 +83,20 @@ resetPasswordExpires: {
       default: true, 
     },
 
+    deactivatedAt: {
+    type: Date,
+    default: null,
+},
+reactivatedAt: {
+    type: Date,
+    default: null,
+},
+
+inactivityWarningSent: {
+    type: Boolean,
+    default: false,
+},
+
     // Gates Products/Categories creation until admin manually verifies
     // the seller's Paystack subaccount in the admin dashboard
     subaccountVerified: {

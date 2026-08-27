@@ -3,7 +3,8 @@ const Conversation = require("../models/Conversation");
 const Message = require("../models/Message");
 const Product = require("../models/Product");
 const Seller = require("../models/Seller");
-const { sendLowStockEmail } = require("./mailer");
+const Transaction = require("../models/Transaction");
+const { sendLowStockEmail, sendInactivityWarningEmail } = require("./mailer");
 
 const startCronJobs = () => {
 
@@ -78,5 +79,50 @@ const startCronJobs = () => {
 
     console.log("Cron jobs started.");
 };
+
+// ── Job 3: Warn sellers who've been inactive for 27 days ──
+cron.schedule("0 9 * * *", async () => {
+    console.log("Running 27-day inactivity warning check...");
+
+    try {
+        const activeSellers = await Seller.find({
+            isActive: true,
+            inactivityWarningSent: false,
+        });
+
+        for (const seller of activeSellers) {
+            // find this seller's most recent real transaction
+            const lastTransaction = await Transaction.findOne({
+                sellerId: seller._id,
+                type: "order",
+            }).sort({ createdAt: -1 });
+
+            // pick the most recent of: last transaction, reactivation date, or signup date
+            const candidateDates = [
+                lastTransaction ? lastTransaction.createdAt : null,
+                seller.reactivatedAt,
+                seller.createdAt,
+            ].filter(Boolean);
+
+            const referenceDate = new Date(Math.max(...candidateDates.map((d) => new Date(d))));
+
+            const daysSinceActivity = Math.floor(
+                (Date.now() - referenceDate.getTime()) / (1000 * 60 * 60 * 24)
+            );
+
+            if (daysSinceActivity >= 27) {
+                await sendInactivityWarningEmail(seller.email, seller.businessName)
+                    .catch((err) => console.error("Inactivity email error:", err.message));
+
+                seller.inactivityWarningSent = true;
+                await seller.save();
+            }
+        }
+
+        console.log("27-day inactivity warning check complete.");
+    } catch (err) {
+        console.error("Inactivity warning cron failed:", err.message);
+    }
+});
 
 module.exports = { startCronJobs };

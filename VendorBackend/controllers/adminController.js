@@ -41,7 +41,12 @@ const activateStore = async (req, res) => {
 
     const seller = await Seller.findOneAndUpdate(
       { email },
-      { isActive: true },
+      {
+        isActive: true,
+        reactivatedAt: new Date(),
+        deactivatedAt: null,
+        inactivityWarningSent: false,
+      },
       { new: true }
     );
 
