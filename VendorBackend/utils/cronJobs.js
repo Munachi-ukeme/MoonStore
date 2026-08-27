@@ -81,7 +81,7 @@ const startCronJobs = () => {
 };
 
 // ── Job 3: Warn sellers who've been inactive for 27 days ──
-cron.schedule("31 16 * * *", async () => {
+cron.schedule("43 16 * * *", async () => {
     console.log("Running 27-day inactivity warning check...");
 
     try {
