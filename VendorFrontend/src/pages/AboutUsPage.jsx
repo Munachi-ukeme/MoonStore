@@ -77,19 +77,28 @@ function AboutUsPage() {
                 <div className={styles.section}>
     <h2 className={styles.sectionTitle}>Meet the Founder</h2>
     <p className={styles.sectionText}>
-        MoonStore was founded by Ukeme Munachi Favour, a cybersecurity
-        student and certified MERN Stack developer based in Lagos,
-        Nigeria. After watching vendors around him lose sales to slow
-        replies, disappearing DMs, and confusing checkout processes,
-        he built MoonStore from the ground up, alone, to give every
-        African vendor the kind of store bigger businesses take for
-        granted.
+        Munachi Ukeme Favour is a 19-year-old cybersecurity student at
+        MIVA Open University and a certified MERN Stack developer,
+        based in Lagos, Nigeria. He is the sole founder and builder
+        behind MoonStore, MOONSTORE BRANDED STORES TECHNOLOGIES, designing
+        and developing the entire platform from the ground up: the
+        storefronts, the real-time chat, the payments, and everything
+        in between.
     </p>
     <p className={styles.sectionText}>
-        MoonStore is more than a product to him, it is the first step
-        in a long-term vision to help Africa build and own its digital
-        commerce infrastructure, one vendor at a time.
+        His path into tech started with a simple observation, watching
+        vendors around him lose sales every day to slow DM replies and
+        disappearing status updates, even when their products were
+        genuinely good. That gap between good products and broken
+        buying experiences became the problem he decided to solve.
     </p>
+    <p className={styles.sectionText}>
+        MoonStore is Munachi's first company, but not his last. His
+        long-term vision is to help Africa fully embrace digital
+        commerce, starting with vendors, and to keep building tools
+        that solve real problems African businesses face every day.
+    </p>
+   
 </div>
 
                 <div className={styles.section}>
