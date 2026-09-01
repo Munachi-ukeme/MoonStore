@@ -203,4 +203,91 @@ const sendInactivityWarningEmail = async (sellerEmail, sellerBusinessName) => {
   }
 };
 
-module.exports = { sendSellerNewChatEmail, sendBuyerReplyEmail, sendPasswordResetEmail, sendSubaccountVerifiedEmail, sendSignupConfirmationEmail, sendCommissionPaidEmail, sendLowStockEmail, sendInactivityWarningEmail };
+const sendStoreDeactivatedEmail = async (sellerEmail, sellerBusinessName) => {
+  try {
+    await resend.emails.send({
+      from: "MoonStore <noreply@moonstore.ng>",
+      to: sellerEmail,
+      subject: "Your MoonStore has been deactivated",
+      html: `
+        <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+          <h2 style="color: #6d28d9;">Your store has been deactivated</h2>
+          <p>Hi ${sellerBusinessName}, your store has been deactivated due to 30 days of inactivity.</p>
+          <p>If you'd like to reactivate your store, please contact support.</p>
+          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore — Your Store. Your Rules.</p>
+        </div>
+      `,
+    });
+  } catch (err) {
+    console.error("Store deactivated email error:", err.message);
+  }
+};
+
+const sendAdminDeactivationSummaryEmail = async (deactivatedSellers) => {
+  try {
+    const listHtml = deactivatedSellers
+      .map((s) => `<li>${s.businessName} (${s.email})</li>`)
+      .join("");
+
+    await resend.emails.send({
+      from: "MoonStore <noreply@moonstore.ng>",
+      to: process.env.ADMIN_EMAIL,
+      subject: `${deactivatedSellers.length} store(s) auto-deactivated today`,
+      html: `
+        <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+          <h2 style="color: #6d28d9;">Auto-deactivation summary</h2>
+          <p>The following stores were automatically deactivated due to 30 days of inactivity:</p>
+          <ul>${listHtml}</ul>
+          <p>They will be permanently deleted in 7 days if not reactivated.</p>
+        </div>
+      `,
+    });
+  } catch (err) {
+    console.error("Admin deactivation summary email error:", err.message);
+  }
+};
+
+const sendStoreDeletedEmail = async (sellerEmail, sellerBusinessName) => {
+  try {
+    await resend.emails.send({
+      from: "MoonStore <noreply@moonstore.ng>",
+      to: sellerEmail,
+      subject: "Your MoonStore has been permanently deleted",
+      html: `
+        <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+          <h2 style="color: #6d28d9;">Your store has been deleted</h2>
+          <p>Hi ${sellerBusinessName}, your store was permanently deleted after 30 days of inactivity followed by a 7-day grace period with no response.</p>
+          <p>If you believe this was a mistake, please contact support.</p>
+          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore — Your Store. Your Rules.</p>
+        </div>
+      `,
+    });
+  } catch (err) {
+    console.error("Store deleted email error:", err.message);
+  }
+};
+
+const sendAdminDeletionSummaryEmail = async (deletedSellers) => {
+  try {
+    const listHtml = deletedSellers
+      .map((s) => `<li>${s.businessName} (${s.email})</li>`)
+      .join("");
+
+    await resend.emails.send({
+      from: "MoonStore <noreply@moonstore.ng>",
+      to: process.env.ADMIN_EMAIL,
+      subject: `${deletedSellers.length} store(s) permanently deleted today`,
+      html: `
+        <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+          <h2 style="color: #6d28d9;">Auto-deletion summary</h2>
+          <p>The following stores were permanently deleted after 30 days inactive + 7 days grace period:</p>
+          <ul>${listHtml}</ul>
+        </div>
+      `,
+    });
+  } catch (err) {
+    console.error("Admin deletion summary email error:", err.message);
+  }
+};
+
+module.exports = { sendSellerNewChatEmail, sendBuyerReplyEmail, sendPasswordResetEmail, sendSubaccountVerifiedEmail, sendSignupConfirmationEmail, sendCommissionPaidEmail, sendLowStockEmail, sendInactivityWarningEmail, sendStoreDeactivatedEmail, sendAdminDeactivationSummaryEmail, sendAdminDeletionSummaryEmail, sendStoreDeletedEmail };

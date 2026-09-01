@@ -4,7 +4,7 @@ const Message = require("../models/Message");
 const Product = require("../models/Product");
 const Seller = require("../models/Seller");
 const Transaction = require("../models/Transaction");
-const { sendLowStockEmail, sendInactivityWarningEmail } = require("./mailer");
+const { sendLowStockEmail, sendInactivityWarningEmail, sendStoreDeactivatedEmail, sendAdminDeactivationSummaryEmail } = require("./mailer");
 
 const startCronJobs = () => {
 
@@ -122,6 +122,114 @@ cron.schedule("48 17 * * *", async () => {
         console.log("27-day inactivity warning check complete.");
     } catch (err) {
         console.error("Inactivity warning cron failed:", err.message);
+    }
+});
+
+// ── Job 4: Deactivate stores inactive for 30+ days ──
+cron.schedule("0 10 * * *", async () => {
+    console.log("Running 30-day auto-deactivation check...");
+
+    try {
+        const candidateSellers = await Seller.find({
+            isActive: true,
+            inactivityWarningSent: true,
+        });
+
+        const deactivatedThisRun = [];
+
+        for (const seller of candidateSellers) {
+            const lastTransaction = await Transaction.findOne({
+                sellerId: seller._id,
+                type: "order",
+            }).sort({ createdAt: -1 });
+
+            const candidateDates = [
+                lastTransaction ? lastTransaction.createdAt : null,
+                seller.reactivatedAt,
+                seller.createdAt,
+            ].filter(Boolean);
+
+            const referenceDate = new Date(Math.max(...candidateDates.map((d) => new Date(d))));
+
+            const daysSinceActivity = Math.floor(
+                (Date.now() - referenceDate.getTime()) / (1000 * 60 * 60 * 24)
+            );
+
+            if (daysSinceActivity >= 30) {
+                seller.isActive = false;
+                seller.deactivatedAt = new Date();
+                await seller.save();
+
+                await sendStoreDeactivatedEmail(seller.email, seller.businessName)
+                    .catch((err) => console.error("Deactivation email error:", err.message));
+
+                deactivatedThisRun.push(seller);
+            }
+        }
+
+        if (deactivatedThisRun.length > 0) {
+            await sendAdminDeactivationSummaryEmail(deactivatedThisRun)
+                .catch((err) => console.error("Admin summary email error:", err.message));
+        }
+
+        console.log(`30-day auto-deactivation check complete. ${deactivatedThisRun.length} store(s) deactivated.`);
+    } catch (err) {
+        console.error("Auto-deactivation cron failed:", err.message);
+    }
+});
+
+
+// ── Job 5: Permanently delete stores 7+ days after deactivation ──
+cron.schedule("0 11 * * *", async () => {
+    console.log("Running 7-day post-deactivation deletion check...");
+
+    try {
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+        const candidateSellers = await Seller.find({
+            isActive: false,
+            deactivatedAt: { $ne: null, $lte: sevenDaysAgo },
+        });
+
+        const deletedThisRun = [];
+
+        for (const seller of candidateSellers) {
+            try {
+                if (seller.paystackSubaccountCode) {
+                    await deactivateSubaccount(seller.paystackSubaccountCode);
+                }
+
+                const conversations = await Conversation.find({ sellerId: seller._id });
+                const conversationIds = conversations.map((c) => c._id);
+
+                await Message.deleteMany({ conversationId: { $in: conversationIds } });
+                await Conversation.deleteMany({ sellerId: seller._id });
+                await Product.deleteMany({ sellerId: seller._id });
+                await Category.deleteMany({ sellerId: seller._id });
+
+                // capture info for the email before the document is gone
+                const sellerInfo = { businessName: seller.businessName, email: seller.email };
+
+                await seller.deleteOne();
+
+                await sendStoreDeletedEmail(sellerInfo.email, sellerInfo.businessName)
+                    .catch((err) => console.error("Store deleted email error:", err.message));
+
+                deletedThisRun.push(sellerInfo);
+            } catch (err) {
+                console.error(`Failed to delete seller ${seller.email}:`, err.message);
+            }
+        }
+
+        if (deletedThisRun.length > 0) {
+            await sendAdminDeletionSummaryEmail(deletedThisRun)
+                .catch((err) => console.error("Admin deletion summary email error:", err.message));
+        }
+
+        console.log(`Auto-deletion check complete. ${deletedThisRun.length} store(s) deleted.`);
+    } catch (err) {
+        console.error("Auto-deletion cron failed:", err.message);
     }
 });
 
