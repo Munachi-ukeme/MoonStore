@@ -1,6 +1,7 @@
 //This is the app's entry point. It starts the server, connects the database, and will later handle all the routes.
 
 const express = require("express"); 
+const maintenanceMiddleware = require('./middleware/maintenance');
 const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit")
@@ -16,8 +17,11 @@ dotenv.config()
 
 
 const app = express();
+
 const httpServer = http.createServer(app);
 initSocket(httpServer);
+
+app.use(maintenanceMiddleware);
 
 // Security middleware
 // 1. helmet- set secure HTTP headers automatically
