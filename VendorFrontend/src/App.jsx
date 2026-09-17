@@ -37,27 +37,41 @@ import AdminRevenuePage from "./adminComponent/AdminRevenuePage";
 import AdminExitSurveysPage from "./adminComponent/AdminExitSurveysPage";
 import AdminUnverifiedSellersPage from "./adminComponent/AdminUnverifiedSellersPage";
 import { MaintenanceOverlay } from './sellerComponent/MaintenanceOverlay';
+import { checkSystemStatus } from "./api/api"
 
-// Main App Routes Wrapper (Inside Router context)
 const MainRoutes = () => {
-  const location = useLocation();
-  const currentPath = location.pathname;
   const [isMaintenance, setIsMaintenance] = useState(false);
-
-  // Whitelisted paths for maintenance testing
-  const isWhitelistedRoute = 
-    currentPath === '/login' || 
-    currentPath.startsWith('/test-store') ||
-    currentPath.startsWith('/dashboard'); // Allows access to test-store seller dashboard
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // 1. Listen for dynamic maintenance events triggered during active session API calls
     const handleMaintenance = () => setIsMaintenance(true);
     window.addEventListener("maintenance_active", handleMaintenance);
+
+    // 2. Initial status check on component mount before displaying any UI
+    async function verifyStatus() {
+      try {
+        const res = await checkSystemStatus();
+        if (res?.isMaintenance) {
+          setIsMaintenance(true);
+        }
+      } catch (err) {
+        console.error("Failed to fetch system status:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    verifyStatus();
+
     return () => window.removeEventListener("maintenance_active", handleMaintenance);
   }, []);
 
-  // Display overlay if backend signals maintenance and user is not on a whitelisted route
-  if (isMaintenance && !isWhitelistedRoute) {
+  if (loading) {
+    return null; // Or return a clean loading spinner while checking
+  }
+
+  if (isMaintenance) {
     return <MaintenanceOverlay />;
   }
 
