@@ -16,6 +16,25 @@ const fetchWithTimeout = async (url, options = {}, timeout = 20000) => {
   }
 };
 
+// maintenance check
+
+export const customFetch = async (url, options = {}) => {
+  try {
+    const response = await fetch(url, options);
+
+    // If backend returns 503 Service Unavailable (Maintenance Mode)
+    if (response.status === 503) {
+      window.dispatchEvent(new Event('maintenance_active'));
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'System is under maintenance');
+    }
+
+    return response;
+  } catch (err) {
+    throw err;
+  }
+};
+
 // Helper Headers
 const getAuthHeaders = () => {
   try {
