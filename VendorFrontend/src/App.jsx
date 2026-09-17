@@ -43,6 +43,13 @@ const MainRoutes = () => {
   const [isMaintenance, setIsMaintenance] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // Determine if the current route is allowed during maintenance
+  const currentPath = window.location.pathname;
+  const isWhitelistedRoute = 
+    currentPath === "/login" || 
+    currentPath === "/test-store" || 
+    currentPath.startsWith("/test-store/");
+
   useEffect(() => {
     const handleMaintenance = () => {
       setIsMaintenance(true);
@@ -53,13 +60,18 @@ const MainRoutes = () => {
     const verifyStatus = async () => {
       try {
         const res = await checkSystemStatus();
-        if (res.isMaintenance) {
+        if (res && res.isMaintenance) {
           setIsMaintenance(true);
         } else {
           setIsMaintenance(false);
         }
       } catch (err) {
-        setIsMaintenance(false);
+        // If checkSystemStatus fails or returns 503, trigger maintenance
+        if (err?.status === 503 || err?.isMaintenance) {
+          setIsMaintenance(true);
+        } else {
+          setIsMaintenance(false);
+        }
       } finally {
         setLoading(false);
       }
@@ -76,7 +88,8 @@ const MainRoutes = () => {
     return null;
   }
 
-  if (isMaintenance) {
+  // Show Maintenance Overlay on all paths EXCEPT allowed paths (/login & /test-store)
+  if (isMaintenance && !isWhitelistedRoute) {
     return <MaintenanceOverlay />;
   }
 
