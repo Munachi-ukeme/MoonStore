@@ -1,11 +1,39 @@
 export const BASE_URL = (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
 
+// Helper Headers
+const getAuthHeaders = () => {
+  const token = localStorage.getItem("token");
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
+const getAdminHeaders = () => {
+  const adminToken = localStorage.getItem("moonstore_admin_token");
+  return adminToken ? { "admin-key": adminToken } : {};
+};
+
+// Core Fetch Wrapper handling Timeouts & Global 503 Maintenance Mode
 const fetchWithTimeout = async (url, options = {}, timeout = 20000) => {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
+
+  // Automatically attach default JSON Content-Type unless body is FormData
+  const isFormData = options.body instanceof FormData;
+  const headers = {
+    ...(!isFormData && { "Content-Type": "application/json" }),
+    ...options.headers,
+  };
+
   try {
-    const res = await fetch(url, { ...options, signal: controller.signal });
+    const res = await fetch(url, { ...options, headers, signal: controller.signal });
     clearTimeout(timer);
+
+    // Global 503 Maintenance Interceptor
+    if (res.status === 503) {
+      window.dispatchEvent(new Event("maintenance_active"));
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.message || "System is currently under maintenance.");
+    }
+
     return res;
   } catch (err) {
     clearTimeout(timer);
@@ -16,56 +44,11 @@ const fetchWithTimeout = async (url, options = {}, timeout = 20000) => {
   }
 };
 
-// maintenance check
-
-export const customFetch = async (url, options = {}) => {
-  try {
-    const response = await fetch(url, options);
-
-    // If backend returns 503 Service Unavailable (Maintenance Mode)
-    if (response.status === 503) {
-      window.dispatchEvent(new Event('maintenance_active'));
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || 'System is under maintenance');
-    }
-
-    return response;
-  } catch (err) {
-    throw err;
-  }
-};
-
-// Helper Headers
-const getAuthHeaders = () => {
-  try {
-    const token = localStorage.getItem("token");
-    return {
-      "Content-Type": "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
-    };
-  } catch (error) {
-    return { "Content-Type": "application/json" };
-  }
-};
-
-const getAdminHeaders = () => {
-  try {
-    const adminToken = localStorage.getItem("moonstore_admin_token");
-    return {
-      "Content-Type": "application/json",
-      ...(adminToken && { "admin-key": adminToken }),
-    };
-  } catch (error) {
-    return { "Content-Type": "application/json" };
-  }
-};
-
 // ================= AUTH =================
 export const registerSeller = async (data) => {
   try {
     const res = await fetchWithTimeout(`${BASE_URL}/auth/register`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
     const json = await res.json();
@@ -80,7 +63,6 @@ export const loginSeller = async (email, password) => {
   try {
     const res = await fetchWithTimeout(`${BASE_URL}/auth/login`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     });
     const json = await res.json();
@@ -91,11 +73,35 @@ export const loginSeller = async (email, password) => {
   }
 };
 
+export const requestSignupConfirmation = async (payload) => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/auth/request-signup-confirmation`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Could not send confirmation email." };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Could not send confirmation email." };
+  }
+};
+
+export const verifySignupToken = async (token) => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/auth/verify-signup-token?token=${encodeURIComponent(token)}`);
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "This link is invalid or has expired." };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Could not verify this link." };
+  }
+};
+
 export const forgotPassword = async (email) => {
   try {
     const res = await fetchWithTimeout(`${BASE_URL}/auth/forgot-password`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
     });
     const json = await res.json();
@@ -110,7 +116,6 @@ export const resetPassword = async (token, newPassword) => {
   try {
     const res = await fetchWithTimeout(`${BASE_URL}/auth/reset-password`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token, newPassword }),
     });
     const json = await res.json();
@@ -118,6 +123,19 @@ export const resetPassword = async (token, newPassword) => {
     return json;
   } catch (err) {
     return { error: err.message || "Could not reset password. Please try again." };
+  }
+};
+
+export const getCurrentSeller = async () => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/seller/me`, {
+      headers: getAuthHeaders(),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Could not load seller data." };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Could not load seller data." };
   }
 };
 
@@ -137,7 +155,6 @@ export const verifyAccount = async (accountNumber, bankCode) => {
   try {
     const res = await fetchWithTimeout(`${BASE_URL}/payments/verify-account`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ accountNumber, bankCode }),
     });
     const json = await res.json();
@@ -204,7 +221,6 @@ export const saveBuyerEmail = async (email, sessionId, sellerId) => {
   try {
     const res = await fetchWithTimeout(`${BASE_URL}/buyer/save-email`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, sessionId, sellerId }),
     });
     const json = await res.json();
@@ -219,7 +235,6 @@ export const buyerLogin = async (email) => {
   try {
     const res = await fetchWithTimeout(`${BASE_URL}/buyer/login`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email }),
     });
     const json = await res.json();
@@ -244,9 +259,7 @@ export const getBuyerConversations = async (sessionIds) => {
 
 export const getSellerConversations = async (slug, sessionId) => {
   try {
-    const res = await fetchWithTimeout(
-      `${BASE_URL}/buyer/conversations/seller/${slug}?sessionId=${sessionId}`
-    );
+    const res = await fetchWithTimeout(`${BASE_URL}/buyer/conversations/seller/${slug}?sessionId=${sessionId}`);
     const json = await res.json();
     if (!res.ok) return { error: json.error || json.message || "Could not load orders" };
     return json;
@@ -256,30 +269,11 @@ export const getSellerConversations = async (slug, sessionId) => {
 };
 
 // ================= CHAT =================
-export const startConversation = async (
-  slug,
-  sessionId,
-  items,
-  buyerName,
-  buyerEmail,
-  deliveryAddress,
-  deliveryCity,
-  deliveryPhone
-) => {
+export const startConversation = async (slug, sessionId, items, buyerName, buyerEmail, deliveryAddress, deliveryCity, deliveryPhone) => {
   try {
     const res = await fetchWithTimeout(`${BASE_URL}/chat/start`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        slug,
-        sessionId,
-        items,
-        buyerName,
-        buyerEmail,
-        deliveryAddress,
-        deliveryCity,
-        deliveryPhone,
-      }),
+      body: JSON.stringify({ slug, sessionId, items, buyerName, buyerEmail, deliveryAddress, deliveryCity, deliveryPhone }),
     });
     const json = await res.json();
     if (!res.ok) return { error: json.message || "Failed to start conversation" };
@@ -293,12 +287,8 @@ export const sendBuyerMessage = async (conversationId, sessionId, content) => {
   try {
     const res = await fetchWithTimeout(`${BASE_URL}/chat/${conversationId}/message`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "x-session-id": sessionId },
-      body: JSON.stringify({
-        content,
-        sender: "buyer",
-        sessionId,
-      }),
+      headers: { "x-session-id": sessionId },
+      body: JSON.stringify({ content, sender: "buyer", sessionId }),
     });
     const json = await res.json();
     if (!res.ok) return { error: json.message || "Failed to send message" };
@@ -325,12 +315,7 @@ export const sendImageMessage = async (conversationId, sessionId, base64Content,
   try {
     const res = await fetchWithTimeout(`${BASE_URL}/chat/${conversationId}/message`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        content: base64Content,
-        sender,
-        sessionId,
-      }),
+      body: JSON.stringify({ content: base64Content, sender, sessionId }),
     });
     if (res.status === 413) return { status: 413, error: "Image size too large" };
     const json = await res.json();
@@ -345,7 +330,7 @@ export const reportConversation = async (conversationId, sessionId, reason, buye
   try {
     const res = await fetchWithTimeout(`${BASE_URL}/chat/${conversationId}/report`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "x-session-id": sessionId },
+      headers: { "x-session-id": sessionId },
       body: JSON.stringify({ reason, buyerPhone }),
     });
     const json = await res.json();
@@ -387,10 +372,7 @@ export const sendSellerMessage = async (conversationId, content) => {
     const res = await fetchWithTimeout(`${BASE_URL}/chat/${conversationId}/message`, {
       method: "POST",
       headers: getAuthHeaders(),
-      body: JSON.stringify({
-        content,
-        sender: "seller",
-      }),
+      body: JSON.stringify({ content, sender: "seller" }),
     });
     const json = await res.json();
     if (!res.ok) return { error: json.message || "Failed to send message" };
@@ -400,7 +382,7 @@ export const sendSellerMessage = async (conversationId, content) => {
   }
 };
 
-// ================= PRODUCTS (Protected) =================
+// ================= PRODUCTS (Protected & Multipart) =================
 export const getProducts = async () => {
   try {
     const res = await fetchWithTimeout(`${BASE_URL}/products`, {
@@ -416,13 +398,10 @@ export const getProducts = async () => {
 
 export const createProduct = async (formData) => {
   try {
-    const token = localStorage.getItem("token");
     const res = await fetchWithTimeout(`${BASE_URL}/products`, {
       method: "POST",
-      headers: {
-        ...(token && { Authorization: `Bearer ${token}` }),
-      },
-      body: formData,
+      headers: getAuthHeaders(),
+      body: formData, // FormData handles boundary content type automatically
     });
     const json = await res.json();
     if (!res.ok) return { error: json.message || "Failed to create product." };
@@ -434,12 +413,9 @@ export const createProduct = async (formData) => {
 
 export const updateProduct = async (id, formData) => {
   try {
-    const token = localStorage.getItem("token");
     const res = await fetchWithTimeout(`${BASE_URL}/products/${id}`, {
       method: "PUT",
-      headers: {
-        ...(token && { Authorization: `Bearer ${token}` }),
-      },
+      headers: getAuthHeaders(),
       body: formData,
     });
     const json = await res.json();
@@ -525,12 +501,9 @@ export const deleteCategory = async (id) => {
 // ================= STORE & SELLER ACCOUNT =================
 export const updateStoreSettings = async (formData) => {
   try {
-    const token = localStorage.getItem("token");
     const res = await fetchWithTimeout(`${BASE_URL}/store/settings`, {
       method: "PUT",
-      headers: {
-        ...(token && { Authorization: `Bearer ${token}` }),
-      },
+      headers: getAuthHeaders(),
       body: formData,
     });
     const json = await res.json();
@@ -576,7 +549,6 @@ export const trackStoreVisit = async ({ sellerId, sessionId, referrer }) => {
   try {
     const res = await fetchWithTimeout(`${BASE_URL}/analytics/store-visit`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ sellerId, sessionId, referrer }),
     });
     return await res.json();
@@ -589,7 +561,6 @@ export const trackProductClick = async ({ sellerId, productId, sessionId }) => {
   try {
     const res = await fetchWithTimeout(`${BASE_URL}/analytics/product-click`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ sellerId, productId, sessionId }),
     });
     return await res.json();
@@ -629,7 +600,6 @@ export const submitReview = async (sellerId, productId, buyerEmail, rating, text
   try {
     const res = await fetchWithTimeout(`${BASE_URL}/reviews`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ sellerId, productId, buyerEmail, rating, text }),
     });
     const json = await res.json();
@@ -656,7 +626,6 @@ export const adminLogin = async (passkey) => {
   try {
     const res = await fetchWithTimeout(`${BASE_URL}/admin/login`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ passkey }),
     });
     const json = await res.json();
@@ -772,8 +741,8 @@ export const adminLogout = async () => {
       method: "POST",
       headers: getAdminHeaders(),
     });
-  } catch (err) {
-    // Fail silently on logout request
+  } catch {
+    // Fail silently on logout
   }
 };
 
@@ -797,7 +766,6 @@ export const getRevenueSummaryAdmin = async (startDate, endDate) => {
 export const getExitSurveys = async () => {
   try {
     const res = await fetchWithTimeout(`${BASE_URL}/admin/exit-surveys`, {
-      method: "GET",
       headers: getAdminHeaders(),
     });
     const json = await res.json();
@@ -833,46 +801,5 @@ export const verifySubaccountAdmin = async (email) => {
     return json;
   } catch (err) {
     return { error: err.message || "Could not verify subaccount. Please try again." };
-  }
-};
-
-
-export const requestSignupConfirmation = async (payload) => {
-  try {
-    const res = await fetchWithTimeout(`${BASE_URL}/auth/request-signup-confirmation`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    const json = await res.json();
-    if (!res.ok) return { error: json.message || "Could not send confirmation email." };
-    return json;
-  } catch (err) {
-    return { error: err.message || "Could not send confirmation email." };
-  }
-};
-
-export const verifySignupToken = async (token) => {
-  try {
-    const res = await fetchWithTimeout(`${BASE_URL}/auth/verify-signup-token?token=${encodeURIComponent(token)}`);
-    const json = await res.json();
-    if (!res.ok) return { error: json.message || "This link is invalid or has expired." };
-    return json;
-  } catch (err) {
-    return { error: err.message || "Could not verify this link." };
-  }
-};
-
-
-export const getCurrentSeller = async () => {
-  try {
-    const res = await fetchWithTimeout(`${BASE_URL}/seller/me`, {
-      headers: getAuthHeaders(),
-    });
-    const json = await res.json();
-    if (!res.ok) return { error: json.message || "Could not load seller data." };
-    return json;
-  } catch (err) {
-    return { error: err.message || "Could not load seller data." };
   }
 };
