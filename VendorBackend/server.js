@@ -1,73 +1,66 @@
-//This is the app's entry point. It starts the server, connects the database, and will later handle all the routes.
+// This is the app's entry point. It starts the server, connects the database, and handles all routes.
 
 const express = require("express"); 
-const maintenanceMiddleware = require('./middleware/maintenance');
 const cors = require("cors");
 const helmet = require("helmet");
-const rateLimit = require("express-rate-limit")
+const rateLimit = require("express-rate-limit");
 const dotenv = require("dotenv");
 const connectDB = require("./config/db");
 const { startCronJobs } = require("./utils/cronJobs");
 const http = require("http");
 const { initSocket } = require("./utils/socket");
+const maintenanceMiddleware = require('./middleware/maintenance');
 
-//load environment variables
-dotenv.config()
-
-
+// Load environment variables
+dotenv.config();
 
 const app = express();
 
 const httpServer = http.createServer(app);
 initSocket(httpServer);
 
-app.use(maintenanceMiddleware);
-
-// Security middleware
-// 1. helmet- set secure HTTP headers automatically
-// protects against common attacks like clickjacking, XSS, sniffing
+// 1. Helmet Security Headers
 app.use(helmet());
 
-// 2. CORS - only allow requests from moonstore frontend URL
-// blocks any other domain from calling moonstore backend
-
+// 2. CORS MUST COME BEFORE MAINTENANCE MIDDLEWARE
+// Allows maintenance 503 responses to pass browser CORS checks safely
 app.use(cors({
   origin: [process.env.FRONTEND_URL, 'https://www.moonstore.ng'],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization","x-session-id", "admin-key",],
+  allowedHeaders: ["Content-Type", "Authorization", "x-session-id", "admin-key"],
 }));
 
 app.set('trust proxy', 1);
 
-// 3. General rate limiter - applies to all routes
-// limits each IP to 100 requests per 15 minutes
+// 3. MAINTENANCE MIDDLEWARE (Placed right after CORS & Helmet)
+app.use(maintenanceMiddleware);
+
+// 4. Rate Limiter
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100,
-  message:{
+  message: {
     error: "Too many requests. Please try again later."
   },
   standardHeaders: true,
   legacyHeaders: false,
 });
 
-// apply general limiter to all routes
 app.use(generalLimiter);
 
-
+// 5. Body Parsers
 app.use(express.json({
-    verify: (req, res, buf) => {
-        // If the incoming request is going to our webhook path, save the raw text string!
-        if (req.originalUrl.includes('/webhook')) {
-            req.rawBody = buf.toString();
-        }
+  verify: (req, res, buf) => {
+    if (req.originalUrl.includes('/webhook')) {
+      req.rawBody = buf.toString();
     }
+  }
 }));
 
-app.use(express.urlencoded({ extended: true })); // allows app to read JSON from requests
+app.use(express.urlencoded({ extended: true }));
 
-//Routes
+// Routes
 const authRoutes = require("./routes/auth");
 const categoryRoutes = require("./routes/categories");
 const productRoutes = require("./routes/products");
@@ -78,9 +71,8 @@ const paymentRoutes = require("./routes/payments");
 const buyerRoutes = require("./routes/buyer");
 const chatRoutes = require("./routes/chat");
 const analyticsRoutes = require("./routes/analyticsRoutes");
-const reviewRoutes = require("./routes/reviews")
+const reviewRoutes = require("./routes/reviews");
 const sitemapRoute = require("./routes/sitemaproute");
-
 
 app.use("/api/auth", authRoutes);
 app.use("/api/categories", categoryRoutes);
@@ -95,36 +87,28 @@ app.use("/api/analytics", analyticsRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/", sitemapRoute);
 
-
-
-
-// test route
+// Test route
 app.get("/", (req, res) => {
   res.send("MoonStore Backend is running 🚀");
 });
 
-// Create an async engine to handle startup order
+// Startup Engine
 const startServer = async () => {
   try {
-    // 1. Wait for database connection first
     await connectDB();
     console.log("Database connected successfully! 📁");
 
-    // 2. Start listening on network port
     const PORT = process.env.PORT || 4000;
     httpServer.listen(PORT, () => {
       console.log(`Server running on port ${PORT} 🚀`);
-
-      // 3. Start cron jobs now that everything else is ready
       startCronJobs();
       console.log("Cron jobs successfully initialized ⏰");
     });
 
   } catch (error) {
     console.error("Critical boot error:", error.message);
-    process.exit(1); // Safely shut down if database connection fails
+    process.exit(1);
   }
 };
 
-// Execute the function
 startServer();
