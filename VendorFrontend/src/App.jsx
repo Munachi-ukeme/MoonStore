@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
-import { saveInstallPrompt } from "./utils/installPrompt";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./ProtectedRoute";
 import LoginPage from "./pages/LoginPage";
@@ -36,39 +35,45 @@ import AdminReportsPage from "./adminComponent/AdminReportsPage";
 import AdminRevenuePage from "./adminComponent/AdminRevenuePage";
 import AdminExitSurveysPage from "./adminComponent/AdminExitSurveysPage";
 import AdminUnverifiedSellersPage from "./adminComponent/AdminUnverifiedSellersPage";
-import { MaintenanceOverlay } from './sellerComponent/MaintenanceOverlay';
-import { checkSystemStatus } from "./api/api"
+import { MaintenanceOverlay } from "./sellerComponent/MaintenanceOverlay";
+import { checkSystemStatus } from "./api/api";
+import { saveInstallPrompt } from "./utils/installPrompt";
 
 const MainRoutes = () => {
   const [isMaintenance, setIsMaintenance] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 1. Listen for dynamic maintenance events triggered during active session API calls
-    const handleMaintenance = () => setIsMaintenance(true);
+    const handleMaintenance = () => {
+      setIsMaintenance(true);
+    };
+
     window.addEventListener("maintenance_active", handleMaintenance);
 
-    // 2. Initial status check on component mount before displaying any UI
-    async function verifyStatus() {
+    const verifyStatus = async () => {
       try {
         const res = await checkSystemStatus();
-        if (res?.isMaintenance) {
+        if (res.isMaintenance) {
           setIsMaintenance(true);
+        } else {
+          setIsMaintenance(false);
         }
       } catch (err) {
-        console.error("Failed to fetch system status:", err);
+        setIsMaintenance(false);
       } finally {
         setLoading(false);
       }
-    }
+    };
 
     verifyStatus();
 
-    return () => window.removeEventListener("maintenance_active", handleMaintenance);
+    return () => {
+      window.removeEventListener("maintenance_active", handleMaintenance);
+    };
   }, []);
 
   if (loading) {
-    return null; // Or return a clean loading spinner while checking
+    return null;
   }
 
   if (isMaintenance) {
@@ -215,7 +220,7 @@ const MainRoutes = () => {
   );
 };
 
-function App() {
+const App = () => {
   useEffect(() => {
     const handlePromptReady = (event) => {
       event.preventDefault();
@@ -223,7 +228,9 @@ function App() {
     };
 
     window.addEventListener("beforeinstallprompt", handlePromptReady);
-    return () => window.removeEventListener("beforeinstallprompt", handlePromptReady);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handlePromptReady);
+    };
   }, []);
 
   return (
@@ -234,6 +241,6 @@ function App() {
       </BrowserRouter>
     </AuthProvider>
   );
-}
+};
 
 export default App;
