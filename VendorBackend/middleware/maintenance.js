@@ -12,29 +12,42 @@ const maintenanceMiddleware = (req, res, next) => {
     return next();
   }
 
+  // Get the normalized path (e.g., '/api/store/right-hairs' or '/store/right-hairs')
   const currentUrl = req.originalUrl || req.path;
 
-  // Static assets bypass
+  // Static assets bypass (JS, CSS, images, etc.)
   const isStaticAsset = /\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|map)$/i.test(currentUrl);
   if (isStaticAsset) {
     return next();
   }
 
-  // Whitelisted paths
-  const exactWhitelistedPaths = ['/login', '/api/auth/login'];
-  const prefixWhitelistedPaths = ['/test-store', '/api/test-store'];
+  // Exact whitelisted endpoints (login routes)
+  const exactWhitelistedPaths = [
+    '/login',
+    '/auth/login',
+    '/api/auth/login'
+  ];
+
+  // Specific prefix whitelisted endpoints (only for test-store)
+  const prefixWhitelistedPaths = [
+    '/test-store',
+    '/api/test-store',
+    '/store/test-store',      // Matches fetchWithTimeout(`${BASE_URL}/store/test-store`)
+    '/api/store/test-store'
+  ];
 
   const isExactMatch = exactWhitelistedPaths.includes(currentUrl);
   const isPrefixMatch = prefixWhitelistedPaths.some((prefix) => currentUrl.startsWith(prefix));
 
+  // If path is allowed (like login or test-store), let it pass
   if (isExactMatch || isPrefixMatch) {
     return next();
   }
 
-  // Set No-Cache headers
+  // Set No-Cache headers so browsers don't cache maintenance responses
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
 
-  // Return JSON for all API calls
+  // Block ALL other API calls (including /store/right-hairs or root API endpoints) with 503
   return res.status(503).json({
     success: false,
     message: 'The system is under maintenance. Please try again later.',
