@@ -139,6 +139,13 @@ export const getCurrentSeller = async () => {
   }
 };
 
+
+export const checkSystemStatus = async () => {
+  // Pings any public endpoint that triggers your maintenance middleware
+  const res = await fetchWithTimeout(`${BASE_URL}/store/test-store`);
+  return res;
+};
+
 // ================= PAYMENTS =================
 export const getBanks = async () => {
   try {
