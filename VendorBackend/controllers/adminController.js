@@ -238,80 +238,6 @@ const getAllSellers = async (req, res) => {
   }
 };
 
-// Mark referral commission as paid
-const markCommissionPaid = async (req, res) => {
-  try {
-    if (!verifyAdmin(req, res)) return;
-
-    const { email } = req.body;
-
-    const seller = await Seller.findOne({ email });
-    if (!seller) {
-      return res.status(404).json({ message: "Seller not found" });
-    }
-
-    if (seller.commissionBalance === 0) {
-      return res
-        .status(400)
-        .json({ message: "No pending commission for this seller" });
-    }
-
-    const amountPaid = seller.commissionBalance;
-
-    seller.totalPaid = seller.totalPaid + seller.commissionBalance;
-    seller.commissionBalance = 0;
-    await seller.save();
-
-    const { sendCommissionPaidEmail } = require("../utils/mailer");
-    sendCommissionPaidEmail(seller.email, seller.businessName, amountPaid).catch((err) => {
-      console.error("Commission paid email error:", err.message);
-    });
-
-    res.json({
-      message: `Commission marked as paid for ${seller.businessName}`,
-      totalPaid: seller.totalPaid,
-      pendingBalance: seller.commissionBalance,
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// Get all referral relationships
-const getAllReferrals = async (req, res) => {
-  try {
-    if (!verifyAdmin(req, res)) return;
-
-    const referredSellers = await Seller.find({
-      referredBy: { $ne: null },
-    }).select("-password");
-
-    const referrals = await Promise.all(
-      referredSellers.map(async (referred) => {
-        const referrer = await Seller.findOne({
-          referralCode: referred.referredBy,
-        }).select("businessName email commissionBalance totalEarned totalPaid");
-
-        return {
-          referrer: referrer ? referrer.businessName : "Unknown",
-          referrerEmail: referrer ? referrer.email : "Unknown",
-          referrerCommissionBalance: referrer ? referrer.commissionBalance : 0,
-          referredSeller: referred.businessName,
-          referredEmail: referred.email,
-          referralCode: referred.referredBy,
-          joinedDate: referred.createdAt,
-        };
-      })
-    );
-
-    res.json({
-      total: referrals.length,
-      referrals,
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
 
 const adminLogin = async (req, res) => {
   const { passkey } = req.body;
@@ -486,8 +412,6 @@ module.exports = {
   verifyAdmin,
   deleteSeller,
   getAllSellers,
-  markCommissionPaid,
-  getAllReferrals,
   exportConversationPdf,
   getRevenueSummary,
   getExitSurveys,

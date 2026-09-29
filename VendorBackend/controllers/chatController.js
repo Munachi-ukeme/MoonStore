@@ -1,11 +1,21 @@
+//models
 const Conversation = require("../models/Conversation");
 const Message = require("../models/Message");
 const Seller = require("../models/Seller");
 const Product = require("../models/Product");
+const Buyer = require("../models/Buyer");
+
+//Utils
 const { sendSellerNewChatEmail } = require("../utils/mailer");
 const { getIO } = require("../utils/socket");
-const { grossUpPrice } = require("../utils/pricing");
+const { findOrCreatePartyByEmail, createTransaction, activateTransaction, createCheckoutSession } = require("../utils/escrowpay");
+const { setupEscrowPaymentForConversation, buildPaymentMessage } = require("../utils/setupEscrowPayment");
+const { onboardParty } = require("../utils/escrowpay");
+const { calculateCommissionBps } = require("../utils/feeCalculator");
 const { markOrderPaid } = require("../utils/markOrderPaid");
+const { escrowpayRequest } = require("../utils/escrowpay"); 
+
+
 const MAX_IMAGE_SIZE_BYTES = 300 * 1024; // 300KB limit after Base64
 
 
@@ -120,7 +130,7 @@ items?.forEach((item) => {
     productQuantities[idStr] = (productQuantities[idStr] || 0) + item.quantity;
 });
 
-        const conversation = await Conversation.create({
+          const conversation = await Conversation.create({
             buyerSessionId: sessionId,
             buyerEmail: buyerEmail || "",
             sellerId: seller._id,
@@ -135,62 +145,25 @@ items?.forEach((item) => {
             lastMessage: "New order request",
         });
 
-        // build opening system message
-        let orderLines = "";
-    items?.forEach((item) => {
-      const product = productMap[item.productSlug];
-      if (!product) return;
-
-      const itemTotal = product.price * item.quantity;
-      let line = `• ${product.name} x${item.quantity}`;
-
-      // 1. Process multiple colors (array) or fallback to single color (string)
-      let chosenColors = "";
-      if (Array.isArray(item.colors)) {
-        chosenColors = item.colors.filter(Boolean).join(", ");
-      } else if (typeof item.color === "string" && item.color.trim() !== "") {
-        chosenColors = item.color.trim();
-      }
-
-      // 2. Process multiple sizes (array) or fallback to single size (string)
-      let chosenSizes = "";
-      if (Array.isArray(item.sizes)) {
-        chosenSizes = item.sizes.filter(Boolean).join(", ");
-      } else if (typeof item.size === "string" && item.size.trim() !== "") {
-        chosenSizes = item.size.trim();
-      }
-
-      // 3. Append to the message line only if choices exist
-      if (chosenColors) {
-        line += ` (${chosenColors})`;
-      }
-      if (chosenSizes) {
-        line += ` — Size: ${chosenSizes}`;
-      }
-
-      line += ` — ₦${grossUpPrice(itemTotal).toLocaleString()}`;
-
-      if (product.images && product.images.length > 0) {
-        line += `\n[img]${product.images[0]}[/img]`;
-      }
-
-      orderLines += line + "\n";
-    });
-
-        let orderMessage = `New Order Request\n\n${orderLines}\nTotal: ₦${grossUpPrice(totalAmount).toLocaleString()}`;
-
-        if (deliveryAddress) {
-            orderMessage += `\n\n Deliver to: ${deliveryAddress}`;
-            if (deliveryCity) orderMessage += `, ${deliveryCity}`;
-        }
-        if (deliveryPhone) {
-            orderMessage += `\n Phone: ${deliveryPhone}`;
-        }
-        if (buyerName) {
-            orderMessage += `\n Name: ${buyerName}`;
+        // ── check if this buyer is already verified anywhere on MoonStore ──
+        let buyer = null;
+        if (buyerEmail) {
+            buyer = await Buyer.findOne({ email: buyerEmail.toLowerCase().trim() });
         }
 
-        await Message.create({
+        let paymentInstructions = null;
+        let needsVerification = false;
+
+        if (buyer && buyer.identityVerificationStatus === "verified" && buyer.escrowPayPartyId) {
+            const result = await setupEscrowPaymentForConversation(conversation, seller, buyer.escrowPayPartyId);
+            if (result.ok) {
+                paymentInstructions = result.paymentInstructions;
+            }
+        } else if (buyerEmail) {
+            needsVerification = true;
+        }
+
+                await Message.create({
             conversationId: conversation._id,
             sender: "system",
             content: SECURITY_NOTICE,
@@ -202,6 +175,28 @@ items?.forEach((item) => {
             content: orderMessage,
         });
 
+        if (paymentInstructions) {
+            await Message.create({
+                conversationId: conversation._id,
+                sender: "system",
+                content: buildPaymentMessage(paymentInstructions),
+            });
+        } else if (needsVerification) {
+            await Message.create({
+                conversationId: conversation._id,
+                sender: "system",
+                content:
+                    "[verify]To hold your payment safely until delivery, we need to verify your identity once — a Central Bank requirement. Enter your NIN or BVN below. It is sent securely and never stored by MoonStore.[/verify]",
+            });
+        } else {
+            await Message.create({
+                conversationId: conversation._id,
+                sender: "system",
+                content: "⚠️ We couldn't generate your payment details automatically. The seller will assist you shortly.",
+            });
+        }
+
+        
         
         // notify seller
 const productNames = products.map((p) => p.name);
@@ -254,7 +249,7 @@ const getMessages = async (req, res) => {
             return res.status(403).json({ message: "Access denied" });
         }
 
-         await verifyPaymentIfStuck(conversation);
+         await verifyEscrowIfStuck(conversation);
 
         const messages = await Message.find({ conversationId })
             .sort({ createdAt: 1 }); // oldest first — like any chat app
@@ -287,7 +282,7 @@ const getMessagesAsSeller = async (req, res) => {
             return res.status(403).json({ message: "Access denied" });
         }
 
-        await verifyPaymentIfStuck(conversation);
+        await verifyEscrowIfStuck(conversation);
 
         const messages = await Message.find({ conversationId })
             .sort({ createdAt: 1 });
@@ -521,31 +516,22 @@ const initializeOrderPayment = async (req, res) => {
     }
 };
 
-// Checks Paystack directly to confirm whether an "active" conversation
-// with a payment link was actually paid — self-heals if the webhook
-// never fired or failed silently.
-const verifyPaymentIfStuck = async (conversation) => {
+const verifyEscrowIfStuck = async (conversation) => {
     if (conversation.status === "paid") return;
-    if (!conversation.paystackReference) return;
+    if (!conversation.escrowTransactionId) return;
 
     try {
-        const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY;
-        const response = await fetch(
-            `https://api.paystack.co/transaction/verify/${conversation.paystackReference}`,
-            { headers: { Authorization: `Bearer ${PAYSTACK_SECRET}` } }
-        );
-        const data = await response.json();
+        const result = await escrowpayRequest(`/api/v1/transactions/${conversation.escrowTransactionId}`, "GET");
 
-        if (data.status && data.data.status === "success") {
+        // ⚠️ UNCONFIRMED: field name/value for "this transaction is funded" — test in sandbox and correct if wrong
+        if (result.ok && result.data.data.status === "funded") {
             await markOrderPaid({
                 conversation,
-                realPrice: data.data.metadata.realPrice,
-                platformFeeAmount: data.data.metadata.platformFeeAmount,
-                reference: data.data.reference,
+                reference: conversation.escrowTransactionId,
             });
         }
     } catch (err) {
-        console.error("Payment verify check failed:", err.message);
+        console.error("Escrow verify check failed:", err.message);
     }
 };
 
@@ -586,6 +572,183 @@ const reportConversation = async (req, res) => {
     }
 };
 
+const verifyBuyerIdentity = async (req, res) => {
+    try {
+        const { conversationId } = req.params;
+        const sessionId = req.headers["x-session-id"];
+        const { type, identifier, consent, buyerName, buyerEmail } = req.body;
+
+        if (!type || !identifier || !consent || !buyerEmail) {
+            return res.status(400).json({ message: "Missing required fields" });
+        }
+
+        const conversation = await Conversation.findById(conversationId).populate("sellerId");
+        if (!conversation) {
+            return res.status(404).json({ message: "Conversation not found" });
+        }
+
+        if (conversation.buyerSessionId !== sessionId) {
+            return res.status(403).json({ message: "Access denied" });
+        }
+
+        let buyer = await Buyer.findOne({ email: buyerEmail.toLowerCase().trim() });
+        if (!buyer) {
+            buyer = await Buyer.create({ email: buyerEmail.toLowerCase().trim() });
+        }
+
+        const onboardResult = await onboardParty({
+            type,
+            identifier,
+            consent,
+            email: buyerEmail,
+            name: buyerName || "MoonStore Buyer",
+            externalReference: buyer._id.toString(),
+        });
+
+        if (!onboardResult.ok) {
+            await Message.create({
+                conversationId: conversation._id,
+                sender: "system",
+                content: "⚠️ We couldn't verify your details. Please check your NIN/BVN and try again, or contact support.",
+            });
+            return res.status(422).json({ message: "Verification failed", detail: onboardResult.data });
+        }
+
+        const partyData = onboardResult.data.data;
+
+        buyer.escrowPayPartyId = partyData.party.id;
+        buyer.identityVerificationStatus = partyData.identity.verification_status;
+        await buyer.save();
+
+        if (partyData.identity.verification_status !== "verified") {
+            await Message.create({
+                conversationId: conversation._id,
+                sender: "system",
+                content: "Your verification is under review. We'll notify you once it's complete.",
+            });
+            return res.json({ verified: false, status: partyData.identity.verification_status });
+        }
+
+        const seller = conversation.sellerId;
+        const result = await setupEscrowPaymentForConversation(conversation, seller, buyer.escrowPayPartyId);
+
+        if (result.ok) {
+            const message = await Message.create({
+                conversationId: conversation._id,
+                sender: "system",
+                content: buildPaymentMessage(result.paymentInstructions),
+            });
+            getIO().to(conversationId).emit("new_message", message);
+            return res.json({ verified: true });
+        }
+
+        await Message.create({
+            conversationId: conversation._id,
+            sender: "system",
+            content: "⚠️ Verified, but we couldn't generate payment details. The seller will assist you shortly.",
+        });
+        return res.status(500).json({ message: result.error });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+const crypto = require("crypto");
+
+const markAsShipped = async (req, res) => {
+    try {
+        const { conversationId } = req.params;
+
+        const conversation = await Conversation.findById(conversationId);
+        if (!conversation) {
+            return res.status(404).json({ message: "Conversation not found" });
+        }
+
+        if (conversation.sellerId.toString() !== req.seller._id.toString()) {
+            return res.status(403).json({ message: "Access denied" });
+        }
+
+        if (conversation.shippedAt) {
+            return res.status(400).json({ message: "Already marked as shipped" });
+        }
+
+        const pin = crypto.randomInt(100000, 999999).toString();
+
+        conversation.shippedAt = new Date();
+        conversation.orderStage = "shipped";
+        conversation.deliveryPin = pin;
+        conversation.autoReleaseAt = new Date(
+            Date.now() + conversation.deliveryWindowDays * 24 * 60 * 60 * 1000 + 48 * 60 * 60 * 1000
+        );
+        await conversation.save();
+
+        await Message.create({
+            conversationId: conversation._id,
+            sender: "system",
+            content: "📦 Your order has been shipped! You'll receive a delivery PIN separately — enter it once you receive your item to confirm delivery.",
+        });
+
+        // send PIN to buyer only — never expose it to the seller
+        // TODO: also send via Termii SMS once that integration is wired up
+        await Message.create({
+            conversationId: conversation._id,
+            sender: "system",
+            content: `[buyer-only-pin]${pin}[/buyer-only-pin]`,
+        });
+
+        res.json({ message: "Marked as shipped" });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+const confirmDelivery = async (req, res) => {
+    try {
+        const { conversationId } = req.params;
+        const sessionId = req.headers["x-session-id"];
+        const { pin } = req.body;
+
+        const conversation = await Conversation.findById(conversationId);
+        if (!conversation) {
+            return res.status(404).json({ message: "Conversation not found" });
+        }
+
+        if (conversation.buyerSessionId !== sessionId) {
+            return res.status(403).json({ message: "Access denied" });
+        }
+
+        if (conversation.deliveryPinLockedUntil && conversation.deliveryPinLockedUntil > new Date()) {
+            return res.status(429).json({ message: "Too many attempts. Try again later." });
+        }
+
+        if (conversation.deliveryPin !== pin) {
+            conversation.deliveryPinAttempts += 1;
+
+            if (conversation.deliveryPinAttempts >= 5) {
+                conversation.deliveryPinLockedUntil = new Date(Date.now() + 60 * 60 * 1000);
+                conversation.deliveryPinAttempts = 0;
+            }
+
+            await conversation.save();
+            return res.status(400).json({ message: "Incorrect PIN" });
+        }
+
+        conversation.deliveredAt = new Date();
+        conversation.orderStage = "delivered";
+        conversation.autoReleaseAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
+        await conversation.save();
+
+        await Message.create({
+            conversationId: conversation._id,
+            sender: "system",
+            content: "✅ Delivery confirmed. You have 48 hours to raise a dispute if there's an issue.",
+        });
+
+        res.json({ message: "Delivery confirmed" });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
 
 
 module.exports = {
@@ -596,5 +759,9 @@ module.exports = {
     sendMessage,
     getSellerInbox,
     initializeOrderPayment,
-    verifyPaymentIfStuck,
+    verifyEscrowIfStuck,
+    verifyBuyerIdentity,
+    markAsShipped,
+    confirmDelivery,
+
 };

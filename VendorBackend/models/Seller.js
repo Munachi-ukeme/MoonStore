@@ -52,6 +52,13 @@ const sellerSchema = new mongoose.Schema(
             required: true,
         },
 
+        // Add to sellerSchema:
+escrowPayMerchantRef: { type: String, default: null },
+onboardingStatus: { 
+    type: String, 
+    enum: ["pending", "completed", "failed"], 
+    default: "pending" 
+},
 
         howHeardAboutUsOther: {
             type: String,
@@ -104,68 +111,12 @@ inactivityWarningSent: {
       default: false,
     },
 
-    
-    //referral field
-    referralCode: {
-        type: String,
-        unique: true,
-        sparse: true, //allow multiple null values without unique conflict
-    },
-
-    referredBy:{
-    type: String,
-    default: null,
-    },
-
-    //commission fields
-    commissionBalance:{
-        type: Number,
-        default: 0,
-    },
-
-    totalEarned: {
-        type: Number,
-        default: 0,
-    },
-
-    totalPaid:{
-        type: Number,
-        default: 0,
-    },
-
-    paystackSubaccountCode: {
-        type: String,
-        default: null
-    },
-
+ 
     buyerEmails: {
     type: [String],
     default: [],
     },
 
-
-    // bank details for commission payout
-    bankDetails: {
-        accountName: {
-            type: String,
-            default: "",
-        },
-
-        accountNumber: {
-            type: String,
-            default: ""
-        },
-
-        bankName: {
-            type: String,
-            default: "",
-        },
-
-        bankCode: {
-            type: String,
-            default: ""
-        },
-    },
 
 },
 

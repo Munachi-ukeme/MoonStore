@@ -10,12 +10,10 @@ const conversationSchema = new mongoose.Schema(
             type: String,
             default: null,
         },
-
         buyerPhone: {
             type: String,
-            default: "" 
+            default: "",
         },
-        
         sellerId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Seller",
@@ -25,14 +23,13 @@ const conversationSchema = new mongoose.Schema(
             {
                 type: mongoose.Schema.Types.ObjectId,
                 ref: "Product",
-            }
+            },
         ],
-
         productQuantities: {
-    type: Map,
-    of: Number,
-    default: {},
-},
+            type: Map,
+            of: Number,
+            default: {},
+        },
         status: {
             type: String,
             enum: ["active", "paid"],
@@ -62,12 +59,10 @@ const conversationSchema = new mongoose.Schema(
             type: Date,
             default: null,
         },
-
-        paystackReference: {
-            type: String,
-            default: null,
-        },
-        
+       paymentReference: {
+    type: String,
+    default: null,
+},
         lastMessage: {
             type: String,
             default: "",
@@ -84,14 +79,80 @@ const conversationSchema = new mongoose.Schema(
             type: String,
             default: "",
         },
+
+        // ==========================================
+        // ESCROW & FULFILLMENT FIELDS
+        // ==========================================
+        escrowStatus: {
+            type: String,
+            enum: ["pending", "held", "released", "disputed", "refunded"],
+            default: "pending",
+        },
+        shippedAt: {
+            type: Date,
+            default: null,
+        },
+        deliveryWindowDays: {
+            type: Number,
+            default: 0,
+        },
+
+        orderStage: {
+    type: String,
+    enum: [
+        "awaiting_payment",
+        "payment_held",
+        "shipped",
+        "delivered",
+        "released",
+        "disputed",
+        "refunded",
+    ],
+    default: "awaiting_payment",
+},
+shipDeadlineAt: {
+    type: Date,
+    default: null,
+},
+
+        autoReleaseAt: {
+            type: Date,
+            default: null,
+        },
+        releasedAt: {
+            type: Date,
+            default: null,
+        },
+        dispute: {
+            reason: {
+                type: String,
+                default: "",
+            },
+            raisedAt: {
+                type: Date,
+                default: null,
+            },
+            resolvedAt: {
+                type: Date,
+                default: null,
+            },
+            resolutionNotes: {
+                type: String,
+                default: "",
+            },
+        },
     },
     {
         timestamps: true,
     }
 );
 
+// Existing Indexes
 conversationSchema.index({ sellerId: 1 });
 conversationSchema.index({ buyerSessionId: 1 });
 conversationSchema.index({ sellerId: 1, status: 1 });
+
+// Cron & Escrow Index (optimizes hourly queries)
+conversationSchema.index({ escrowStatus: 1, autoReleaseAt: 1 });
 
 module.exports = mongoose.model("Conversation", conversationSchema);

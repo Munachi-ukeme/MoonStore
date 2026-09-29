@@ -14,6 +14,16 @@ const buyerSchema = new mongoose.Schema(
             type: [String],
             default: [],
         },
+
+        escrowPayPartyId: {
+            type: String,
+            default: null,
+        },
+        identityVerificationStatus: {
+            type: String,
+            enum: [null, "verified", "failed", "requires_review"],
+            default: null,
+        },
     },
     {
         timestamps: true,

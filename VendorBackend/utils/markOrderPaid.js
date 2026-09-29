@@ -1,16 +1,21 @@
-const markOrderPaid = async ({ conversation, realPrice, platformFeeAmount, reference }) => {
+const markOrderPaid = async ({ conversation, reference }) => {
     const Message = require("../models/Message");
     const Product = require("../models/Product");
     const Seller = require("../models/Seller");
     const Transaction = require("../models/Transaction");
-    const Referral = require("../models/Referral");
     const { getIO } = require("./socket");
     const { sendLowStockEmail } = require("./mailer");
 
     if (conversation.status === "paid") return;
 
+    const realPrice = conversation.amount;
+    const platformFeeAmount = Math.round((realPrice * conversation.marketplaceCommissionBps) / 10000);
+
     conversation.status = "paid";
+    conversation.escrowStatus = "held";
+    conversation.orderStage = "payment_held";
     conversation.paidAt = new Date();
+    conversation.shipDeadlineAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
     await conversation.save();
 
     const seller = await Seller.findById(conversation.sellerId);
@@ -53,37 +58,6 @@ const markOrderPaid = async ({ conversation, realPrice, platformFeeAmount, refer
         console.error("Stock decrement failed:", err.message);
     }
 
-    try {
-        const pendingReferral = await Referral.findOne({
-            referredSellerId: conversation.sellerId,
-            status: "pending",
-        });
-
-        if (pendingReferral) {
-            const salesAggregate = await Transaction.aggregate([
-                { $match: { sellerId: conversation.sellerId, type: "order" } },
-                { $group: { _id: null, total: { $sum: "$amount" } } },
-            ]);
-
-            const cumulativeSales = salesAggregate[0]?.total || 0;
-
-            if (cumulativeSales >= 500000) {
-                const referrer = await Seller.findById(pendingReferral.referrerId);
-                if (referrer) {
-                    referrer.commissionBalance += pendingReferral.commissionAmount;
-                    referrer.totalEarned += pendingReferral.commissionAmount;
-                    await referrer.save();
-                }
-
-                pendingReferral.status = "earned";
-                pendingReferral.paidAt = new Date();
-                await pendingReferral.save();
-            }
-        }
-    } catch (err) {
-        console.error("Referral commission check failed:", err.message);
-    }
-
     const products = await Product.find({ _id: { $in: conversation.productIds } });
 
     const productLinks = products
@@ -93,7 +67,7 @@ const markOrderPaid = async ({ conversation, realPrice, platformFeeAmount, refer
     await Message.create({
         conversationId: conversation._id,
         sender: "system",
-        content: `✅ Thank you for your order! Payment is confirmed. Once you receive ${productLinks}, come back to this chat and tap this product link to leave a review. Note that this conversation will be deleted in 7 days.`,
+        content: `✅ Payment received and secured. The seller has 48 hours to ship your order. Once you receive ${productLinks}, come back to this chat and tap this product link to leave a review.`,
     });
 
     try {

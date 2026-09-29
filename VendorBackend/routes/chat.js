@@ -21,4 +21,7 @@ router.get("/seller/inbox", protect, getSellerInbox);
 router.get("/seller/messages/:conversationId", protect, getMessagesAsSeller);
 router.post("/:conversationId/generate-payment-link", protect, initializeOrderPayment);
 router.post("/:conversationId/report", reportConversation);
+router.post("/:conversationId/verify-identity", verifyBuyerIdentity);
+router.post("/:conversationId/mark-shipped", protect, markAsShipped);
+router.post("/:conversationId/confirm-delivery", confirmDelivery);
 module.exports = router;
