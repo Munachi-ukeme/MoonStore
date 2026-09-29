@@ -26,6 +26,8 @@ const ProductPage = () => {
     const [deliveryAddress, setDeliveryAddress] = useState("");
     const [deliveryCity, setDeliveryCity] = useState("");
     const [deliveryPhone, setDeliveryPhone] = useState("");
+    const [deliveryZones, setDeliveryZones] = useState([]);
+    const [selectedZone, setSelectedZone] = useState(null);
     const [addressAlreadySaved, setAddressAlreadySaved] = useState(false);
     const [showChangeAddress, setShowChangeAddress] = useState(false);
 
@@ -58,6 +60,7 @@ const ProductPage = () => {
                 return;
             }
             setStore(storeData.store);
+            setDeliveryZones(storeData.store.deliveryOptions || []);
             setProduct(productData.product);
 
             try {
@@ -201,6 +204,10 @@ const ProductPage = () => {
                 tray.buyerName = buyerName;
             }
 
+            if (!tray.deliveryZone && selectedZone) {
+    tray.deliveryZone = selectedZone;
+}
+
             tray.items.push({
                 productSlug: product.slug,
                 productName: product.name,
@@ -316,8 +323,9 @@ const ProductPage = () => {
         );
     }
 
-    const buyerUnitPrice = grossUpPrice(product.price);
-    const total = buyerUnitPrice * quantity;
+const buyerUnitPrice = grossUpPrice(product.price);
+const deliveryFee = selectedZone ? selectedZone.price : 0;
+const total = (buyerUnitPrice * quantity) + deliveryFee;
 
     return (
         <div className={styles.page}>
@@ -426,6 +434,25 @@ const ProductPage = () => {
                         <p className={styles.selectorLabel}>Delivery Details</p>
                         <p className={styles.deliveryHint}>Optional — fill in if you want delivery</p>
 
+                         {deliveryZones.length > 0 ? (
+        <div className={styles.zonePicker}>
+            {deliveryZones.map((zone, i) => (
+                <button
+                    key={i}
+                    type="button"
+                    className={
+                        selectedZone && selectedZone.label === zone.label
+                            ? `${styles.zoneBtn} ${styles.activeZone}`
+                            : styles.zoneBtn
+                    }
+                    onClick={() => setSelectedZone(zone)}
+                >
+                    {zone.label} — ₦{zone.price.toLocaleString()} ({zone.estimatedDays} days)
+                </button>
+            ))}
+        </div>
+    ) : null}
+
                         {addressAlreadySaved && !showChangeAddress ? (
                             <div className={styles.savedAddress}>
                                 <p className={styles.savedAddressText}>
@@ -487,7 +514,10 @@ const ProductPage = () => {
                         </div>
                     </div>
 
-                    <p className={styles.total}>Total: ₦{total.toLocaleString()}</p>
+                    <p className={styles.total}>
+    Total: ₦{total.toLocaleString()}
+    {selectedZone ? <span className={styles.deliveryLine}> (incl. ₦{deliveryFee.toLocaleString()} delivery)</span> : null}
+</p>
 
                     <button
                         className={addedToTray ? `${styles.orderBtn} ${styles.addedBtn}` : styles.orderBtn}

@@ -14,31 +14,25 @@ const OrderTray = ({ slug }) => {
     const [ordering, setOrdering] = useState(false);
     const [orderError, setOrderError] = useState("");
 
-    const [showEmailBanner, setShowEmailBanner] = useState(false);
+    const [savedEmail, setSavedEmail] = useState("");
     const [emailInput, setEmailInput] = useState("");
-    const [emailSaved, setEmailSaved] = useState(false);
 
     useEffect(() => {
-        const savedEmail = localStorage.getItem("moonstore_buyer_email");
-        const dismissed = localStorage.getItem("moonstore_email_banner_dismissed");
-
-        if (!savedEmail && !dismissed) {
-            setShowEmailBanner(true);
+        const existing = localStorage.getItem("moonstore_buyer_email");
+        if (existing) {
+            setSavedEmail(existing);
         }
     }, []);
 
     const handleSaveEmail = () => {
-        if (!emailInput.trim()) return;
-        localStorage.setItem("moonstore_buyer_email", emailInput.trim());
-        setEmailSaved(true);
-        setTimeout(() => {
-            setShowEmailBanner(false);
-        }, 1200);
-    };
-
-    const handleDismissBanner = () => {
-        localStorage.setItem("moonstore_email_banner_dismissed", "true");
-        setShowEmailBanner(false);
+        const trimmed = emailInput.trim();
+        if (!trimmed || !trimmed.includes("@")) {
+            setOrderError("Please enter a valid email.");
+            setTimeout(() => setOrderError(""), 3000);
+            return;
+        }
+        localStorage.setItem("moonstore_buyer_email", trimmed);
+        setSavedEmail(trimmed);
     };
 
     const loadTray = useCallback(() => {
@@ -83,19 +77,25 @@ const OrderTray = ({ slug }) => {
 
     const handleStartOrder = async () => {
         if (!tray || !tray.items.length) return;
+
+        if (!savedEmail) {
+            setOrderError("Please add your email above before ordering.");
+            setTimeout(() => setOrderError(""), 3000);
+            return;
+        }
+
         setOrdering(true);
         setOrderError("");
 
         try {
             const sessionId = getOrCreateSessionId();
-            const buyerEmail = localStorage.getItem("moonstore_buyer_email") || "";
 
             const data = await startConversation(
                 slug,
                 sessionId,
                 tray.items,
                 tray.buyerName,
-                buyerEmail,
+                savedEmail,
                 tray.deliveryAddress,
                 tray.deliveryCity,
                 tray.deliveryPhone,
@@ -108,9 +108,7 @@ const OrderTray = ({ slug }) => {
                 return;
             }
 
-            // clear tray after successful order
             localStorage.removeItem(TRAY_KEY(slug));
-            localStorage.removeItem("moonstore_email_banner_dismissed");
             navigate(`/${slug}/chat/${data.conversation._id}`);
 
         } catch (error) {
@@ -123,48 +121,12 @@ const OrderTray = ({ slug }) => {
 
     if (!tray || !tray.items || tray.items.length === 0) return null;
 
-   const total = tray.items.reduce((sum, item) => sum + grossUpPrice(item.price) * item.quantity, 0);
+    const total = tray.items.reduce((sum, item) => sum + grossUpPrice(item.price) * item.quantity, 0);
     const itemCount = tray.items.length;
 
     return (
         <div className={styles.trayWrapper}>
-            {showEmailBanner ? (
-                <div className={styles.emailBanner}>
-                    {emailSaved ? (
-                        <p className={styles.emailBannerSaved}>Email saved ✓</p>
-                    ) : (
-                        <div className={styles.emailBannerContent}>
-                            <p className={styles.emailBannerText}>
-                                Add your email so you don't miss order replies
-                            </p>
-                            <div className={styles.emailBannerRow}>
-                                <input
-                                    type="email"
-                                    className={styles.emailBannerInput}
-                                    placeholder="you@email.com"
-                                    value={emailInput}
-                                    onChange={(e) => setEmailInput(e.target.value)}
-                                />
-                                <button
-                                    className={styles.emailBannerSaveBtn}
-                                    onClick={handleSaveEmail}
-                                >
-                                    Save
-                                </button>
-                                <button
-                                    className={styles.emailBannerDismissBtn}
-                                    onClick={handleDismissBanner}
-                                >
-                                    ✕
-                                </button>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            ) : null}
-
             <div className={styles.tray}>
-            {/* collapsed bar */}
             {!expanded ? (
                 <div className={styles.collapsed} onClick={() => setExpanded(true)}>
                     <span className={styles.collapsedText}>
@@ -221,6 +183,31 @@ const OrderTray = ({ slug }) => {
                         <span className={styles.totalValue}>₦{total.toLocaleString()}</span>
                     </div>
 
+                    {!savedEmail ? (
+                        <div className={styles.emailBanner}>
+                            <p className={styles.emailBannerText}>
+                                Email required — used to verify your order and payment
+                            </p>
+                            <div className={styles.emailBannerRow}>
+                                <input
+                                    type="email"
+                                    className={styles.emailBannerInput}
+                                    placeholder="you@email.com"
+                                    value={emailInput}
+                                    onChange={(e) => setEmailInput(e.target.value)}
+                                />
+                                <button
+                                    className={styles.emailBannerSaveBtn}
+                                    onClick={handleSaveEmail}
+                                >
+                                    Save
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                        <p className={styles.emailBannerSaved}>Ordering as {savedEmail}</p>
+                    )}
+
                     {orderError ? (
                         <p className={styles.orderError}>{orderError}</p>
                     ) : null}
@@ -228,7 +215,7 @@ const OrderTray = ({ slug }) => {
                     <button
                         className={styles.startOrderBtn}
                         onClick={handleStartOrder}
-                        disabled={ordering}
+                        disabled={ordering || !savedEmail}
                     >
                         {ordering ? "Sending order..." : "Send your Order →"}
                     </button>
