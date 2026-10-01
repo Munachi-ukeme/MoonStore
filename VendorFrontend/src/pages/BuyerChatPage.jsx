@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
 import { IoSend } from "react-icons/io5";
 import { io } from "socket.io-client";
 import { GrAttachment } from "react-icons/gr";
-import { getConversationMessages, sendBuyerMessage, reportConversation, sendImageMessage, BASE_URL } from "../api/api";
+import { getConversationMessages, sendBuyerMessage, reportConversation, sendImageMessage, verifyBuyerIdentity, confirmDelivery, BASE_URL } from "../api/api";
 import { getOrCreateSessionId } from "../utils/session";
 import styles from "./BuyerChatPage.module.css";
 
@@ -73,6 +73,20 @@ const BuyerChatPage = () => {
     const [error, setError] = useState("");
     const [fullscreenImage, setFullscreenImage] = useState(null);
     const [imageError, setImageError] = useState("");
+
+    // ── identity verification state ──
+    const [ninType, setNinType] = useState("nin");
+    const [ninValue, setNinValue] = useState("");
+    const [consentChecked, setConsentChecked] = useState(false);
+    const [verifySubmitting, setVerifySubmitting] = useState(false);
+    const [verifyError, setVerifyError] = useState("");
+    const [verifiedNow, setVerifiedNow] = useState(false);
+
+    // ── delivery PIN confirmation state ──
+    const [showPinModal, setShowPinModal] = useState(false);
+    const [pinInput, setPinInput] = useState("");
+    const [pinSubmitting, setPinSubmitting] = useState(false);
+    const [pinError, setPinError] = useState("");
 
     const fileInputRef = useRef(null);
     const bottomRef = useRef(null);
@@ -282,6 +296,74 @@ const BuyerChatPage = () => {
         e.target.value = "";
     };
 
+    // ── identity verification submit ──
+    const handleVerifySubmit = async () => {
+        if (!ninValue.trim() || ninValue.trim().length < 10) {
+            setVerifyError("Enter a valid NIN or BVN.");
+            return;
+        }
+        if (!consentChecked) {
+            setVerifyError("You must agree to continue.");
+            return;
+        }
+
+        setVerifySubmitting(true);
+        setVerifyError("");
+
+        try {
+            const data = await verifyBuyerIdentity(conversationId, sessionId, {
+                type: ninType,
+                identifier: ninValue.trim(),
+                consent: true,
+                buyerName: conversation?.buyerName || "",
+                buyerEmail: conversation?.buyerEmail || "",
+            });
+
+            if (data?.error || data?.verified === false) {
+                setVerifyError(data?.error || "Verification is under review. We'll notify you here once complete.");
+                setVerifySubmitting(false);
+                return;
+            }
+
+            setVerifiedNow(true);
+            setVerifySubmitting(false);
+        } catch (err) {
+            console.error("Verify error:", err);
+            setVerifyError("Something went wrong. Please try again.");
+            setVerifySubmitting(false);
+        }
+    };
+
+    // ── delivery PIN confirm submit ──
+    const handleConfirmDelivery = async () => {
+        if (!pinInput.trim()) {
+            setPinError("Enter the PIN you received.");
+            return;
+        }
+
+        setPinSubmitting(true);
+        setPinError("");
+
+        try {
+            const data = await confirmDelivery(conversationId, sessionId, pinInput.trim());
+
+            if (data?.error) {
+                setPinError(data.error);
+                setPinSubmitting(false);
+                return;
+            }
+
+            setShowPinModal(false);
+            setPinInput("");
+            setPinSubmitting(false);
+            fetchMessages();
+        } catch (err) {
+            console.error("Confirm delivery error:", err);
+            setPinError("Something went wrong. Please try again.");
+            setPinSubmitting(false);
+        }
+    };
+
     const renderMessageContent = (content, msgId) => {
         if (!content) return null;
 
@@ -337,28 +419,113 @@ const BuyerChatPage = () => {
         );
     };
 
+    const handleCopyAccountNumber = (accountNumber) => {
+        navigator.clipboard.writeText(accountNumber);
+    };
+
     const renderMessage = (msg) => {
         if (msg.sender === "system") {
-            const isPaymentLink = msg.content.includes("https://");
-            if (isPaymentLink) {
-                const urlMatch = msg.content.match(/https:\/\/\S+/);
-                const url = urlMatch ? urlMatch[0] : null;
+
+            // ── identity verification prompt ──
+            const isVerifyPrompt = msg.content.includes("[verify]");
+            if (isVerifyPrompt) {
+                const textMatch = msg.content.match(/\[verify\](.*?)\[\/verify\]/s);
+                const promptText = textMatch ? textMatch[1] : "";
+
+                if (verifiedNow) {
+                    return (
+                        <div key={msg._id} className={styles.systemMessage}>
+                            <p>{promptText}</p>
+                            <p className={styles.verifySuccess}>✅ Verified — generating your payment details...</p>
+                        </div>
+                    );
+                }
+
                 return (
                     <div key={msg._id} className={styles.systemMessage}>
-                        <span>💳 Your payment link is ready</span>
-                        {url ? (
-                            <a
-                                href={url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className={styles.payNowBtn}
+                        <p>{promptText}</p>
+                        <div className={styles.verifyForm}>
+                            <div className={styles.verifyTypeRow}>
+                                <button
+                                    type="button"
+                                    className={ninType === "nin" ? `${styles.verifyTypeBtn} ${styles.activeType}` : styles.verifyTypeBtn}
+                                    onClick={() => setNinType("nin")}
+                                >
+                                    NIN
+                                </button>
+                                <button
+                                    type="button"
+                                    className={ninType === "bvn" ? `${styles.verifyTypeBtn} ${styles.activeType}` : styles.verifyTypeBtn}
+                                    onClick={() => setNinType("bvn")}
+                                >
+                                    BVN
+                                </button>
+                            </div>
+                            <input
+                                type="text"
+                                className={styles.verifyInput}
+                                placeholder={ninType === "nin" ? "Enter your NIN" : "Enter your BVN"}
+                                value={ninValue}
+                                onChange={(e) => setNinValue(e.target.value)}
+                                maxLength={11}
+                            />
+                            <label className={styles.verifyConsentRow}>
+                                <input
+                                    type="checkbox"
+                                    checked={consentChecked}
+                                    onChange={(e) => setConsentChecked(e.target.checked)}
+                                />
+                                <span>I consent to identity verification for secure payment</span>
+                            </label>
+                            {verifyError ? <p className={styles.verifyError}>{verifyError}</p> : null}
+                            <button
+                                className={styles.verifySubmitBtn}
+                                onClick={handleVerifySubmit}
+                                disabled={verifySubmitting}
                             >
-                                Tap to Pay
-                            </a>
+                                {verifySubmitting ? "Verifying..." : "Verify & Continue"}
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
+            // ── payment instructions (bank transfer details) ──
+            const isPaymentDetails = msg.content.includes("💳 Payment Details");
+            if (isPaymentDetails) {
+                const accountMatch = msg.content.match(/Account Number:\s*(\d+)/);
+                const accountNumber = accountMatch ? accountMatch[1] : null;
+
+                return (
+                    <div key={msg._id} className={styles.systemMessage}>
+                        {renderMessageContent(msg.content, msg._id)}
+                        {accountNumber ? (
+                            <button
+                                className={styles.copyAccountBtn}
+                                onClick={() => handleCopyAccountNumber(accountNumber)}
+                            >
+                                Copy Account Number
+                            </button>
                         ) : null}
                     </div>
                 );
             }
+
+            // ── buyer-only delivery PIN ──
+            const isPinMessage = msg.content.includes("[buyer-only-pin]");
+            if (isPinMessage) {
+                const pinMatch = msg.content.match(/\[buyer-only-pin\](.*?)\[\/buyer-only-pin\]/);
+                const pin = pinMatch ? pinMatch[1] : "";
+
+                return (
+                    <div key={msg._id} className={styles.systemMessage}>
+                        <p className={styles.pinLabel}>Your Delivery PIN</p>
+                        <p className={styles.pinValue}>{pin}</p>
+                        <p className={styles.pinHint}>Enter this PIN once you receive your item to confirm delivery.</p>
+                    </div>
+                );
+            }
+
             return (
                 <div key={msg._id} className={styles.systemMessage}>
                     {renderMessageContent(msg.content, msg._id)}
@@ -391,7 +558,18 @@ const BuyerChatPage = () => {
         );
     }
 
-    const isPaid = conversation?.status === "paid";
+    const stageBadgeText = () => {
+        const stage = conversation?.orderStage;
+        if (stage === "payment_held") return "✓ Paid";
+        if (stage === "shipped") return "📦 Shipped";
+        if (stage === "delivered") return "✓ Delivered";
+        if (stage === "released") return "✓ Completed";
+        if (stage === "disputed") return "⚠️ Disputed";
+        if (stage === "refunded") return "Refunded";
+        return null;
+    };
+
+    const canConfirmDelivery = conversation?.orderStage === "shipped";
 
     return (
         <div className={styles.page}>
@@ -400,9 +578,14 @@ const BuyerChatPage = () => {
                     ←
                 </button>
                 <span className={styles.storeName}>{slug}</span>
-                {isPaid ? <span className={styles.paidBadge}>✓ Paid</span> : null}
+                {stageBadgeText() ? <span className={styles.paidBadge}>{stageBadgeText()}</span> : null}
                 <div className={styles.headerActions}>
-                    {isPaid ? (
+                    {canConfirmDelivery ? (
+                        <button className={styles.confirmDeliveryBtn} onClick={() => setShowPinModal(true)}>
+                            Confirm Delivery
+                        </button>
+                    ) : null}
+                    {conversation?.orderStage === "released" || conversation?.orderStage === "delivered" ? (
                         <a
                             href={`https://wa.me/2349132227203?text=${encodeURIComponent("Feedback on my MoonStore order: ")}`}
                             target="_blank"
@@ -504,6 +687,43 @@ const BuyerChatPage = () => {
                             </button>
                         </div>
                         {reportSent ? <p className={styles.reportSuccess}>Report submitted.</p> : null}
+                    </div>
+                </div>
+            ) : null}
+
+            {showPinModal ? (
+                <div className={styles.modalOverlay}>
+                    <div className={styles.modal}>
+                        <h3>Confirm Delivery</h3>
+                        <p>Enter the PIN you received in this chat to confirm you got your item.</p>
+                        <input
+                            type="text"
+                            className={styles.reportPhoneInput}
+                            placeholder="Enter PIN"
+                            value={pinInput}
+                            onChange={(e) => setPinInput(e.target.value)}
+                            maxLength={6}
+                        />
+                        {pinError ? <p className={styles.reportError}>{pinError}</p> : null}
+                        <div className={styles.modalActions}>
+                            <button
+                                className={styles.cancelBtn}
+                                onClick={() => {
+                                    setShowPinModal(false);
+                                    setPinInput("");
+                                    setPinError("");
+                                }}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                className={styles.submitBtn}
+                                onClick={handleConfirmDelivery}
+                                disabled={pinSubmitting}
+                            >
+                                {pinSubmitting ? "Confirming..." : "Confirm"}
+                            </button>
+                        </div>
                     </div>
                 </div>
             ) : null}

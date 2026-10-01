@@ -187,19 +187,37 @@ export const initializePayment = async (plan) => {
   }
 };
 
-export const generatePaymentLink = async (conversationId) => {
+export const verifyBuyerIdentity = async (conversationId, sessionId, payload) => {
   try {
-    const res = await fetchWithTimeout(`${BASE_URL}/chat/${conversationId}/generate-payment-link`, {
+    const res = await fetchWithTimeout(`${BASE_URL}/chat/${conversationId}/verify-identity`, {
       method: "POST",
-      headers: getAuthHeaders(),
+      headers: { "x-session-id": sessionId },
+      body: JSON.stringify(payload),
     });
     const json = await res.json();
-    if (!res.ok) return { error: json.message || "Failed to generate payment link" };
+    if (!res.ok) return { error: json.message || "Verification failed" };
     return json;
   } catch (err) {
-    return { error: err.message || "Failed to generate payment link" };
+    return { error: err.message || "Verification failed" };
   }
 };
+
+export const confirmDelivery = async (conversationId, sessionId, pin) => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/chat/${conversationId}/confirm-delivery`, {
+      method: "POST",
+      headers: { "x-session-id": sessionId },
+      body: JSON.stringify({ pin }),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Could not confirm delivery" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Could not confirm delivery" };
+  }
+};
+
+
 
 // ================= PUBLIC (BUYER & STORE) =================
 export const getStore = async (slug) => {
@@ -237,6 +255,8 @@ export const saveBuyerEmail = async (email, sessionId, sellerId) => {
     return { error: err.message || "Something went wrong. Please try again." };
   }
 };
+
+
 
 export const buyerLogin = async (email) => {
   try {

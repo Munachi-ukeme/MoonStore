@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react"; // Added useCallback
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getSellerInbox } from "../api/api";
@@ -12,7 +12,6 @@ const SellerInboxPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // 1. Move function here so JSX and useEffect can both access it
   const fetchInbox = useCallback(async () => {
     setError("");
     setLoading(true);
@@ -25,15 +24,19 @@ const SellerInboxPage = () => {
     setLoading(false);
   }, []);
 
-  // 2. Trigger the fetch on component mount
   useEffect(() => {
     fetchInbox();
   }, [fetchInbox]);
 
   const filtered = conversations?.filter((c) => {
     if (filter === "all") return true;
-    if (filter === "active") return c.status === "active";
-    if (filter === "paid") return c.status === "paid";
+    if (filter === "active") return c.orderStage === "awaiting_payment";
+    if (filter === "paid") return c.orderStage === "payment_held";
+    if (filter === "shipped") return c.orderStage === "shipped";
+    if (filter === "delivered") return c.orderStage === "delivered";
+    if (filter === "released") return c.orderStage === "released";
+    if (filter === "disputed") return c.orderStage === "disputed";
+    if (filter === "refunded") return c.orderStage === "refunded";
     return true;
   }) || [];
 
@@ -63,9 +66,18 @@ const SellerInboxPage = () => {
     return new Date(c.buyerLastMessageAt) > new Date(c.sellerLastReadAt);
   };
 
+  const stageBadgeText = (stage) => {
+    if (stage === "payment_held") return "Paid";
+    if (stage === "shipped") return "Shipped";
+    if (stage === "delivered") return "Delivered";
+    if (stage === "released") return "Completed";
+    if (stage === "disputed") return "Disputed";
+    if (stage === "refunded") return "Refunded";
+    return null;
+  };
+
   if (loading) return <div className={styles.loading}>Loading inbox...</div>;
 
-  // 3. This button will now work perfectly without crashing
   if (error) {
     return (
       <div className={styles.error}>
@@ -102,6 +114,36 @@ const SellerInboxPage = () => {
         >
           Paid
         </button>
+        <button
+          className={`${styles.filterBtn} ${filter === "shipped" ? styles.active : ""}`}
+          onClick={() => setFilter("shipped")}
+        >
+          Shipped
+        </button>
+        <button
+          className={`${styles.filterBtn} ${filter === "delivered" ? styles.active : ""}`}
+          onClick={() => setFilter("delivered")}
+        >
+          Delivered
+        </button>
+        <button
+          className={`${styles.filterBtn} ${filter === "released" ? styles.active : ""}`}
+          onClick={() => setFilter("released")}
+        >
+          Completed
+        </button>
+        <button
+          className={`${styles.filterBtn} ${filter === "disputed" ? styles.active : ""}`}
+          onClick={() => setFilter("disputed")}
+        >
+          Disputed
+        </button>
+        <button
+          className={`${styles.filterBtn} ${filter === "refunded" ? styles.active : ""}`}
+          onClick={() => setFilter("refunded")}
+        >
+          Refunded
+        </button>
       </div>
 
       {filtered?.length === 0 ? (
@@ -110,6 +152,7 @@ const SellerInboxPage = () => {
         <div className={styles.list}>
           {filtered?.map((c) => {
             const unread = isUnread(c);
+            const badgeText = stageBadgeText(c.orderStage);
             return (
               <div
                 key={c._id}
@@ -131,9 +174,9 @@ const SellerInboxPage = () => {
                       {c.lastMessage || "No messages yet"}
                     </span>
                     <div className={styles.badges}>
-                      {c.status === "paid" && (
-                        <span className={styles.paidBadge}>Paid</span>
-                      )}
+                      {badgeText ? (
+                        <span className={styles.paidBadge}>{badgeText}</span>
+                      ) : null}
                       {unread && <span className={styles.dot} />}
                     </div>
                   </div>
