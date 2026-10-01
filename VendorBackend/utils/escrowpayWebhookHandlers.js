@@ -4,16 +4,18 @@ const { markOrderPaid } = require("./markOrderPaid");
 const { restoreStockOnRefund } = require("./restoreStockOnRefund");
 const { getIO } = require("./socket");
 
-const handleTransactionFunded = async (eventData) => {
-    const conversation = await Conversation.findOne({ escrowTransactionId: eventData.id });
+const handleTransactionFunded = async (event) => {
+    const conversation = await Conversation.findOne({ escrowTransactionId: event.object_id });
     if (!conversation) return;
 
-    await markOrderPaid({ conversation, reference: eventData.id });
+    await markOrderPaid({ conversation, reference: event.object_id });
 };
 
-const handleReleaseCompleted = async (eventData) => {
-    const conversation = await Conversation.findOne({ escrowTransactionId: eventData.transaction_id });
-    if (!conversation) return;
+// ⚠️ NOT CONFIRMED — needs a real test event from EscrowPay's dashboard
+// to confirm how to find the right Conversation from this event's data
+const handleReleaseCompleted = async (event) => {
+    const conversation = await Conversation.findOne({ escrowTransactionId: event.data.transaction_id });
+    if (!conversation || conversation.escrowStatus === "released") return;
 
     conversation.escrowStatus = "released";
     conversation.orderStage = "released";
@@ -33,9 +35,10 @@ const handleReleaseCompleted = async (eventData) => {
     }
 };
 
-const handleRefundCompleted = async (eventData) => {
-    const conversation = await Conversation.findOne({ escrowTransactionId: eventData.transaction_id });
-    if (!conversation) return;
+// ⚠️ NOT CONFIRMED — same issue as above
+const handleRefundCompleted = async (event) => {
+    const conversation = await Conversation.findOne({ escrowTransactionId: event.data.transaction_id });
+    if (!conversation || conversation.escrowStatus === "refunded") return;
 
     conversation.escrowStatus = "refunded";
     conversation.orderStage = "refunded";
