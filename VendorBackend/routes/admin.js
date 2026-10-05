@@ -54,4 +54,9 @@ router.get("/unverified-sellers", getUnverifiedSellers)
 // PUT /api/admin/verify-subaccount → unlock Products/Categories for a seller
 router.put("/verify-subaccount", verifySubaccount)
 
+router.get("/disputes", getDisputedConversations);
+router.get("/disputes/:conversationId", getDisputeDetail);
+router.post("/disputes/:conversationId/message", sendAdminMessage);
+router.post("/disputes/:conversationId/resolve", resolveDispute);
+
 module.exports = router

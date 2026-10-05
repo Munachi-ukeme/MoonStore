@@ -24,6 +24,9 @@ const buyerSchema = new mongoose.Schema(
             enum: [null, "verified", "failed", "requires_review"],
             default: null,
         },
+
+        disputesRaised: { type: Number, default: 0 },
+disputesLost: { type: Number, default: 0 },
     },
     {
         timestamps: true,

@@ -4,7 +4,10 @@ const Message = require("../models/Message");
 const Product = require("../models/Product");
 const Seller = require("../models/Seller");
 const Transaction = require("../models/Transaction");
-const Category = require("../models/Category"); // Added missing import from Job 5
+const Category = require("../models/Category");
+const { createRelease, createRefund } = require("./utils/escrowpay");
+const { restoreStockOnRefund } = require("./utils/restoreStockOnRefund");
+const { getIO } = require("./utils/socket");
 const { 
     sendLowStockEmail, 
     sendInactivityWarningEmail, 
@@ -268,12 +271,6 @@ const startCronJobs = () => {
     console.log("Cron jobs started.");
 };
 
-const cron = require("node-cron");
-const Conversation = require("./models/Conversation");
-const { createRelease, createRefund } = require("./utils/escrowpay");
-const { restoreStockOnRefund } = require("./utils/restoreStockOnRefund");
-const Message = require("./models/Message");
-const { getIO } = require("./utils/socket");
 
 // runs hourly — releases funds once autoReleaseAt has passed
 cron.schedule("0 * * * *", async () => {
@@ -317,6 +314,38 @@ cron.schedule("0 * * * *", async () => {
         }
         // conversation.escrowStatus flips to "refunded" only when the
         // Refund Completed webhook actually fires — not here
+    }
+});
+
+cron.schedule("0 * * * *", async () => {
+    const overdue = await Conversation.find({
+        escrowStatus: "disputed",
+        "dispute.responseDeadline": { $ne: null, $lte: new Date() },
+        "dispute.resolution": "",
+    });
+
+    for (const conversation of overdue) {
+        const result = await createRelease({
+            transactionId: conversation.escrowTransactionId,
+            amountMinor: conversation.amount * 100,
+            reason: "Auto-resolved: no response from either party within 24-hour window",
+        });
+
+        if (!result.ok) {
+            console.error("Auto-resolve dispute failed for", conversation._id, result.data);
+            continue;
+        }
+
+        conversation.dispute.resolution = "released_to_seller";
+        conversation.dispute.resolvedAt = new Date();
+        conversation.dispute.autoResolved = true;
+        await conversation.save();
+
+        await Message.create({
+            conversationId: conversation._id,
+            sender: "system",
+            content: "This dispute was automatically resolved in the seller's favor because neither party responded in time.",
+        });
     }
 });
 

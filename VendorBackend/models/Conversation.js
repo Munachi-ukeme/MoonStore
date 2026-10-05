@@ -123,24 +123,18 @@ shipDeadlineAt: {
             type: Date,
             default: null,
         },
+    
         dispute: {
-            reason: {
-                type: String,
-                default: "",
-            },
-            raisedAt: {
-                type: Date,
-                default: null,
-            },
-            resolvedAt: {
-                type: Date,
-                default: null,
-            },
-            resolutionNotes: {
-                type: String,
-                default: "",
-            },
-        },
+    reason: { type: String, default: "" },
+    raisedBy: { type: String, enum: [null, "buyer", "seller"], default: null },
+    raisedAt: { type: Date, default: null },
+    notifiedAt: { type: Date, default: null },
+    responseDeadline: { type: Date, default: null },
+    resolvedAt: { type: Date, default: null },
+    resolutionNotes: { type: String, default: "" },
+    resolution: { type: String, enum: ["", "released_to_seller", "refunded_to_buyer"], default: "" },
+    autoResolved: { type: Boolean, default: false },
+},
     },
     {
         timestamps: true,

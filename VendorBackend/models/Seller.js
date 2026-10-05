@@ -52,7 +52,10 @@ const sellerSchema = new mongoose.Schema(
             required: true,
         },
 
-        // Add to sellerSchema:
+        disputesAgainst: { type: Number, default: 0 },
+disputesLostAgainst: { type: Number, default: 0 },
+
+        
 escrowPayMerchantRef: { type: String, default: null },
 onboardingStatus: { 
     type: String, 

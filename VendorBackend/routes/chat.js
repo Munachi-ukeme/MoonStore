@@ -24,4 +24,8 @@ router.post("/:conversationId/report", reportConversation);
 router.post("/:conversationId/verify-identity", verifyBuyerIdentity);
 router.post("/:conversationId/mark-shipped", protect, markAsShipped);
 router.post("/:conversationId/confirm-delivery", confirmDelivery);
+router.post("/:conversationId/dispute/buyer", raiseDispute);
+router.post("/:conversationId/dispute/seller", protect, raiseDispute);
+router.post("/:conversationId/dispute/buyer/cancel", cancelDispute);
+router.post("/:conversationId/dispute/seller/cancel", protect, cancelDispute);
 module.exports = router;

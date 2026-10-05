@@ -1,4 +1,5 @@
 const { Resend } = require("resend");
+const { sendAdminDisputeMessage } = require("../../VendorFrontend/src/api/api");
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -85,28 +86,7 @@ const sendPasswordResetEmail = async (sellerEmail, sellerBusinessName, resetToke
   }
 };
 
-const sendSubaccountVerifiedEmail = async (sellerEmail, sellerBusinessName) => {
-  try {
-    await resend.emails.send({
-      from: "MoonStore <noreply@moonstore.ng>",
-      to: sellerEmail,
-      subject: "Your MoonStore account is now fully active",
-      html: `
-        <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
-          <h2 style="color: #6d28d9;">You're all set! ✅</h2>
-          <p>Hi ${sellerBusinessName}, your account has been verified. You can now add products and categories to your store.</p>
-          <a href="${process.env.FRONTEND_URL}/login"
-            style="display:inline-block;padding:10px 20px;background:#6d28d9;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;">
-            Login to add your first product
-          </a>
-          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore — Your Store. your Rules.</p>
-        </div>
-      `,
-    });
-  } catch (err) {
-    console.error("Subaccount verified email error:", err.message);
-  }
-};
+
 
 const sendSignupConfirmationEmail = async (email, businessName, signupToken) => {
   try {
@@ -132,28 +112,6 @@ const sendSignupConfirmationEmail = async (email, businessName, signupToken) => 
   }
 };
 
-const sendCommissionPaidEmail = async (sellerEmail, sellerBusinessName, amountPaid) => {
-  try {
-    await resend.emails.send({
-      from: "MoonStore <noreply@moonstore.ng>",
-      to: sellerEmail,
-      subject: "Your MoonStore referral commission has been paid",
-      html: `
-        <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
-          <h2 style="color: #6d28d9;">You've been paid! 💰</h2>
-          <p>Hi ${sellerBusinessName}, your referral commission of <strong>₦${amountPaid.toLocaleString()}</strong> has been sent to your bank account.</p>
-          <a href="${process.env.FRONTEND_URL}/dashboard"
-            style="display:inline-block;padding:10px 20px;background:#6d28d9;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;">
-            View Your Dashboard
-          </a>
-          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore — Your store, your rules.</p>
-        </div>
-      `,
-    });
-  } catch (err) {
-    console.error("Commission paid email error:", err.message);
-  }
-};
 
 const sendLowStockEmail = async (sellerEmail, sellerBusinessName, productName, stockLeft) => {
   try {
@@ -290,4 +248,52 @@ const sendAdminDeletionSummaryEmail = async (deletedSellers) => {
   }
 };
 
-module.exports = { sendSellerNewChatEmail, sendBuyerReplyEmail, sendPasswordResetEmail, sendSubaccountVerifiedEmail, sendSignupConfirmationEmail, sendCommissionPaidEmail, sendLowStockEmail, sendInactivityWarningEmail, sendStoreDeactivatedEmail, sendAdminDeactivationSummaryEmail, sendAdminDeletionSummaryEmail, sendStoreDeletedEmail };
+const sendAdminNewDisputeEmail = async (conversationId, sellerBusinessName, reason, raisedBy) => {
+  try {
+    const disputeLink = `${process.env.FRONTEND_URL}/admin/disputes/${conversationId}`;
+    await resend.emails.send({
+      from: "MoonStore <noreply@moonstore.ng>",
+      to: process.env.ADMIN_EMAIL,
+      subject: `New dispute raised — ${sellerBusinessName}`,
+      html: `
+        <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+          <h2 style="color: #6d28d9;">A dispute needs review ⚠️</h2>
+          <p>Raised by the <strong>${raisedBy}</strong> on an order from <strong>${sellerBusinessName}</strong>.</p>
+          <p>Reason: ${reason}</p>
+          <a href="${disputeLink}"
+            style="display:inline-block;padding:10px 20px;background:#6d28d9;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;">
+            Review Dispute
+          </a>
+        </div>
+      `,
+    });
+  } catch (err) {
+    console.error("Admin new dispute email error:", err.message);
+  }
+};
+
+const sendDisputeNotificationEmail = async (toEmail, recipientName, chatLink, deadline) => {
+  try {
+    await resend.emails.send({
+      from: "MoonStore <noreply@moonstore.ng>",
+      to: toEmail,
+      subject: "MoonStore support needs you in your order chat",
+      html: `
+        <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+          <h2 style="color: #6d28d9;">Action needed on a disputed order</h2>
+          <p>Hi ${recipientName}, MoonStore support is reviewing a dispute on your order and needs your input.</p>
+          <p>Please respond in the chat before <strong>${deadline.toLocaleString("en-NG")}</strong>. If we don't hear from either side by then, a decision will be made automatically.</p>
+          <a href="${chatLink}"
+            style="display:inline-block;padding:10px 20px;background:#6d28d9;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;">
+            Go to Chat
+          </a>
+          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore — Your Store. Your Rules.</p>
+        </div>
+      `,
+    });
+  } catch (err) {
+    console.error("Dispute notification email error:", err.message);
+  }
+};
+
+module.exports = { sendSellerNewChatEmail, sendBuyerReplyEmail, sendPasswordResetEmail, sendSignupConfirmationEmail, sendLowStockEmail, sendInactivityWarningEmail, sendStoreDeactivatedEmail, sendAdminDeactivationSummaryEmail, sendAdminDeletionSummaryEmail, sendStoreDeletedEmail,sendAdminNewDisputeEmail, sendDisputeNotificationEmail };

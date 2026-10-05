@@ -15,7 +15,7 @@ const messageSchema = new mongoose.Schema(
         // system = automated MoonStore messages (security notice, payment confirmed)
         sender: {
             type: String,
-            enum: ["buyer", "seller", "system"],
+            enum: ["buyer", "seller", "system", "admin"],
             required: true,
         },
 

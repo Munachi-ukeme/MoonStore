@@ -6,12 +6,10 @@ const Product = require("../models/Product");
 const Buyer = require("../models/Buyer");
 
 //Utils
-const { sendSellerNewChatEmail } = require("../utils/mailer");
+const { sendSellerNewChatEmail} = require("../utils/mailer");
 const { getIO } = require("../utils/socket");
-const { findOrCreatePartyByEmail, createTransaction, activateTransaction, createCheckoutSession } = require("../utils/escrowpay");
 const { setupEscrowPaymentForConversation, buildPaymentMessage } = require("../utils/setupEscrowPayment");
 const { onboardParty } = require("../utils/escrowpay");
-const { calculateCommissionBps } = require("../utils/feeCalculator");
 const { markOrderPaid } = require("../utils/markOrderPaid");
 const { escrowpayRequest } = require("../utils/escrowpay"); 
 
@@ -145,6 +143,13 @@ items?.forEach((item) => {
             lastMessage: "New order request",
         });
 
+        sendAdminNewDisputeEmail(
+            conversation._id.toString(),
+            seller?.businessName || "Unknown seller",
+            reason.trim(),
+            raisedBy
+        ).catch((err) => console.error("Admin dispute notify error:", err.message));
+
         // ── check if this buyer is already verified anywhere on MoonStore ──
         let buyer = null;
         if (buyerEmail) {
@@ -195,7 +200,6 @@ items?.forEach((item) => {
                 content: "⚠️ We couldn't generate your payment details automatically. The seller will assist you shortly.",
             });
         }
-
         
         
         // notify seller
@@ -425,96 +429,7 @@ const getSellerInbox = async (req, res) => {
     }
 };
 
-const initializeOrderPayment = async (req, res) => {
-    try {
-        const { conversationId } = req.params;
 
-        const conversation = await Conversation.findById(conversationId)
-            .populate("sellerId", "email businessName slug paystackSubaccountCode");
-
-        if (!conversation) {
-            return res.status(404).json({ message: "Conversation not found" });
-        }
-
-        if (conversation.sellerId._id.toString() !== req.seller._id.toString()) {
-            return res.status(403).json({ message: "Access denied" });
-        }
-
-        if (conversation.status === "paid") {
-            return res.status(400).json({ message: "This order is already paid" });
-        }
-
-        const seller = conversation.sellerId;
-
-        if (!seller.paystackSubaccountCode) {
-            return res.status(400).json({
-                message: "Your Paystack subaccount is not set up. Please contact support.",
-            });
-        }
-
-        // conversation.amount holds the REAL price total (sum of product prices)
-        const realPrice = conversation.amount;
-        const buyerChargeAmount = grossUpPrice(realPrice);
-
-        // MoonStore's cut: 4% of the REAL price only, never the inflated total
-        const platformFeeAmount = Math.min(Math.round(realPrice * 0.04), 2000);
-
-        const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY;
-        const PAYSTACK_BASE = "https://api.paystack.co";
-
-        const response = await fetch(`${PAYSTACK_BASE}/transaction/initialize`, {
-            method: "POST",
-            headers: {
-                Authorization: `Bearer ${PAYSTACK_SECRET}`,
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                email: seller.email,
-                amount: buyerChargeAmount * 100, // kobo — total the buyer is charged
-                subaccount: seller.paystackSubaccountCode,
-                transaction_charge: platformFeeAmount * 100, // kobo — MoonStore's exact fixed cut
-                bearer: "account",
-                metadata: {
-                    sellerId: seller._id,
-                    conversationId: conversation._id,
-                    realPrice,
-                    platformFeeAmount,
-                },
-                callback_url: `${process.env.FRONTEND_URL}/${seller.slug}/chat/${conversationId}`,
-            }),
-        });
-
-        const data = await response.json();
-
-        console.log("Paystack response:", JSON.stringify(data));
-
-        if (!data.status) {
-            return res.status(400).json({ message: "Could not generate payment link" });
-        } 
-
-        const paymentUrl = data.data.authorization_url;
-        conversation.paystackReference = data.data.reference;
-
-        const systemMessage = await Message.create({
-            conversationId: conversation._id,
-            sender: "system",
-            content: `💳 Payment link ready. Tap to pay:\n${paymentUrl}`,
-        });
-
-        conversation.lastMessage = "Payment link sent";
-        await conversation.save();
-
-        try {
-            getIO().to(conversationId).emit("new_message", systemMessage);
-        } catch (err) {
-            console.error("Socket emit error:", err.message);
-        }
-
-        res.json({ message: "Payment link generated", paymentUrl });
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-};
 
 const verifyEscrowIfStuck = async (conversation) => {
     if (conversation.status === "paid") return;
@@ -750,6 +665,116 @@ const confirmDelivery = async (req, res) => {
     }
 };
 
+const raiseDispute = async (req, res) => {
+    try {
+        const { conversationId } = req.params;
+        const { reason } = req.body;
+        const sessionId = req.headers["x-session-id"];
+        const raisedBy = req.seller ? "seller" : "buyer";
+
+        if (!reason || !reason.trim()) {
+            return res.status(400).json({ message: "A reason is required to raise a dispute" });
+        }
+
+        const conversation = await Conversation.findById(conversationId);
+        if (!conversation) {
+            return res.status(404).json({ message: "Conversation not found" });
+        }
+
+        if (raisedBy === "buyer" && conversation.buyerSessionId !== sessionId) {
+            return res.status(403).json({ message: "Access denied" });
+        }
+        if (raisedBy === "seller" && conversation.sellerId.toString() !== req.seller._id.toString()) {
+            return res.status(403).json({ message: "Access denied" });
+        }
+
+        if (conversation.escrowStatus === "disputed") {
+            return res.status(400).json({ message: "This order is already under dispute" });
+        }
+        if (conversation.escrowStatus !== "held") {
+            return res.status(400).json({ message: "This order cannot be disputed right now" });
+        }
+
+        conversation.escrowStatus = "disputed";
+        conversation.orderStage = "disputed";
+        conversation.dispute.reason = reason.trim();
+        conversation.dispute.raisedBy = raisedBy;
+        conversation.dispute.raisedAt = new Date();
+        await conversation.save();
+
+        await Message.create({
+            conversationId: conversation._id,
+            sender: "system",
+            content: `⚠️ A dispute has been raised by the ${raisedBy}. MoonStore support will review this order and may join this chat.`,
+        });
+
+        const { sendAdminNewDisputeEmail } = require("../utils/mailer");
+        const seller = await Seller.findById(conversation.sellerId);
+        sendAdminNewDisputeEmail(
+            conversation._id.toString(),
+            seller?.businessName || "Unknown seller",
+            reason.trim(),
+            raisedBy
+        ).catch((err) => console.error("Admin dispute notify error:", err.message));
+
+        res.json({ message: "Dispute raised" });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+const cancelDispute = async (req, res) => {
+    try {
+        const { conversationId } = req.params;
+        const sessionId = req.headers["x-session-id"];
+        const requester = req.seller ? "seller" : "buyer";
+
+        const conversation = await Conversation.findById(conversationId);
+        if (!conversation) return res.status(404).json({ message: "Conversation not found" });
+
+        if (requester === "buyer" && conversation.buyerSessionId !== sessionId) {
+            return res.status(403).json({ message: "Access denied" });
+        }
+        if (requester === "seller" && conversation.sellerId.toString() !== req.seller._id.toString()) {
+            return res.status(403).json({ message: "Access denied" });
+        }
+
+        if (conversation.escrowStatus !== "disputed") {
+            return res.status(400).json({ message: "This order is not under dispute" });
+        }
+
+        if (conversation.dispute.raisedBy !== requester) {
+            return res.status(403).json({ message: "Only the person who raised this dispute can cancel it" });
+        }
+
+        // extend the release deadline by however long the dispute was open,
+        // so a mistaken dispute doesn't cost the seller real delivery-window time
+        if (conversation.dispute.raisedAt && conversation.autoReleaseAt) {
+            const disputeDurationMs = Date.now() - conversation.dispute.raisedAt.getTime();
+            conversation.autoReleaseAt = new Date(conversation.autoReleaseAt.getTime() + disputeDurationMs);
+        }
+
+        conversation.escrowStatus = "held";
+        conversation.orderStage = conversation.deliveredAt ? "delivered" : conversation.shippedAt ? "shipped" : "payment_held";
+        conversation.dispute.reason = "";
+        conversation.dispute.raisedBy = null;
+        conversation.dispute.raisedAt = null;
+        conversation.dispute.notifiedAt = null;
+        conversation.dispute.responseDeadline = null;
+        await conversation.save();
+
+        await Message.create({
+            conversationId: conversation._id,
+            sender: "system",
+            content: `The dispute was cancelled by the ${requester}. This order is back to normal.`,
+        });
+
+        res.json({ message: "Dispute cancelled" });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
 
 module.exports = {
     startConversation,
@@ -758,10 +783,10 @@ module.exports = {
     getMessagesAsSeller,
     sendMessage,
     getSellerInbox,
-    initializeOrderPayment,
     verifyEscrowIfStuck,
     verifyBuyerIdentity,
     markAsShipped,
     confirmDelivery,
-
+    raiseDispute,
+    cancelDispute,
 };
