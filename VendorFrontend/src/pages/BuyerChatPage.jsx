@@ -3,7 +3,7 @@ import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
 import { IoSend } from "react-icons/io5";
 import { io } from "socket.io-client";
 import { GrAttachment } from "react-icons/gr";
-import { getConversationMessages, sendBuyerMessage, reportConversation, sendImageMessage, verifyBuyerIdentity, confirmDelivery, BASE_URL } from "../api/api";
+import { getConversationMessages, sendBuyerMessage, reportConversation, sendImageMessage, verifyBuyerIdentity, confirmDelivery, BASE_URL, raiseDisputeBuyer } from "../api/api";
 import { getOrCreateSessionId } from "../utils/session";
 import styles from "./BuyerChatPage.module.css";
 
@@ -73,6 +73,10 @@ const BuyerChatPage = () => {
     const [error, setError] = useState("");
     const [fullscreenImage, setFullscreenImage] = useState(null);
     const [imageError, setImageError] = useState("");
+    const [showDisputeModal, setShowDisputeModal] = useState(false);
+    const [disputeReason, setDisputeReason] = useState("");
+const [disputeSending, setDisputeSending] = useState(false);
+const [disputeSent, setDisputeSent] = useState(false);
 
     // ── identity verification state ──
     const [ninType, setNinType] = useState("nin");
@@ -236,6 +240,18 @@ const BuyerChatPage = () => {
         }
     };
 
+    const handleRaiseDispute = async () => {
+    if (!disputeReason.trim()) return;
+    setDisputeSending(true);
+    const data = await raiseDisputeBuyer(conversationId, sessionId, disputeReason.trim());
+    if (!data.error) {
+        setDisputeSent(true);
+        setShowDisputeModal(false);
+        fetchMessages();
+    }
+    setDisputeSending(false);
+};
+
     const handleSendAll = async () => {
         if (!input.trim() && !pendingImage) return;
         setSending(true);
@@ -272,6 +288,11 @@ const BuyerChatPage = () => {
         setReportSent("");
         setReportSending(false);
     };
+
+    const handleCancelDispute = async () => {
+    const data = await cancelDisputeBuyer(conversationId, sessionId);
+    if (!data.error) fetchMessages();
+};
 
     const handleImagePick = () => {
         setImageError("");
@@ -577,8 +598,10 @@ const BuyerChatPage = () => {
                 <button className={styles.backBtnAlt} onClick={() => navigate(`/${slug}/orders`)}>
                     ←
                 </button>
+
                 <span className={styles.storeName}>{slug}</span>
                 {stageBadgeText() ? <span className={styles.paidBadge}>{stageBadgeText()}</span> : null}
+
                 <div className={styles.headerActions}>
                     {canConfirmDelivery ? (
                         <button className={styles.confirmDeliveryBtn} onClick={() => setShowPinModal(true)}>
@@ -599,7 +622,48 @@ const BuyerChatPage = () => {
                         Report
                     </button>
                 </div>
+
+                {conversation?.orderStage === "delivered" ? (
+    <button className={styles.disputeBtn} onClick={() => setShowDisputeModal(true)}>
+        Dispute
+    </button>
+) : null}
+
+{showDisputeModal ? (
+    <div className={styles.modalOverlay}>
+        <div className={styles.modal}>
+            <h3>Raise a Dispute</h3>
+            <p>Tell us what went wrong with this order. Your payment will stay on hold while we review.</p>
+            <textarea
+                className={styles.reportInput}
+                value={disputeReason}
+                onChange={(e) => setDisputeReason(e.target.value)}
+                placeholder="Describe the issue..."
+                rows={4}
+            />
+            <div className={styles.modalActions}>
+                <button className={styles.cancelBtn} onClick={() => setShowDisputeModal(false)}>
+                    Cancel
+                </button>
+                <button
+                    className={styles.submitBtn}
+                    onClick={handleRaiseDispute}
+                    disabled={disputeSending || !disputeReason.trim()}
+                >
+                    {disputeSending ? "Submitting..." : "Submit Dispute"}
+                </button>
             </div>
+            {disputeSent ? <p className={styles.reportSuccess}>Dispute submitted. Our team will review this order.</p> : null}
+        </div>
+    </div>
+) : null}
+
+{conversation?.orderStage === "disputed" && conversation?.dispute?.raisedBy === "buyer" ? (
+    <button className={styles.cancelDisputeBtn} onClick={handleCancelDispute}>
+        Cancel Dispute
+    </button>
+) : null}
+        </div>
 
             <div className={styles.messages}>
                 {messages?.map((msg) => renderMessage(msg))}

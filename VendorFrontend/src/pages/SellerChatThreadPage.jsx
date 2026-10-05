@@ -9,6 +9,7 @@ import {
     generatePaymentLink,
     sendImageMessage,
     BASE_URL,
+    raiseDisputeSeller
 } from "../api/api";
 import styles from "./SellerChatThreadPage.module.css";
 
@@ -95,6 +96,10 @@ const SellerChatThreadPage = () => {
     const [generatingLink, setGeneratingLink] = useState(false);
     const [linkError, setLinkError] = useState("");
     const [fullscreenImage, setFullscreenImage] = useState(null);
+    const [showDisputeModal, setShowDisputeModal] = useState(false);
+const [disputeReason, setDisputeReason] = useState("");
+const [disputeSending, setDisputeSending] = useState(false);
+const [disputeSent, setDisputeSent] = useState(false);
     const [error, setError] = useState("");
     const [imageError, setImageError] = useState("");
     const bottomRef = useRef(null);
@@ -232,6 +237,18 @@ const SellerChatThreadPage = () => {
         }
     };
 
+    const handleRaiseDispute = async () => {
+    if (!disputeReason.trim()) return;
+    setDisputeSending(true);
+    const data = await raiseDisputeSeller(conversationId, disputeReason.trim());
+    if (!data.error) {
+        setDisputeSent(true);
+        setShowDisputeModal(false);
+        fetchThread();
+    }
+    setDisputeSending(false);
+};
+
     const handleImagePick = () => {
         setImageError("");
         fileInputRef.current.click();
@@ -255,21 +272,10 @@ const SellerChatThreadPage = () => {
         e.target.value = "";
     };
 
-    const handleGeneratePaymentLink = async () => {
-        setGeneratingLink(true);
-        setLinkError("");
-        const data = await generatePaymentLink(conversationId);
-        setGeneratingLink(false);
-        if (data.error) {
-            setLinkError(data.error);
-            setTimeout(() => setLinkError(""), 3000);
-            return;
-        }
-        const updated = await getSellerChatMessages(conversationId);
-        if (!updated.error) {
-            setMessages(updated.messages);
-        }
-    };
+ const handleCancelDispute = async () => {
+    const data = await cancelDisputeSeller(conversationId);
+    if (!data.error) fetchThread();
+};
 
     const renderMessageContent = (content, msgId) => {
         if (!content) return <span key={`${msgId}-empty`} style={{ display: "none" }} />;
@@ -379,12 +385,53 @@ const SellerChatThreadPage = () => {
 
             <div className={styles.header}>
                 <button className={styles.backBtn} onClick={() => navigate("/dashboard/inbox")}>←</button>
+
                 <div className={styles.headerInfo}>
                     <span className={styles.productName}>
                         {conversation?.productIds?.[0]?.name || "Order"}
                     </span>
-                    <span className={styles.statusLabel}>{isPaid ? "Paid" : "Active"}</span>
                 </div>
+
+                {(isPaid && conversation?.orderStage !== "released" && conversation?.orderStage !== "refunded" && conversation?.orderStage !== "disputed") ? (
+    <button className={styles.disputeBtn} onClick={() => setShowDisputeModal(true)}>
+        Dispute
+    </button>
+) : null}
+
+{showDisputeModal ? (
+    <div className={styles.modalOverlay}>
+        <div className={styles.modal}>
+            <h3>Raise a Dispute</h3>
+            <p>Tell us what went wrong with this order. The payment will stay on hold while we review.</p>
+            <textarea
+                className={styles.disputeTextarea}
+                value={disputeReason}
+                onChange={(e) => setDisputeReason(e.target.value)}
+                placeholder="Describe the issue..."
+                rows={4}
+            />
+            <div className={styles.modalActions}>
+                <button className={styles.cancelBtn} onClick={() => setShowDisputeModal(false)}>
+                    Cancel
+                </button>
+                <button
+                    className={styles.submitDisputeBtn}
+                    onClick={handleRaiseDispute}
+                    disabled={disputeSending || !disputeReason.trim()}
+                >
+                    {disputeSending ? "Submitting..." : "Submit Dispute"}
+                </button>
+            </div>
+            {disputeSent ? <p className={styles.disputeSuccess}>Dispute submitted. Our team will review this order.</p> : null}
+        </div>
+    </div>
+) : null}
+
+{conversation?.orderStage === "disputed" && conversation?.dispute?.raisedBy === "seller" ? (
+    <button className={styles.cancelDisputeBtn} onClick={handleCancelDispute}>
+        Cancel Dispute
+    </button>
+) : null}
             </div>
 
             <div className={styles.messages}>
@@ -392,19 +439,7 @@ const SellerChatThreadPage = () => {
                 <div ref={bottomRef} />
             </div>
 
-            <div className={styles.bottomBar}>
-                {!isPaid ? (
-                    <>
-                        {linkError ? <p className={styles.linkError}>{linkError}</p> : null}
-                        <button
-                            className={styles.generateBtn}
-                            onClick={handleGeneratePaymentLink}
-                            disabled={generatingLink}
-                        >
-                            {generatingLink ? "Generating..." : "💳 Generate Payment Link"}
-                        </button>
-                    </>
-                ) : null}
+            <div className={styles.bottomBar}>              
 
                 {imageError ? <p className={styles.imageError}>{imageError}</p> : null}
 

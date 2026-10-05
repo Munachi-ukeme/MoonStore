@@ -830,3 +830,131 @@ export const verifySubaccountAdmin = async (email) => {
     return { error: err.message || "Could not verify subaccount. Please try again." };
   }
 };
+
+export const getDisputedConversationsAdmin = async () => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/admin/disputes`, {
+      headers: getAdminHeaders(),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Could not load disputes" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Could not load disputes. Please try again." };
+  }
+};
+
+export const getDisputeDetailAdmin = async (conversationId) => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/admin/disputes/${conversationId}`, {
+      headers: getAdminHeaders(),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Could not load dispute" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Could not load dispute. Please try again." };
+  }
+};
+
+export const sendAdminDisputeMessage = async (conversationId, content) => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/admin/disputes/${conversationId}/message`, {
+      method: "POST",
+      headers: getAdminHeaders(),
+      body: JSON.stringify({ content }),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Could not send message" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Could not send message. Please try again." };
+  }
+};
+
+export const resolveDisputeAdmin = async (conversationId, resolution, splitSellerPercent) => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/admin/disputes/${conversationId}/resolve`, {
+      method: "POST",
+      headers: getAdminHeaders(),
+      body: JSON.stringify({ resolution, splitSellerPercent }),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Could not resolve dispute" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Could not resolve dispute. Please try again." };
+  }
+};
+
+export const raiseDisputeBuyer = async (conversationId, sessionId, reason) => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/chat/${conversationId}/dispute/buyer`, {
+      method: "POST",
+      headers: { "x-session-id": sessionId },
+      body: JSON.stringify({ reason }),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Could not raise dispute" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Could not raise dispute" };
+  }
+};
+
+export const raiseDisputeSeller = async (conversationId, reason) => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/chat/${conversationId}/dispute/seller`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ reason }),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Could not raise dispute" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Could not raise dispute" };
+  }
+};
+
+export const notifyDisputePartiesAdmin = async (conversationId) => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/admin/disputes/${conversationId}/notify`, {
+      method: "POST",
+      headers: getAdminHeaders(),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Could not notify parties" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Could not notify parties" };
+  }
+};
+
+export const cancelDisputeBuyer = async (conversationId, sessionId) => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/chat/${conversationId}/dispute/buyer/cancel`, {
+      method: "POST",
+      headers: { "x-session-id": sessionId },
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Could not cancel dispute" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Could not cancel dispute" };
+  }
+};
+
+export const cancelDisputeSeller = async (conversationId) => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/chat/${conversationId}/dispute/seller/cancel`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Could not cancel dispute" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Could not cancel dispute" };
+  }
+};
