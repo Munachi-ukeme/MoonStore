@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate} from "react-router-dom";
 import styles from "./ProductCard.module.css";
-import { grossUpPrice } from "../utils/pricing";
+
 
 function ProductCard({ product, slug}){
     const navigate = useNavigate();

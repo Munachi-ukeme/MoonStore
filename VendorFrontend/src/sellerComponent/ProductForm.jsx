@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { createProduct, updateProduct, getCategories } from "../api/api";
 import imageCompression from "browser-image-compression";
 import styles from "./ProductForm.module.css";
-import { grossUpPrice } from "../utils/pricing";
 
 const ProductForm = ({ editingProduct, onSaved, onCancel }) => {
     const maxImages = 5;
