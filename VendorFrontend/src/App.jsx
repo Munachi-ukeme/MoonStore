@@ -30,7 +30,6 @@ import AdminLoginPage from "./adminComponent/AdminLoginPage";
 import AdminProtectedRoute from "./AdminProtectedRoute";
 import AdminSellersPage from "./adminComponent/AdminSellersPage";
 import AdminLayout from "./adminComponent/AdminLayout";
-import AdminReferralsPage from "./adminComponent/AdminReferralsPage";
 import AdminReportsPage from "./adminComponent/AdminReportsPage";
 import AdminRevenuePage from "./adminComponent/AdminRevenuePage";
 import AdminExitSurveysPage from "./adminComponent/AdminExitSurveysPage";
@@ -184,13 +183,6 @@ const MainRoutes = () => {
         </AdminProtectedRoute>
       }/>
 
-      <Route path="/admin/referrals" element={
-        <AdminProtectedRoute>
-          <AdminLayout>
-            <AdminReferralsPage />
-          </AdminLayout>
-        </AdminProtectedRoute>
-      }/>
 
       <Route path="/admin/reports" element={
         <AdminProtectedRoute>
