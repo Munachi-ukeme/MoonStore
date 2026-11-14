@@ -3,7 +3,6 @@ const Conversation = require("../models/Conversation");
 const Transaction = require("../models/Transaction");
 const mongoose = require("mongoose");
 
-// POST /api/analytics/store-visit
 const trackStoreVisit = async (req, res) => {
   try {
     const { sellerId, sessionId, referrer } = req.body;
@@ -25,8 +24,6 @@ const trackStoreVisit = async (req, res) => {
   }
 };
 
-
-// POST /api/analytics/product-click
 const trackProductClick = async (req, res) => {
   try {
     const { sellerId, productId, sessionId } = req.body;
@@ -48,20 +45,19 @@ const trackProductClick = async (req, res) => {
   }
 };
 
-// GET /api/analytics/summary — protected, seller only
 const getAnalyticsSummary = async (req, res) => {
   try {
     const sellerId = req.seller._id;
-    const { period } = req.query; // today, week, month, last_month, year, last_year
+    const { period } = req.query;
 
     const now = new Date();
     let startDate;
-    let endDate = new Date(); // default end is now
+    let endDate = new Date();
 
     if (period === "today") {
       startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
     } else if (period === "week") {
-      const day = now.getDay(); // 0 = Sunday
+      const day = now.getDay();
       startDate = new Date(now);
       startDate.setDate(now.getDate() - day);
       startDate.setHours(0, 0, 0, 0);
@@ -76,109 +72,133 @@ const getAnalyticsSummary = async (req, res) => {
       startDate = new Date(now.getFullYear() - 1, 0, 1);
       endDate = new Date(now.getFullYear() - 1, 11, 31, 23, 59, 59);
     } else {
-      // default: this month
       startDate = new Date(now.getFullYear(), now.getMonth(), 1);
     }
 
     const dateFilter = { $gte: startDate, $lte: endDate };
+    const sellerObjectId = new mongoose.Types.ObjectId(sellerId);
 
-    // store visits
     const storeVisits = await Analytics.countDocuments({
       sellerId,
       type: "store_visit",
       createdAt: dateFilter,
     });
 
-// orders = product clicks = buyer tapped Order Now
-// orders = conversations started by buyers
-const orders = await Conversation.countDocuments({
-    sellerId,
-    createdAt: dateFilter,
-});
+    const orders = await Conversation.countDocuments({
+      sellerId,
+      createdAt: dateFilter,
+    });
 
- // products sold = conversations marked paid in period
     const productsSold = await Conversation.countDocuments({
       sellerId,
       status: "paid",
       paidAt: dateFilter,
     });
 
-    // pending payments = total amount paid today, awaiting Paystack daily settlement
-const startOfToday = new Date();
-startOfToday.setHours(0, 0, 0, 0);
-
-const endOfToday = new Date();
-endOfToday.setHours(23, 59, 59, 999);
-
-const pendingAggregate = await Conversation.aggregate([
-    {
+    // Total Sales — gross value of everything paid for in this period,
+    // regardless of what stage it's at now (held, shipped, released, disputed)
+    const totalSalesAggregate = await Conversation.aggregate([
+      {
         $match: {
-            sellerId: new mongoose.Types.ObjectId(sellerId),
-            status: "paid",
-            paidAt: { $gte: startOfToday, $lte: endOfToday },
+          sellerId: sellerObjectId,
+          status: "paid",
+          paidAt: dateFilter,
         },
-    },
-    {
-        $group: {
-            _id: null,
-            total: { $sum: "$amount" },
-        },
-    },
-]);
+      },
+      { $group: { _id: null, total: { $sum: "$amount" } } },
+    ]);
+    const totalSales = totalSalesAggregate[0]?.total || 0;
 
-const pendingPayments = pendingAggregate[0]?.total || 0;
-
-
-
-    const salesAggregate = await Conversation.aggregate([
-    {
+    // Held in Escrow — money paid in this period that is STILL locked up,
+    // not yet released to the seller and not refunded/disputed away
+    const heldAggregate = await Conversation.aggregate([
+      {
         $match: {
-            sellerId: new mongoose.Types.ObjectId(sellerId),
-            status: "paid",
-            paidAt: dateFilter,
+          sellerId: sellerObjectId,
+          escrowStatus: "held",
+          paidAt: dateFilter,
         },
-    },
-    {
-        $group: {
-            _id: null,
-            total: { $sum: "$amount" },
-        },
-    },
-]);
+      },
+      { $group: { _id: null, total: { $sum: "$amount" } } },
+    ]);
+    const heldInEscrow = heldAggregate[0]?.total || 0;
 
-const totalSales = salesAggregate[0]?.total || 0;
-
-// Seller's real take-home — uses actual recorded platformFee per sale
-// (capped at ₦2,000 each), not a flat 4% guess
-const earningsAggregate = await Transaction.aggregate([
-    {
+    // Released to You — real take-home, only orders actually released in
+    // this period (filtered by releasedAt, not paidAt — this answers
+    // "how much actually hit my account during this period")
+    const releasedAggregate = await Transaction.aggregate([
+      {
         $match: {
-            sellerId: new mongoose.Types.ObjectId(sellerId),
-            type: "order",
-            createdAt: dateFilter,
+          sellerId: sellerObjectId,
+          type: "order",
         },
-    },
-    {
+      },
+      {
+        $lookup: {
+          from: "conversations",
+          localField: "conversationId",
+          foreignField: "_id",
+          as: "conversation",
+        },
+      },
+      { $unwind: "$conversation" },
+      {
+        $match: {
+          "conversation.escrowStatus": "released",
+          "conversation.releasedAt": dateFilter,
+        },
+      },
+      {
         $group: {
-            _id: null,
-            totalAmount: { $sum: "$amount" },
-            totalFee: { $sum: "$platformFee" },
+          _id: null,
+          totalAmount: { $sum: "$amount" },
+          totalFee: { $sum: "$platformFee" },
         },
-    },
-]);
+      },
+    ]);
+    const releasedToYou = releasedAggregate[0]
+      ? releasedAggregate[0].totalAmount - releasedAggregate[0].totalFee
+      : 0;
 
-const sellerEarnings = earningsAggregate[0]
-    ? earningsAggregate[0].totalAmount - earningsAggregate[0].totalFee
-    : 0;
+    // Disputed — count + value of orders currently under dispute
+    const disputedAggregate = await Conversation.aggregate([
+      {
+        $match: {
+          sellerId: sellerObjectId,
+          escrowStatus: "disputed",
+          paidAt: dateFilter,
+        },
+      },
+      { $group: { _id: null, total: { $sum: "$amount" }, count: { $sum: 1 } } },
+    ]);
+    const disputedCount = disputedAggregate[0]?.count || 0;
+    const disputedAmount = disputedAggregate[0]?.total || 0;
 
+    // Refunded — count + value of orders refunded back to buyer
+    const refundedAggregate = await Conversation.aggregate([
+      {
+        $match: {
+          sellerId: sellerObjectId,
+          escrowStatus: "refunded",
+          paidAt: dateFilter,
+        },
+      },
+      { $group: { _id: null, total: { $sum: "$amount" }, count: { $sum: 1 } } },
+    ]);
+    const refundedCount = refundedAggregate[0]?.count || 0;
+    const refundedAmount = refundedAggregate[0]?.total || 0;
 
     res.json({
       storeVisits,
       orders,
       productsSold,
-      pendingPayments,
       totalSales,
-      sellerEarnings
+      heldInEscrow,
+      releasedToYou,
+      disputedCount,
+      disputedAmount,
+      refundedCount,
+      refundedAmount,
     });
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch analytics" });

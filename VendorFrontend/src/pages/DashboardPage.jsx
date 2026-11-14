@@ -10,7 +10,6 @@ function DashboardPage() {
     const navigate = useNavigate();
     const location = useLocation();
 
-    const referralLink = `https://moonstore.ng/register?ref=${seller?.referralCode || ""}`;
     const storeLink = `moonstore.ng/${seller?.slug || ""}`;
 
     const [products, setProducts] = useState([]);
@@ -18,7 +17,6 @@ function DashboardPage() {
     const [categories, setCategories] = useState([]);
     const [error, setError] = useState(null);
     const [copied, setCopied] = useState(false);
-    const [copiedReferral, setCopiedReferral] = useState(false);
     const [showWelcomePopup, setShowWelcomePopup] = useState(false);
 
     const isInactive = !seller?.isActive;
@@ -75,13 +73,6 @@ function DashboardPage() {
         navigator.clipboard.writeText(storeLink);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
-    };
-
-    const handleCopyReferral = () => {
-        if (isInactive) return;
-        navigator.clipboard.writeText(referralLink);
-        setCopiedReferral(true);
-        setTimeout(() => setCopiedReferral(false), 2000);
     };
 
     const visitStore = () => {
@@ -218,7 +209,7 @@ function DashboardPage() {
                         <p className={styles.cardHint}>Total items listed in store</p>
                     </div>
 
-                    <div className={styles.card}>
+            <div className={styles.card}>
             <p className={styles.cardLabel}>Categories</p>
             <p className={styles.cardValue}>{categories.length}</p>
             <p className={styles.cardHint}>Active store categories</p>
@@ -227,42 +218,7 @@ function DashboardPage() {
             )}
 
             {/* Analytics Overview */}
-            {seller ? <AnalyticsSection /> : null}
-
-            {/* Referral Program Card */}
-            <div className={styles.referralCard}>
-                <p className={styles.heroLabel}>Earn ₦3,000 Per Referral</p>
-                <div className={styles.storeLinkRow}>
-                    <button
-                        className={styles.copyButton}
-                        onClick={handleCopyReferral}
-                    >
-                        {copiedReferral ? "Copied!" : "Copy"}
-                    </button>
-                </div>
-
-                <div className={styles.commissionRow}>
-                    <div className={styles.commissionItem}>
-                        <p className={styles.commissionLabel}>Total Earned</p>
-                        <p className={styles.commissionValue}>
-                            ₦{seller?.totalEarned?.toLocaleString() || 0}
-                        </p>
-                    </div>
-                    <div className={styles.commissionItem}>
-                        <p className={styles.commissionLabel}>Pending</p>
-                        <p className={styles.commissionValue}>
-                            ₦{seller?.commissionBalance?.toLocaleString() || 0}
-                        </p>
-                    </div>
-                    <div className={styles.commissionItem}>
-                        <p className={styles.commissionLabel}>Paid Out</p>
-                        <p className={styles.commissionValue}>
-                            ₦{seller?.totalPaid?.toLocaleString() || 0}
-                        </p>
-                    </div>
-                </div>
-            </div>
-
+            {seller ? <AnalyticsSection /> : null}          
             
         </div>
     );

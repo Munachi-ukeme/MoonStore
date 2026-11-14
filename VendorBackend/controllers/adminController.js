@@ -9,10 +9,12 @@ const ExitSurvey = require("../models/ExitSurvey");
 const Transaction = require("../models/Transaction");
 const crypto = require("crypto");
 
-const { createRelease, createRefund } = require("../utils/escrowpay");
+const { getFullAmountMinor, releaseFunds, refundFunds } = require("../utils/escrowActions");
 const { restoreStockOnRefund } = require("../utils/restoreStockOnRefund");
 const { getIO } = require("../utils/socket");
 const { sendSms } = require("../utils/termii");
+const { applyDisputeOutcome } = require("../utils/strikes");
+
 
 let activeAdminToken = null;
 let adminTokenExpires = null;
@@ -148,36 +150,9 @@ const verifySubaccount = async (req, res) => {
   }
 };
 
-// Deactivates Paystack subaccount when a seller account is deleted
-const deactivateSubaccount = async (subaccountCode) => {
-  try {
-    const response = await fetch(
-      `https://api.paystack.co/subaccount/${subaccountCode}`,
-      {
-        method: "PUT",
-        headers: {
-          Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ active: false }),
-      }
-    );
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        `Paystack error ${response.status}: ${errorData.message || "Unknown error"}`
-      );
-    }
-
-    console.log(`Subaccount deactivated: ${subaccountCode}`);
-  } catch (err) {
-    console.error("Subaccount deactivation failed:", err.message);
-  }
-};
 
 // DELETE SELLER ACCOUNT
-// DELETE /api/admin/delete-seller
 const deleteSeller = async (req, res) => {
   try {
     if (!verifyAdmin(req, res)) return;
@@ -189,8 +164,15 @@ const deleteSeller = async (req, res) => {
       return res.status(404).json({ message: "Seller not found" });
     }
 
-    if (seller.paystackSubaccountCode) {
-      await deactivateSubaccount(seller.paystackSubaccountCode);
+    const activeEscrowCount = await Conversation.countDocuments({
+      sellerId: seller._id,
+      escrowStatus: { $in: ["held", "disputed"] },
+    });
+
+    if (activeEscrowCount > 0) {
+      return res.status(400).json({
+        message: `${activeEscrowCount} order(s) still have money held in escrow. Resolve them before deleting this seller.`,
+      });
     }
 
     const conversations = await Conversation.find({ sellerId: seller._id });
@@ -226,10 +208,6 @@ const getAllSellers = async (req, res) => {
       phoneNumber: seller.phoneNumber,
       howHeardAboutUs: seller.howHeardAboutUs,
       howHeardAboutUsOther: seller.howHeardAboutUsOther,
-      referralCode: seller.referralCode,
-      commissionBalance: seller.commissionBalance,
-      totalEarned: seller.totalEarned,
-      totalPaid: seller.totalPaid,
       bankDetails: seller.bankDetails,
       joinedDate: seller.createdAt,
     }));
@@ -491,78 +469,172 @@ const resolveDispute = async (req, res) => {
         if (!verifyAdmin(req, res)) return;
 
         const { conversationId } = req.params;
-        const { resolution, splitSellerPercent } = req.body;
+        const { resolution, splitSellerPercent, splitSellerAmount, note } = req.body;
 
         const conversation = await Conversation.findById(conversationId);
         if (!conversation) {
             return res.status(404).json({ message: "Conversation not found" });
         }
 
-        if (conversation.escrowStatus !== "disputed") {
+        // a split can be retried for its second half after the first half's webhook has already moved the order on
+        const isOpenDispute = conversation.escrowStatus === "disputed";
+        const isSplitRetry =
+            resolution === "split" &&
+            conversation.escrowStatus === "released" &&
+            !!conversation.dispute.raisedAt &&
+            !conversation.dispute.resolvedAt &&
+            !conversation.refundId;
+
+        if (!isOpenDispute && !isSplitRetry) {
             return res.status(400).json({ message: "This order is not under dispute" });
         }
 
-        const totalMinor = conversation.amount * 100;
+        const totalMinor = getFullAmountMinor(conversation);
+        const cleanNote = typeof note === "string" ? note.trim().slice(0, 500) : "";
+
+        let outcome = "";
+        let decisionText = "";
 
         if (resolution === "seller") {
-            const result = await createRelease({
-                transactionId: conversation.escrowTransactionId,
-                amountMinor: totalMinor,
-                reason: "Dispute resolved in seller's favor by admin",
-            });
-            if (!result.ok) return res.status(500).json({ message: "Release failed", detail: result.data });
+            const result = await releaseFunds(conversation, totalMinor, "Dispute resolved in seller's favor by admin");
 
-            conversation.dispute.resolution = "released_to_seller";
-
-        } else if (resolution === "buyer") {
-            const result = await createRefund({
-                transactionId: conversation.escrowTransactionId,
-                amountMinor: totalMinor,
-                reason: "Dispute resolved in buyer's favor by admin",
-            });
-            if (!result.ok) return res.status(500).json({ message: "Refund failed", detail: result.data });
-
-            conversation.dispute.resolution = "refunded_to_buyer";
-            await restoreStockOnRefund(conversation);
-
-        } else if (resolution === "split") {
-            const sellerPercent = Number(splitSellerPercent);
-            if (!sellerPercent || sellerPercent <= 0 || sellerPercent >= 100) {
-                return res.status(400).json({ message: "Invalid split percentage" });
+            if (!result.ok) {
+                return res.status(result.skipped ? 400 : 500).json({
+                    message: result.skipped ? "A release is already in progress for this order" : "Release failed",
+                    detail: result.detail,
+                });
             }
 
-            const sellerAmountMinor = Math.round((totalMinor * sellerPercent) / 100);
+            conversation.dispute.resolution = "released_to_seller";
+            outcome = "released_to_seller";
+            decisionText = "The payment is being released to the seller.";
+
+        } else if (resolution === "buyer") {
+            const result = await refundFunds(conversation, totalMinor, "Dispute resolved in buyer's favor by admin");
+
+            if (!result.ok) {
+                return res.status(result.skipped ? 400 : 500).json({
+                    message: result.skipped ? "A refund is already in progress for this order" : "Refund failed",
+                    detail: result.detail,
+                });
+            }
+
+            conversation.dispute.resolution = "refunded_to_buyer";
+            outcome = "refunded_to_buyer";
+            decisionText = "The buyer is being refunded.";
+
+        } else if (resolution === "split") {
+            // the admin can split by a naira amount for the seller, or by a percentage
+            let sellerAmountMinor = 0;
+
+            if (splitSellerAmount !== undefined && splitSellerAmount !== null && splitSellerAmount !== "") {
+                const sellerNaira = Number(splitSellerAmount);
+
+                if (!Number.isInteger(sellerNaira) || sellerNaira <= 0 || sellerNaira * 100 >= totalMinor) {
+                    return res.status(400).json({ message: "The seller's amount must be a whole number below the order total" });
+                }
+
+                sellerAmountMinor = sellerNaira * 100;
+            } else {
+                const sellerPercent = Number(splitSellerPercent);
+
+                if (!sellerPercent || sellerPercent <= 0 || sellerPercent >= 100) {
+                    return res.status(400).json({ message: "Invalid split percentage" });
+                }
+
+                sellerAmountMinor = Math.round((totalMinor * sellerPercent) / 100);
+            }
+
             const buyerAmountMinor = totalMinor - sellerAmountMinor;
 
-            const releaseResult = await createRelease({
-                transactionId: conversation.escrowTransactionId,
-                amountMinor: sellerAmountMinor,
-                reason: `Dispute split resolution — ${sellerPercent}% to seller`,
-            });
-            if (!releaseResult.ok) return res.status(500).json({ message: "Partial release failed", detail: releaseResult.data });
+            if (sellerAmountMinor <= 0 || buyerAmountMinor <= 0) {
+                return res.status(400).json({ message: "Both sides must receive something in a split" });
+            }
 
-            const refundResult = await createRefund({
-                transactionId: conversation.escrowTransactionId,
-                amountMinor: buyerAmountMinor,
-                reason: `Dispute split resolution — ${100 - sellerPercent}% to buyer`,
-            });
-            if (!refundResult.ok) return res.status(500).json({ message: "Partial refund failed", detail: refundResult.data });
+            if (!conversation.releaseId) {
+                const releaseResult = await releaseFunds(
+                    conversation,
+                    sellerAmountMinor,
+                    "Dispute split resolution: seller's share"
+                );
+
+                if (!releaseResult.ok) {
+                    return res.status(500).json({
+                        message: "The seller's share could not be released. Nothing was sent. Try again.",
+                        detail: releaseResult.detail,
+                    });
+                }
+            }
+
+            if (!conversation.refundId) {
+                const refundResult = await refundFunds(
+                    conversation,
+                    buyerAmountMinor,
+                    "Dispute split resolution: buyer's share"
+                );
+
+                if (!refundResult.ok) {
+                    return res.status(500).json({
+                        message: "The seller's share was released, but the buyer's refund failed. Click Split again to retry only the refund.",
+                        detail: refundResult.detail,
+                    });
+                }
+            }
+
+            const sellerNairaText = (sellerAmountMinor / 100).toLocaleString("en-NG");
+            const buyerNairaText = (buyerAmountMinor / 100).toLocaleString("en-NG");
 
             conversation.dispute.resolution = "released_to_seller";
-            conversation.dispute.resolutionNotes = `Split: ${sellerPercent}% seller / ${100 - sellerPercent}% buyer`;
+            conversation.dispute.resolutionNotes = `Split: ₦${sellerNairaText} seller / ₦${buyerNairaText} buyer`;
+            outcome = "split";
+            decisionText = `The payment is split: ₦${sellerNairaText} to the seller and ₦${buyerNairaText} to the buyer.`;
 
         } else {
             return res.status(400).json({ message: "Invalid resolution type" });
         }
 
-        conversation.dispute.resolvedAt = new Date();
+        // everything below happens once per dispute, even if the admin clicks again to retry a failed half
+        const firstTime = !conversation.dispute.resolvedAt;
+
+        if (firstTime) {
+            // statistics only
+            if (conversation.dispute.raisedBy === "buyer") {
+                const seller = await Seller.findById(conversation.sellerId);
+                if (seller) {
+                    seller.disputesAgainst = (seller.disputesAgainst || 0) + 1;
+                    await seller.save();
+                }
+
+                const buyer = conversation.buyerEmail
+                    ? await Buyer.findOne({ email: conversation.buyerEmail.toLowerCase().trim() })
+                    : null;
+                if (buyer) {
+                    buyer.disputesRaised = (buyer.disputesRaised || 0) + 1;
+                    await buyer.save();
+                }
+            }
+
+            // strikes: warnings and blocks
+            await applyDisputeOutcome(conversation, outcome);
+
+            conversation.dispute.resolvedAt = new Date();
+        }
+
+        if (cleanNote) {
+            conversation.dispute.resolutionNotes = conversation.dispute.resolutionNotes
+                ? `${conversation.dispute.resolutionNotes} | ${cleanNote}`
+                : cleanNote;
+        }
+
         await conversation.save();
 
-        await Message.create({
-            conversationId: conversation._id,
-            sender: "system",
-            content: "This dispute has been resolved by MoonStore support.",
-        });
+        if (firstTime) {
+            await Message.create({
+                conversationId: conversation._id,
+                sender: "system",
+                content: `This dispute has been resolved by MoonStore support. ${decisionText}${cleanNote ? ` Note from support: ${cleanNote}` : ""}`,
+            });
+        }
 
         res.json({ message: "Dispute resolved" });
     } catch (err) {
@@ -575,7 +647,10 @@ const notifyDisputeParties = async (req, res) => {
         if (!verifyAdmin(req, res)) return;
         const { conversationId } = req.params;
 
-        const conversation = await Conversation.findById(conversationId).populate("sellerId", "businessName email slug");
+        const conversation = await Conversation.findById(conversationId).populate(
+            "sellerId",
+            "businessName email slug phoneNumber whatsappNumber"
+        );
         if (!conversation) return res.status(404).json({ message: "Conversation not found" });
 
         if (conversation.escrowStatus !== "disputed") {
@@ -590,7 +665,7 @@ const notifyDisputeParties = async (req, res) => {
         await Message.create({
             conversationId: conversation._id,
             sender: "system",
-            content: `MoonStore support is ready to review this dispute. Please respond in this chat within 24 hours. If neither party responds by ${deadline.toLocaleString("en-NG")}, a decision will be made automatically.`,
+            content: `MoonStore support is reviewing this dispute. Please reply in this chat before ${deadline.toLocaleString("en-NG")} so our team has everything it needs.`,
         });
 
         const { sendDisputeNotificationEmail } = require("../utils/mailer");
@@ -603,17 +678,21 @@ const notifyDisputeParties = async (req, res) => {
         sendDisputeNotificationEmail(conversation.sellerId.email, conversation.sellerId.businessName, chatLink, deadline)
             .catch((err) => console.error("Dispute email (seller) error:", err.message));
 
-                if (conversation.buyerPhone) {
+        const buyerPhone = conversation.buyerPhone || conversation.deliveryPhone;
+        if (buyerPhone) {
             sendSms({
-                to: conversation.buyerPhone,
-                message: `MoonStore: Support needs your input on a disputed order. Check your chat before ${deadline.toLocaleString("en-NG")}.`,
+                to: buyerPhone,
+                message: `MoonStore: Support needs your input on a disputed order. Check your order chat before ${deadline.toLocaleString("en-NG")}.`,
             }).catch((err) => console.error("Buyer SMS error:", err.message));
         }
 
-        sendSms({
-            to: conversation.sellerId.phoneNumber,
-            message: `MoonStore: Support needs your input on a disputed order. Check your chat before ${deadline.toLocaleString("en-NG")}.`,
-        }).catch((err) => console.error("Seller SMS error:", err.message));
+        const sellerPhone = conversation.sellerId.phoneNumber || conversation.sellerId.whatsappNumber;
+        if (sellerPhone) {
+            sendSms({
+                to: sellerPhone,
+                message: `MoonStore: Support needs your input on a disputed order. Check your order chat before ${deadline.toLocaleString("en-NG")}.`,
+            }).catch((err) => console.error("Seller SMS error:", err.message));
+        }
 
         res.json({ message: "Both parties notified", deadline });
     } catch (err) {
@@ -633,8 +712,6 @@ module.exports = {
   exportConversationPdf,
   getRevenueSummary,
   getExitSurveys,
-  getUnverifiedSellers,
-  verifySubaccount,
   getDisputedConversations,
   getDisputeDetail,
   sendAdminMessage,

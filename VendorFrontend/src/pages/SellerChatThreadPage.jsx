@@ -6,12 +6,14 @@ import { useParams, useNavigate } from "react-router-dom";
 import {
     getSellerChatMessages,
     sendSellerMessage,
-    generatePaymentLink,
     sendImageMessage,
+    markOrderShipped,
+    raiseDisputeSeller,
+    cancelDisputeSeller,
     BASE_URL,
-    raiseDisputeSeller
 } from "../api/api";
 import styles from "./SellerChatThreadPage.module.css";
+import CancelOrderModal from "../sellerComponent/CancelOrderModal";
 
 const MAX_IMAGE_BYTES = 300 * 1024;
 
@@ -63,26 +65,6 @@ const compressImage = (file) => {
 };
 
 
-// Calculates the next working day after a paid date (skips Sat/Sun) —
-// matches Paystack's automated payout schedule
-const getExpectedPayoutDate = (paidAtString) => {
-    const paidDate = new Date(paidAtString);
-    const payoutDate = new Date(paidDate);
-    payoutDate.setDate(payoutDate.getDate() + 1);
-
-    // if the next day lands on Sat (6) or Sun (0), push forward to Monday
-    while (payoutDate.getDay() === 0 || payoutDate.getDay() === 6) {
-        payoutDate.setDate(payoutDate.getDate() + 1);
-    }
-
-    return payoutDate.toLocaleDateString("en-NG", {
-        weekday: "long",
-        day: "numeric",
-        month: "short",
-    });
-};
-
-
 const SellerChatThreadPage = () => {
     const { conversationId } = useParams();
     const navigate = useNavigate();
@@ -93,15 +75,21 @@ const SellerChatThreadPage = () => {
     const [pendingImage, setPendingImage] = useState(null);
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
-    const [generatingLink, setGeneratingLink] = useState(false);
-    const [linkError, setLinkError] = useState("");
     const [fullscreenImage, setFullscreenImage] = useState(null);
     const [showDisputeModal, setShowDisputeModal] = useState(false);
 const [disputeReason, setDisputeReason] = useState("");
 const [disputeSending, setDisputeSending] = useState(false);
 const [disputeSent, setDisputeSent] = useState(false);
+    const [disputeCategory, setDisputeCategory] = useState("");
+    const [disputeError, setDisputeError] = useState("");
+    const [showShipConfirm, setShowShipConfirm] = useState(false);
+    const [shipping, setShipping] = useState(false);
+    const [shipError, setShipError] = useState("");
+    const [riderName, setRiderName] = useState("");
+    const [riderPhone, setRiderPhone] = useState("");
     const [error, setError] = useState("");
     const [imageError, setImageError] = useState("");
+       const [showCancel, setShowCancel] = useState(false);
     const bottomRef = useRef(null);
     const fileInputRef = useRef(null);
     const socketRef = useRef(null);
@@ -237,17 +225,56 @@ const [disputeSent, setDisputeSent] = useState(false);
         }
     };
 
-    const handleRaiseDispute = async () => {
-    if (!disputeReason.trim()) return;
-    setDisputeSending(true);
-    const data = await raiseDisputeSeller(conversationId, disputeReason.trim());
-    if (!data.error) {
+         const handleMarkShipped = async () => {
+        if (!riderPhone.trim()) {
+            setShipError("Enter the delivery person's phone number.");
+            return;
+        }
+
+        setShipping(true);
+        setShipError("");
+        const data = await markOrderShipped(conversationId, riderName.trim(), riderPhone.trim());
+        setShipping(false);
+
+        if (data.error) {
+            setShipError(data.error);
+            return;
+        }
+
+        setShowShipConfirm(false);
+        setRiderName("");
+        setRiderPhone("");
+        fetchThread();
+    };  
+
+      const handleRaiseDispute = async () => {
+        setDisputeError("");
+
+        if (!disputeCategory) {
+            setDisputeError("Please choose what went wrong.");
+            return;
+        }
+
+        if (!disputeReason.trim()) {
+            setDisputeError("Please describe the issue.");
+            return;
+        }
+
+        setDisputeSending(true);
+        const data = await raiseDisputeSeller(conversationId, disputeReason.trim(), disputeCategory);
+        setDisputeSending(false);
+
+        if (data.error) {
+            setDisputeError(data.error);
+            return;
+        }
+
         setDisputeSent(true);
         setShowDisputeModal(false);
+        setDisputeCategory("");
+        setDisputeReason("");
         fetchThread();
-    }
-    setDisputeSending(false);
-};
+    };
 
     const handleImagePick = () => {
         setImageError("");
@@ -325,16 +352,6 @@ const [disputeSent, setDisputeSent] = useState(false);
             if (isPaymentLink) {
                 const urlMatch = msg.content.match(/https:\/\/\S+/);
                 const url = urlMatch ? urlMatch[0] : null;
-                return (
-                    <div key={msg._id} className={styles.systemMessage}>
-                        <span>💳 Payment link ready for buyer</span>
-                        {url ? (
-                            <a href={url} target="_blank" rel="noreferrer" className={styles.paymentLinkBtn}>
-                                Open Payment Page
-                            </a>
-                        ) : null}
-                    </div>
-                );
             }
             return (
                 <div key={msg._id} className={styles.systemMessage}>
@@ -370,17 +387,27 @@ const [disputeSent, setDisputeSent] = useState(false);
 
     const isPaid = conversation?.status === "paid";
 
+        const stageBannerText = () => {
+        const stage = conversation?.orderStage;
+
+        if (stage === "payment_held") {
+            if (conversation?.shipDeadlineAt) {
+                return `✓ Payment received and held safely. Mark as shipped before ${new Date(conversation.shipDeadlineAt).toLocaleString("en-NG")} or the buyer is refunded.`;
+            }
+            return "✓ Payment received and held safely. Please ship the order.";
+        }
+        if (stage === "shipped") return "📦 Shipped. Waiting for the buyer to confirm delivery.";
+        if (stage === "delivered") return "✓ Delivery confirmed. Payment is released to you after the 48-hour dispute window.";
+        if (stage === "released") return "✓ Payment has been released to you.";
+        if (stage === "disputed") return "⚠️ This order is under dispute. MoonStore support will review it.";
+        if (stage === "refunded") return "This order was refunded to the buyer.";
+        return null;
+    };
+
     return (
         <div className={styles.page}>
-            {isPaid ? (
-                <div className={styles.paidBanner}>
-                    ✓ This order has been marked as paid
-                    {conversation?.paidAt ? (
-                        <span className={styles.payoutNote}>
-                            {" "}· Expected in your bank account by {getExpectedPayoutDate(conversation.paidAt)}
-                        </span>
-                    ) : null}
-                </div>
+        {stageBannerText() ? (
+                <div className={styles.paidBanner}>{stageBannerText()}</div>
             ) : null}
 
             <div className={styles.header}>
@@ -392,7 +419,7 @@ const [disputeSent, setDisputeSent] = useState(false);
                     </span>
                 </div>
 
-                {(isPaid && conversation?.orderStage !== "released" && conversation?.orderStage !== "refunded" && conversation?.orderStage !== "disputed") ? (
+                {(isPaid && conversation?.orderStage === "shipped" || conversation?.orderStage === "delivered") ? (
     <button className={styles.disputeBtn} onClick={() => setShowDisputeModal(true)}>
         Dispute
     </button>
@@ -403,13 +430,30 @@ const [disputeSent, setDisputeSent] = useState(false);
         <div className={styles.modal}>
             <h3>Raise a Dispute</h3>
             <p>Tell us what went wrong with this order. The payment will stay on hold while we review.</p>
+
+            <p className={styles.fieldLabel}>What went wrong?</p>
+            <select
+                className={styles.selectInput}
+                value={disputeCategory}
+                onChange={(e) => setDisputeCategory(e.target.value)}
+            >
+                <option value="">Choose one</option>
+                <option value="buyer_unreachable">The buyer could not be reached</option>
+                <option value="buyer_refused">The buyer refused the parcel</option>
+                <option value="wrong_address">The address or phone number was wrong</option>
+                <option value="other">Something else</option>
+            </select>
+
             <textarea
                 className={styles.disputeTextarea}
                 value={disputeReason}
                 onChange={(e) => setDisputeReason(e.target.value)}
-                placeholder="Describe the issue..."
+                placeholder="Describe the issue. You can send photos in the chat too."
                 rows={4}
             />
+
+            {disputeError ? <p className={styles.linkError}>{disputeError}</p> : null}
+
             <div className={styles.modalActions}>
                 <button className={styles.cancelBtn} onClick={() => setShowDisputeModal(false)}>
                     Cancel
@@ -417,7 +461,7 @@ const [disputeSent, setDisputeSent] = useState(false);
                 <button
                     className={styles.submitDisputeBtn}
                     onClick={handleRaiseDispute}
-                    disabled={disputeSending || !disputeReason.trim()}
+                    disabled={disputeSending}
                 >
                     {disputeSending ? "Submitting..." : "Submit Dispute"}
                 </button>
@@ -432,14 +476,84 @@ const [disputeSent, setDisputeSent] = useState(false);
         Cancel Dispute
     </button>
 ) : null}
+
+            {showShipConfirm ? (
+                <div className={styles.modalOverlay}>
+                    <div className={styles.modal}>
+                        <h3>Mark as Shipped?</h3>
+                        <p>Only confirm if you have handed this order to a rider or courier, with the parcel code written on the parcel. The buyer will be told by SMS and email, and sees your delivery person's number. Marking an order shipped when it hasn't been is your responsibility.</p>
+                        <input
+                            className={styles.riderInput}
+                            type="text"
+                            placeholder="Delivery person's name (optional)"
+                            value={riderName}
+                            maxLength={60}
+                            onChange={(e) => setRiderName(e.target.value)}
+                        />
+                        <input
+                            className={styles.riderInput}
+                            type="tel"
+                            placeholder="Delivery person's phone number"
+                            value={riderPhone}
+                            maxLength={16}
+                            onChange={(e) => setRiderPhone(e.target.value)}
+                        />
+                        {shipError ? <p className={styles.linkError}>{shipError}</p> : null}
+                        <div className={styles.modalActions}>
+                            <button className={styles.cancelBtn} onClick={() => setShowShipConfirm(false)}>
+                                Cancel
+                            </button>
+                            <button
+                                className={styles.confirmShipBtn}
+                                onClick={handleMarkShipped}
+                                disabled={shipping}
+                            >
+                                {shipping ? "Saving..." : "Yes, it's shipped"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
+
+
+            {conversation?.deliveryPin && (conversation?.orderStage === "payment_held" || conversation?.orderStage === "shipped") ? (
+                    <div className={styles.parcelCard}>
+                        <p className={styles.parcelLabel}>Parcel code</p>
+                        <p className={styles.parcelValue}>{conversation.deliveryPin}</p>
+                        <p className={styles.parcelHint}>
+                            Write this code on the parcel with the buyer's name and phone number. The buyer checks that it matches before taking the parcel. Send a photo of the packed parcel here to protect yourself if there is a dispute.
+                        </p>
+                    </div>
+                ) : null}
+           
             </div>
+
+
 
             <div className={styles.messages}>
                 {messages?.map((msg) => renderMessage(msg))}
                 <div ref={bottomRef} />
             </div>
 
-            <div className={styles.bottomBar}>              
+
+            <div className={styles.bottomBar}>
+
+                     {conversation?.orderStage === "payment_held" ? (
+                       <>
+                           <button
+                               className={styles.generateBtn}
+                               onClick={() => setShowShipConfirm(true)}
+                           >
+                               📦 Mark as Shipped
+                           </button>
+                           <button
+                               className={styles.cancelOrderBtn}
+                               onClick={() => setShowCancel(true)}
+                           >
+                               Cancel order
+                           </button>
+                       </>
+                   ) : null}         
 
                 {imageError ? <p className={styles.imageError}>{imageError}</p> : null}
 
@@ -490,6 +604,17 @@ const [disputeSent, setDisputeSent] = useState(false);
                     </button>
                 </div>
             </div>
+
+                {showCancel ? (
+                   <CancelOrderModal
+                       conversationId={conversationId}
+                       onClose={() => setShowCancel(false)}
+                       onDone={() => {
+                           setShowCancel(false);
+                           fetchThread();
+                       }}
+                   />
+               ) : null}
 
             {fullscreenImage ? (
                 <div className={styles.fullscreenOverlay} onClick={() => setFullscreenImage(null)}>

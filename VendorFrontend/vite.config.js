@@ -9,10 +9,10 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.png', 'apple-touch-icon.png'],
-      manifest: {
-        name: 'MoonStore Seller Dashboard',
-        short_name: 'MoonStore',
-        description: 'Manage your Store — products, orders, and chat with buyers.',
+     manifest: {
+    name: 'MoonStore Seller Dashboard',
+    short_name: 'MoonStore',
+    description: 'Build from home, sell beyond home. Manage your store and marketplace listings, orders, and buyer chats, all in one place.',
         theme_color: '#6d28d9',
         background_color: '#ffffff',
         display: 'standalone',

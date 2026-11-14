@@ -4,7 +4,6 @@ import { trackProductClick, getProduct, getStore, getReviewEligibility, submitRe
 import { getOrCreateSessionId, getSavedEmail, saveBuyerEmailLocally } from "../utils/session";
 import styles from "./ProductPage.module.css";
 import Navbar from "../buyerComponent/Navbar";
-import { grossUpPrice } from "../utils/pricing";
 
 const TRAY_KEY = (slug) => `moonstore_order_${slug}`;
 
@@ -26,14 +25,14 @@ const ProductPage = () => {
     const [deliveryAddress, setDeliveryAddress] = useState("");
     const [deliveryCity, setDeliveryCity] = useState("");
     const [deliveryPhone, setDeliveryPhone] = useState("");
-    const [deliveryZones, setDeliveryZones] = useState([]);
-    const [selectedZone, setSelectedZone] = useState(null);
     const [addressAlreadySaved, setAddressAlreadySaved] = useState(false);
     const [showChangeAddress, setShowChangeAddress] = useState(false);
 
+    const [deliveryZones, setDeliveryZones] = useState([]);
+    const [selectedZone, setSelectedZone] = useState(null);
+
     const [addedToTray, setAddedToTray] = useState(false);
 
-    // ─── review state ───
     const [reviews, setReviews] = useState([]);
     const [averageRating, setAverageRating] = useState(0);
     const [totalReviews, setTotalReviews] = useState(0);
@@ -60,8 +59,8 @@ const ProductPage = () => {
                 return;
             }
             setStore(storeData.store);
-            setDeliveryZones(storeData.store.deliveryOptions || []);
             setProduct(productData.product);
+            setDeliveryZones(storeData.store.deliveryOptions || []);
 
             try {
                 const existing = localStorage.getItem(TRAY_KEY(slug));
@@ -73,6 +72,9 @@ const ProductPage = () => {
                         setDeliveryPhone(tray.deliveryPhone || "");
                         setBuyerName(tray.buyerName || "");
                         setAddressAlreadySaved(true);
+                    }
+                    if (tray.deliveryZone) {
+                        setSelectedZone(tray.deliveryZone);
                     }
                 }
             } catch {
@@ -90,7 +92,6 @@ const ProductPage = () => {
         loadData();
     }, [slug, productSlug]);
 
-    // ─── load reviews + check eligibility once product is loaded ───
     const loadReviews = async () => {
         if (!product?._id) return;
 
@@ -141,7 +142,7 @@ const ProductPage = () => {
             el.setAttribute("content", content);
         };
 
-        const description = product.description || `₦${grossUpPrice(product.price).toLocaleString()}`;
+        const description = product.description || `₦${product.price.toLocaleString()}`;
         const image = product.images && product.images.length > 0 ? product.images[0] : "";
 
         setMetaProperty("og:title", product.name);
@@ -195,6 +196,7 @@ const ProductPage = () => {
                 deliveryAddress: "",
                 deliveryCity: "",
                 deliveryPhone: "",
+                deliveryZone: null,
             };
 
             if (!tray.deliveryAddress && deliveryAddress) {
@@ -205,8 +207,8 @@ const ProductPage = () => {
             }
 
             if (!tray.deliveryZone && selectedZone) {
-    tray.deliveryZone = selectedZone;
-}
+                tray.deliveryZone = selectedZone;
+            }
 
             tray.items.push({
                 productSlug: product.slug,
@@ -235,7 +237,6 @@ const ProductPage = () => {
         }
     };
 
-    // ─── review handlers ───
     const maskEmail = (email) => {
         const [name, domain] = email.split("@");
         const masked = name.length > 2
@@ -263,8 +264,8 @@ const ProductPage = () => {
             setReviewError(
                 eligibilityData.reason === "not_purchased"
                     ? "We couldn't find a purchase of this product with that email."
-                    : eligibilityData.reason === "too_soon"
-                        ? "Your review will be available 24 hours after payment."
+                    : eligibilityData.reason === "not_delivered"
+                        ? "Your review will be available once your order is marked delivered."
                         : eligibilityData.reason === "already_reviewed"
                             ? "You've already reviewed this product."
                             : "Could not verify your purchase."
@@ -323,9 +324,8 @@ const ProductPage = () => {
         );
     }
 
-const buyerUnitPrice = grossUpPrice(product.price);
-const deliveryFee = selectedZone ? selectedZone.price : 0;
-const total = (buyerUnitPrice * quantity) + deliveryFee;
+    const deliveryFee = selectedZone ? selectedZone.price : 0;
+    const total = (product.price * quantity) + deliveryFee;
 
     return (
         <div className={styles.page}>
@@ -380,7 +380,7 @@ const total = (buyerUnitPrice * quantity) + deliveryFee;
 ) : null}
 
                     <h1 className={styles.name}>{product.name}</h1>
-                    <p className={styles.price}>₦{buyerUnitPrice.toLocaleString()}</p>
+                    <p className={styles.price}>₦{product.price.toLocaleString()}</p>
 
                     {product.description ? (
                         <p className={styles.description}>{product.description}</p>
@@ -434,24 +434,24 @@ const total = (buyerUnitPrice * quantity) + deliveryFee;
                         <p className={styles.selectorLabel}>Delivery Details</p>
                         <p className={styles.deliveryHint}>Optional — fill in if you want delivery</p>
 
-                         {deliveryZones.length > 0 ? (
-        <div className={styles.zonePicker}>
-            {deliveryZones.map((zone, i) => (
-                <button
-                    key={i}
-                    type="button"
-                    className={
-                        selectedZone && selectedZone.label === zone.label
-                            ? `${styles.zoneBtn} ${styles.activeZone}`
-                            : styles.zoneBtn
-                    }
-                    onClick={() => setSelectedZone(zone)}
-                >
-                    {zone.label} — ₦{zone.price.toLocaleString()} ({zone.estimatedDays} days)
-                </button>
-            ))}
-        </div>
-    ) : null}
+                        {deliveryZones.length > 0 ? (
+                            <div className={styles.zonePicker}>
+                                {deliveryZones.map((zone, i) => (
+                                    <button
+                                        key={i}
+                                        type="button"
+                                        className={
+                                            selectedZone && selectedZone.label === zone.label
+                                                ? `${styles.zoneBtn} ${styles.activeZone}`
+                                                : styles.zoneBtn
+                                        }
+                                        onClick={() => setSelectedZone(zone)}
+                                    >
+                                        {zone.label} — ₦{zone.price.toLocaleString()} ({zone.estimatedDays} days)
+                                    </button>
+                                ))}
+                            </div>
+                        ) : null}
 
                         {addressAlreadySaved && !showChangeAddress ? (
                             <div className={styles.savedAddress}>
@@ -515,9 +515,9 @@ const total = (buyerUnitPrice * quantity) + deliveryFee;
                     </div>
 
                     <p className={styles.total}>
-    Total: ₦{total.toLocaleString()}
-    {selectedZone ? <span className={styles.deliveryLine}> (incl. ₦{deliveryFee.toLocaleString()} delivery)</span> : null}
-</p>
+                        Total: ₦{total.toLocaleString()}
+                        {selectedZone ? <span className={styles.deliveryLine}> (incl. ₦{deliveryFee.toLocaleString()} delivery)</span> : null}
+                    </p>
 
                     <button
                         className={addedToTray ? `${styles.orderBtn} ${styles.addedBtn}` : styles.orderBtn}
@@ -533,7 +533,6 @@ const total = (buyerUnitPrice * quantity) + deliveryFee;
                 </div>
             </div>
 
-            {/* ─── reviews section ─── */}
             <div className={styles.reviewsSection}>
                 <div className={styles.reviewsHeader}>
                     <p className={styles.reviewsTitle}>

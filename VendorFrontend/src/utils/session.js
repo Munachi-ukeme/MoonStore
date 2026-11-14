@@ -1,12 +1,20 @@
 // session.js manages the buyer's anonymous identity in the browser.
 // localStorage persists data even after the browser is closed.
 // sessionStorage clears when the tab is closed — used for popup dismissal per session.
+const generateSessionId = () => {
+    if (window.crypto && window.crypto.randomUUID) {
+        return window.crypto.randomUUID();
+    }
+
+    const bytes = new Uint8Array(24);
+    window.crypto.getRandomValues(bytes);
+    return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+};
 
 export const getOrCreateSessionId = () => {
     let sessionId = localStorage.getItem("moonstore_session_id");
     if (!sessionId) {
-        // generate a random unique ID combining random string + timestamp
-        sessionId = Math.random().toString(36).substring(2) + Date.now().toString(36);
+        sessionId = generateSessionId();
         localStorage.setItem("moonstore_session_id", sessionId);
     }
     return sessionId;

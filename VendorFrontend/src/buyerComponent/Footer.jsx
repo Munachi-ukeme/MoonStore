@@ -87,6 +87,8 @@ const Footer = ({ store }) => {
                 >
                     Acceptable Use Policy
                 </Link>
+
+                <Link className={styles.legalLink} to="/refund-rules">Refund Rules</Link>
             </div>
 
             {/* powered by */}

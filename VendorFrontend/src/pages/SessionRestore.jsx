@@ -11,26 +11,24 @@ import styles from "./SessionRestore.module.css";
 const SessionRestore = () => {
     const navigate = useNavigate();
 
-    useEffect(() => {
+      useEffect(() => {
         const params = new URLSearchParams(window.location.search);
         const sid = params.get("sid");
         const store = params.get("store");
 
-        if (sid) {
-            // restore this session ID in the browser
-            // if buyer already has a session ID, we replace it with
-            // the one from the email so they see the right conversation
+        const sidIsValid = typeof sid === "string" && /^[A-Za-z0-9-]{10,100}$/.test(sid);
+        const storeIsValid = typeof store === "string" && /^[a-z0-9-]{1,80}$/.test(store);
+
+        if (sidIsValid) {
             localStorage.setItem("moonstore_session_id", sid);
         }
 
-         if (store) {
-            // redirect to the seller's store where the chat lives
+        if (storeIsValid) {
             navigate(`/${store}`, { replace: true });
         } else {
-            // fallback if store param is missing
             navigate("/", { replace: true });
         }
-    }, [navigate]);
+    }, [navigate]);  
 
     // shows briefly while the redirect happens
     return (

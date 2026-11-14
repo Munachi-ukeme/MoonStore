@@ -25,8 +25,7 @@ const messageSchema = new mongoose.Schema(
         },
     },
     {
-        // we use timestamps here instead of a manual createdAt field
-        // mongoose automatically adds createdAt and updatedAt
+      
         timestamps: true,
     }
 );

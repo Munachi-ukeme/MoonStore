@@ -1,5 +1,11 @@
 export const BASE_URL = (import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
 
+// testers: opening any page with ?bypass=KEY saves the key on this device
+const bypassFromUrl = new URLSearchParams(window.location.search).get("bypass");
+if (bypassFromUrl) {
+  localStorage.setItem("moonstore_bypass", bypassFromUrl);
+}
+
 // Helper Headers
 const getAuthHeaders = () => {
   const token = localStorage.getItem("token");
@@ -22,6 +28,11 @@ const fetchWithTimeout = async (url, options = {}, timeout = 20000) => {
     ...(!isFormData && { "Content-Type": "application/json" }),
     ...options.headers,
   };
+
+  const bypassKey = localStorage.getItem("moonstore_bypass");
+  if (bypassKey) {
+    headers["x-maintenance-bypass"] = bypassKey;
+  }
 
   try {
     const res = await fetch(url, { ...options, headers, signal: controller.signal });
@@ -149,7 +160,7 @@ export const checkSystemStatus = async () => {
 // ================= PAYMENTS =================
 export const getBanks = async () => {
   try {
-    const res = await fetchWithTimeout(`${BASE_URL}/payments/banks`);
+    const res = await fetchWithTimeout(`${BASE_URL}/banks`);
     const json = await res.json();
     if (!res.ok) return { error: json.message || "Could not load banks" };
     return json;
@@ -160,7 +171,7 @@ export const getBanks = async () => {
 
 export const verifyAccount = async (accountNumber, bankCode) => {
   try {
-    const res = await fetchWithTimeout(`${BASE_URL}/payments/verify-account`, {
+    const res = await fetchWithTimeout(`${BASE_URL}/banks/resolve`, {
       method: "POST",
       body: JSON.stringify({ accountNumber, bankCode }),
     });
@@ -172,20 +183,7 @@ export const verifyAccount = async (accountNumber, bankCode) => {
   }
 };
 
-export const initializePayment = async (plan) => {
-  try {
-    const res = await fetchWithTimeout(`${BASE_URL}/payments/initialize`, {
-      method: "POST",
-      headers: getAuthHeaders(),
-      body: JSON.stringify({ plan }),
-    });
-    const json = await res.json();
-    if (!res.ok) return { error: json.message || "Payment initialization failed" };
-    return json;
-  } catch (err) {
-    return { error: err.message || "Payment initialization failed" };
-  }
-};
+
 
 export const verifyBuyerIdentity = async (conversationId, sessionId, payload) => {
   try {
@@ -214,6 +212,21 @@ export const confirmDelivery = async (conversationId, sessionId, pin) => {
     return json;
   } catch (err) {
     return { error: err.message || "Could not confirm delivery" };
+  }
+};
+
+export const markOrderShipped = async (conversationId, riderName, riderPhone) => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/chat/${conversationId}/mark-shipped`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ riderName, riderPhone }),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Could not mark as shipped" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Could not mark as shipped" };
   }
 };
 
@@ -256,19 +269,59 @@ export const saveBuyerEmail = async (email, sessionId, sellerId) => {
   }
 };
 
-
-
-export const buyerLogin = async (email) => {
+export const requestBuyerLoginLink = async (email) => {
   try {
-    const res = await fetchWithTimeout(`${BASE_URL}/buyer/login`, {
+    const res = await fetchWithTimeout(`${BASE_URL}/buyer/request-login-link`, {
       method: "POST",
       body: JSON.stringify({ email }),
     });
     const json = await res.json();
-    if (!res.ok) return { error: json.error || json.message || "Login failed" };
+    if (!res.ok) return { error: json.error || json.message || "Could not send the link" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Could not send the link. Please try again." };
+  }
+};
+
+export const consumeBuyerLink = async (token, sessionId) => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/buyer/consume-link`, {
+      method: "POST",
+      body: JSON.stringify({ token, sessionId }),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.error || json.message || "This link is invalid or has expired." };
     return json;
   } catch (err) {
     return { error: err.message || "Something went wrong. Please try again." };
+  }
+};
+
+export const requestConfirmLink = async (conversationId, sessionId) => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/chat/${conversationId}/request-confirm-link`, {
+      method: "POST",
+      headers: { "x-session-id": sessionId },
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Could not send the link" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Could not send the link. Please try again." };
+  }
+};
+
+export const continuePayment = async (conversationId, sessionId) => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/chat/${conversationId}/continue-payment`, {
+      method: "POST",
+      headers: { "x-session-id": sessionId },
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Could not continue" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Could not continue. Please try again." };
   }
 };
 
@@ -296,11 +349,12 @@ export const getSellerConversations = async (slug, sessionId) => {
 };
 
 // ================= CHAT =================
-export const startConversation = async (slug, sessionId, items, buyerName, buyerEmail, deliveryAddress, deliveryCity, deliveryPhone) => {
+
+export const startConversation = async (slug, sessionId, items, buyerName, buyerEmail, deliveryAddress, deliveryCity, deliveryPhone, deliveryZone) => {
   try {
     const res = await fetchWithTimeout(`${BASE_URL}/chat/start`, {
       method: "POST",
-      body: JSON.stringify({ slug, sessionId, items, buyerName, buyerEmail, deliveryAddress, deliveryCity, deliveryPhone }),
+      body: JSON.stringify({ slug, sessionId, items, buyerName, buyerEmail, deliveryAddress, deliveryCity, deliveryPhone, deliveryZone }),
     });
     const json = await res.json();
     if (!res.ok) return { error: json.message || "Failed to start conversation" };
@@ -342,6 +396,7 @@ export const sendImageMessage = async (conversationId, sessionId, base64Content,
   try {
     const res = await fetchWithTimeout(`${BASE_URL}/chat/${conversationId}/message`, {
       method: "POST",
+      headers: sender === "seller" ? getAuthHeaders() : {},
       body: JSON.stringify({ content: base64Content, sender, sessionId }),
     });
     if (res.status === 413) return { status: 413, error: "Image size too large" };
@@ -406,6 +461,21 @@ export const sendSellerMessage = async (conversationId, content) => {
     return json;
   } catch (err) {
     return { error: err.message || "Failed to send message" };
+  }
+};
+
+export const sellerCancelOrder = async (conversationId, reason, note) => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/chat/${conversationId}/seller-cancel`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ reason, note }),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Could not cancel the order" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Could not cancel the order. Please try again." };
   }
 };
 
@@ -734,33 +804,7 @@ export const deleteSellerAdmin = async (email) => {
   }
 };
 
-export const getAllReferralsAdmin = async () => {
-  try {
-    const res = await fetchWithTimeout(`${BASE_URL}/admin/referrals`, {
-      headers: getAdminHeaders(),
-    });
-    const json = await res.json();
-    if (!res.ok) return { error: json.message || "Could not load referrals" };
-    return json;
-  } catch (err) {
-    return { error: err.message || "Could not load referrals. Please try again." };
-  }
-};
 
-export const markCommissionPaidAdmin = async (email) => {
-  try {
-    const res = await fetchWithTimeout(`${BASE_URL}/admin/mark-commission-paid`, {
-      method: "PUT",
-      headers: getAdminHeaders(),
-      body: JSON.stringify({ email }),
-    });
-    const json = await res.json();
-    if (!res.ok) return { error: json.message || "Could not update commission" };
-    return json;
-  } catch (err) {
-    return { error: err.message || "Could not update commission. Please try again." };
-  }
-};
 
 export const adminLogout = async () => {
   try {
@@ -800,34 +844,6 @@ export const getExitSurveys = async () => {
     return json;
   } catch (err) {
     return { error: err.message || "Failed to fetch exit surveys." };
-  }
-};
-
-export const getUnverifiedSellersAdmin = async () => {
-  try {
-    const res = await fetchWithTimeout(`${BASE_URL}/admin/unverified-sellers`, {
-      headers: getAdminHeaders(),
-    });
-    const json = await res.json();
-    if (!res.ok) return { error: json.message || "Could not load unverified sellers" };
-    return json;
-  } catch (err) {
-    return { error: err.message || "Could not load unverified sellers. Please try again." };
-  }
-};
-
-export const verifySubaccountAdmin = async (email) => {
-  try {
-    const res = await fetchWithTimeout(`${BASE_URL}/admin/verify-subaccount`, {
-      method: "PUT",
-      headers: getAdminHeaders(),
-      body: JSON.stringify({ email }),
-    });
-    const json = await res.json();
-    if (!res.ok) return { error: json.message || "Could not verify subaccount" };
-    return json;
-  } catch (err) {
-    return { error: err.message || "Could not verify subaccount. Please try again." };
   }
 };
 
@@ -872,12 +888,12 @@ export const sendAdminDisputeMessage = async (conversationId, content) => {
   }
 };
 
-export const resolveDisputeAdmin = async (conversationId, resolution, splitSellerPercent) => {
+export const resolveDisputeAdmin = async (conversationId, resolution, splitSellerPercent, splitSellerAmount, note) => {
   try {
     const res = await fetchWithTimeout(`${BASE_URL}/admin/disputes/${conversationId}/resolve`, {
       method: "POST",
       headers: getAdminHeaders(),
-      body: JSON.stringify({ resolution, splitSellerPercent }),
+      body: JSON.stringify({ resolution, splitSellerPercent, splitSellerAmount, note }),
     });
     const json = await res.json();
     if (!res.ok) return { error: json.message || "Could not resolve dispute" };
@@ -887,12 +903,12 @@ export const resolveDisputeAdmin = async (conversationId, resolution, splitSelle
   }
 };
 
-export const raiseDisputeBuyer = async (conversationId, sessionId, reason) => {
+export const raiseDisputeBuyer = async (conversationId, sessionId, reason, category, answers) => {
   try {
     const res = await fetchWithTimeout(`${BASE_URL}/chat/${conversationId}/dispute/buyer`, {
       method: "POST",
       headers: { "x-session-id": sessionId },
-      body: JSON.stringify({ reason }),
+      body: JSON.stringify({ reason, category, answers }),
     });
     const json = await res.json();
     if (!res.ok) return { error: json.message || "Could not raise dispute" };
@@ -902,12 +918,12 @@ export const raiseDisputeBuyer = async (conversationId, sessionId, reason) => {
   }
 };
 
-export const raiseDisputeSeller = async (conversationId, reason) => {
+export const raiseDisputeSeller = async (conversationId, reason, category) => {
   try {
     const res = await fetchWithTimeout(`${BASE_URL}/chat/${conversationId}/dispute/seller`, {
       method: "POST",
       headers: getAuthHeaders(),
-      body: JSON.stringify({ reason }),
+      body: JSON.stringify({ reason, category }),
     });
     const json = await res.json();
     if (!res.ok) return { error: json.message || "Could not raise dispute" };
@@ -956,5 +972,51 @@ export const cancelDisputeSeller = async (conversationId) => {
     return json;
   } catch (err) {
     return { error: err.message || "Could not cancel dispute" };
+  }
+};
+
+
+export const updateDeliveryOptions = async (options) => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/seller/delivery-options`, {
+      method: "PUT",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ options }),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Failed to save delivery options." };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Failed to save delivery options." };
+  }
+};
+
+
+export const retryPayoutSetup = async () => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/seller/retry-payout-setup`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Could not finish payout setup." };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Could not finish payout setup." };
+  }
+};
+
+
+export const refreshPaymentDetails = async (conversationId, sessionId) => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/chat/${conversationId}/refresh-payment`, {
+      method: "POST",
+      headers: { "x-session-id": sessionId },
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Could not get new payment details" };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Could not get new payment details" };
   }
 };

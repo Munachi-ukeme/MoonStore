@@ -17,7 +17,7 @@ const AdminSidebar = () => {
             <nav className={styles.nav}>
                 <a href="/admin/revenue" className={styles.navLink}>Revenue</a>
                 <a href="/admin/sellers" className={styles.navLink}>Sellers</a>
-                <a href="/admin/unverifiedsellers" className={styles.navLink}>Unactivated Sellers</a>
+                <a href="/admin/disputes" className={styles.navLink}>Disputes</a>
                 <a href="/admin/reports" className={styles.navLink}>Reports</a>
                 <a href="/admin/exitsurveys" className={styles.navLink}>Exit Surveys</a>
             </nav>

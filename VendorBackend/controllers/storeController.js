@@ -49,6 +49,7 @@ const getStore = async (req, res) => {
         whatsappNumber: seller.whatsappNumber,
         address: seller.address,
         phoneNumber: seller.phoneNumber,
+        deliveryOptions: seller.deliveryOptions || [],
         averageRating,
         totalReviews,
       },

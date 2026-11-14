@@ -31,12 +31,15 @@ const SignupPage = () => {
         password: "",
         whatsappNumber: "",
         howHeardAboutUs: "",
-         howHeardAboutUsOther: "",
+        howHeardAboutUsOther: "",
         accountNumber: "",
         bankCode: "",
         bankName: "",
-        referredBy: "",
+        identifier: "",
+        dateOfBirth: "",
     });
+
+    const [consentChecked, setConsentChecked] = useState(false);
 
     // holds the verified, hashed step 1 data once the email link is confirmed
     const [confirmedData, setConfirmedData] = useState(null);
@@ -71,17 +74,7 @@ const SignupPage = () => {
 
         verify();
     }, [tokenFromUrl]);
-
-    // auto-fill referral code from URL e.g /signup?ref=482910 (only when not arriving via token)
-    useEffect(() => {
-        if (tokenFromUrl) return;
-        const params = new URLSearchParams(window.location.search);
-        const ref = params.get("ref");
-        if (ref) {
-            setFormDetails((prev) => ({ ...prev, referredBy: ref }));
-            setRefFromUrl(true);
-        }
-    }, [tokenFromUrl]);
+    
 
     // fetch bank list on mount
     useEffect(() => {
@@ -122,10 +115,13 @@ const SignupPage = () => {
         }
     }, [formDetails.accountNumber, formDetails.bankCode]);
 
-    const handleChange = (e) => {
+      const handleChange = (e) => {
         let { name, value } = e.target;
         if (name === "whatsappNumber") {
             value = value.replace(/\+/g, "");
+        }
+        if (name === "identifier") {
+            value = value.replace(/\D/g, "").slice(0, 11);
         }
         setFormDetails((prev) => ({ ...prev, [name]: value }));
     };
@@ -160,7 +156,11 @@ const SignupPage = () => {
     }
 };
 
-    const validateStep2 = () => {
+       const validateStep2 = () => {
+        if (!/^\d{11}$/.test(formDetails.identifier)) return "Enter your 11-digit NIN";
+        if (!formDetails.dateOfBirth) return "Enter your date of birth";
+        if (new Date(formDetails.dateOfBirth) > new Date()) return "Enter a valid date of birth";
+        if (!consentChecked) return "Please agree to identity verification to continue";
         if (!formDetails.bankCode) return "Please select a bank";
         if (!formDetails.accountNumber || formDetails.accountNumber.length !== 10) return "Enter a valid 10-digit account number";
         if (!resolvedName) return "Account name could not be resolved. Check your details.";
@@ -196,19 +196,15 @@ const SignupPage = () => {
         setAwaitingConfirmation(true);
     };
 
-    const handleSubmit = async () => {
+        const handleSubmit = async () => {
         setError("");
 
-        // Safety net: handleSubmit should only ever run after a token was
-        // verified and confirmedData was set. If it's somehow missing —
-        // e.g. a stale page reload, dev tools tampering, or a future bug —
-        // don't attempt to build a payload with undefined fields. Send them
-        // back to start signup fresh instead of letting this crash.
         if (!confirmedData) {
             setError("Your session expired. Please start signup again.");
             setTimeout(() => navigate("/register"), 2000);
             return;
         }
+
         const err = validateStep2();
         if (err) {
             setError(err);
@@ -218,19 +214,22 @@ const SignupPage = () => {
         setLoading(true);
 
         const payload = {
+            signupToken: tokenFromUrl,
             businessName: confirmedData.businessName,
             email: confirmedData.email,
             hashedPassword: confirmedData.hashedPassword,
             whatsappNumber: confirmedData.whatsappNumber,
             howHeardAboutUs: confirmedData.howHeardAboutUs,
             howHeardAboutUsOther: confirmedData.howHeardAboutUsOther || "",
+            identifier: formDetails.identifier,
+            dateOfBirth: formDetails.dateOfBirth,
+            consent: true,
             bankDetails: {
                 accountNumber: formDetails.accountNumber,
                 bankCode: formDetails.bankCode,
                 bankName: formDetails.bankName,
                 accountName: resolvedName,
             },
-            referredBy: confirmedData.referredBy || undefined,
         };
 
         const result = await registerSeller(payload);
@@ -241,7 +240,7 @@ const SignupPage = () => {
             return;
         }
 
-       login(result.token, result.seller);
+        login(result.token, result.seller);
         setLoading(false);
         navigate("/dashboard", { state: { justSignedUp: true } });
     };
@@ -253,7 +252,7 @@ const SignupPage = () => {
                     <p className={styles.sectionTitle}>Check your email</p>
                     <p className={styles.sectionHint}>
                         We sent a confirmation link to <strong>{formDetails.email}</strong>. Click it
-                        to continue setting up your store. The link expires in 10 minutes.
+                        to continue setting up your store. The link expires in 30 minutes.
                     </p>
                 </div>
             );
@@ -334,6 +333,7 @@ const SignupPage = () => {
                         <option value="Threads">Threads</option>
                         <option value="Google Search">Google Search</option>
                         <option value="Referred by a friend">Referred by a friend</option>
+                        <option value="Instagram">Ads</option>
                         <option value="Instagram">Instagram</option>
                         <option value="Other">Other</option>
                     </select>
@@ -360,23 +360,61 @@ const SignupPage = () => {
         );
     };
 
-    const renderStep2 = () => {
+       const renderStep2 = () => {
         return (
             <div className={styles.formSection}>
+                <p className={styles.sectionTitle}>Verify Your Identity</p>
+
+                <div className={styles.infoBox}>
+                    🔒 Buyers' payments are not held by MoonStore. They are held safely until delivery by Rubies Microfinance Bank, a bank licensed by the Central Bank of Nigeria, through our payment partner EscrowPay. EscrowPay verifies every seller's identity once before they can receive payments. Enter your NIN and date of birth exactly as they appear on your NIN record. Your NIN is sent securely to EscrowPay for verification and is never stored by MoonStore.
+                </div>
+
+                <div className={styles.field}>
+                    <label className={styles.label}>NIN</label>
+                    <input
+                        className={styles.input}
+                        type="text"
+                        inputMode="numeric"
+                        name="identifier"
+                        placeholder="11-digit NIN"
+                        maxLength={11}
+                        value={formDetails.identifier}
+                        onChange={handleChange}
+                    />
+                </div>
+
+                <div className={styles.field}>
+                    <label className={styles.label}>Date of Birth</label>
+                    <input
+                        className={styles.input}
+                        type="date"
+                        name="dateOfBirth"
+                        max={new Date().toISOString().split("T")[0]}
+                        value={formDetails.dateOfBirth}
+                        onChange={handleChange}
+                    />
+                </div>
+
+                <label className={styles.consentRow}>
+                    <input
+                        type="checkbox"
+                        checked={consentChecked}
+                        onChange={(e) => setConsentChecked(e.target.checked)}
+                    />
+                    <span>I agree that EscrowPay, a third party, verifies my identity, and that my payment is held by a licensed bank.</span>
+                </label>
+
                 <p className={styles.sectionTitle}>Bank Details</p>
+
                 <div className={styles.warningBox}>
                     ⚠️ Double-check this is the correct bank account before continuing.
-                    This is where all your sales money will be sent — MoonStore cannot
+                    This is where your sales money will be sent. MoonStore cannot
                     recover funds sent to the wrong account.
                 </div>
 
                 <div className={styles.infoBox}>
-                    💡 Money from your sales settles to your bank account the next
-                    working day. For example: sell on Monday, get paid Tuesday. But
-                    Saturdays, Sundays, and Nigerian public holidays don't count as
-                    working days, so a sale made on a Friday, Saturday, or Sunday
-                    all settle on the following Monday (or Tuesday if Monday is a
-                    public holiday).
+                    💡 Payments are held safely by Rubies Microfinance Bank (CBN-licensed) until the buyer confirms delivery or
+                    the delivery window ends, then released to you.
                 </div>
 
                 <div className={styles.field}>
@@ -421,25 +459,6 @@ const SignupPage = () => {
                     ) : null}
                 </div>
 
-                <div className={styles.field}>
-                    <label className={styles.label}>
-                        Referral Code{" "}
-                        <span className={styles.optional}>(optional)</span>
-                    </label>
-                    <input
-                        className={refFromUrl ? `${styles.input} ${styles.lockedInput}` : styles.input}
-                        type="text"
-                        name="referredBy"
-                        placeholder="e.g. 482910"
-                        value={formDetails.referredBy}
-                        onChange={handleChange}
-                        disabled={refFromUrl}
-                    />
-                    {refFromUrl ? (
-                        <p className={styles.appliedMsg}>✓ Referral code automatically applied!</p>
-                    ) : null}
-                </div>
-
                 {error ? <p className={styles.error}>{error}</p> : null}
 
                 <button
@@ -447,7 +466,7 @@ const SignupPage = () => {
                     onClick={handleSubmit}
                     disabled={loading}
                 >
-                    {loading ? "Creating your store..." : "Create My Store"}
+                    {loading ? "Verifying and creating your store..." : "Verify & Create My Store"}
                 </button>
             </div>
         );

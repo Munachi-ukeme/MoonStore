@@ -15,6 +15,11 @@ const buyerSchema = new mongoose.Schema(
             default: [],
         },
 
+        trustedSessionIds: {
+            type: [String],
+            default: [],
+        },
+
         escrowPayPartyId: {
             type: String,
             default: null,
@@ -25,8 +30,17 @@ const buyerSchema = new mongoose.Schema(
             default: null,
         },
 
+        orderBlockedUntil: {
+            type: Date,
+            default: null,
+        },
+        permanentlyBlocked: {
+            type: Boolean,
+            default: false,
+        },
+
         disputesRaised: { type: Number, default: 0 },
-disputesLost: { type: Number, default: 0 },
+        disputesLost: { type: Number, default: 0 },
     },
     {
         timestamps: true,

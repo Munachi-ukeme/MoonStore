@@ -3,11 +3,13 @@ import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
 import { IoSend } from "react-icons/io5";
 import { io } from "socket.io-client";
 import { GrAttachment } from "react-icons/gr";
-import { getConversationMessages, sendBuyerMessage, reportConversation, sendImageMessage, verifyBuyerIdentity, confirmDelivery, BASE_URL, raiseDisputeBuyer } from "../api/api";
+import { getConversationMessages, sendBuyerMessage, reportConversation, sendImageMessage, verifyBuyerIdentity, confirmDelivery, BASE_URL, raiseDisputeBuyer, cancelDisputeBuyer, refreshPaymentDetails, requestConfirmLink, continuePayment } from "../api/api";
 import { getOrCreateSessionId } from "../utils/session";
 import styles from "./BuyerChatPage.module.css";
 
 const MAX_IMAGE_BYTES = 300 * 1024;
+
+const ESCROWPAY_BUTTON_BASE = "https://docs.escrowpay.app/brand/checkout-button";
 
 const compressImage = (file) => {
     return new Promise((resolve, reject) => {
@@ -75,11 +77,22 @@ const BuyerChatPage = () => {
     const [imageError, setImageError] = useState("");
     const [showDisputeModal, setShowDisputeModal] = useState(false);
     const [disputeReason, setDisputeReason] = useState("");
-const [disputeSending, setDisputeSending] = useState(false);
-const [disputeSent, setDisputeSent] = useState(false);
+    const [disputeSending, setDisputeSending] = useState(false);
+    const [disputeSent, setDisputeSent] = useState(false);
+    const [now, setNow] = useState(Date.now());
+    const [refreshingPayment, setRefreshingPayment] = useState(false);
+    const [paymentError, setPaymentError] = useState("");
+    const [confirmSent, setConfirmSent] = useState(false);
+    const [confirmLoading, setConfirmLoading] = useState(false);
+    const [confirmError, setConfirmError] = useState("");
+   const [disputeCategory, setDisputeCategory] = useState("");
+    const [disputeError, setDisputeError] = useState("");
+    const [riderCalledAnswer, setRiderCalledAnswer] = useState("");
+    const [someoneElseAnswer, setSomeoneElseAnswer] = useState("");
+    const [addressAnswer, setAddressAnswer] = useState("");
 
     // ── identity verification state ──
-    const [ninType, setNinType] = useState("nin");
+    const [dobValue, setDobValue] = useState("");
     const [ninValue, setNinValue] = useState("");
     const [consentChecked, setConsentChecked] = useState(false);
     const [verifySubmitting, setVerifySubmitting] = useState(false);
@@ -114,6 +127,14 @@ const [disputeSent, setDisputeSent] = useState(false);
         setLoading(false);
     }, [conversationId, sessionId]);
 
+        const refreshConversation = useCallback(async () => {
+        const data = await getConversationMessages(conversationId, sessionId);
+        if (!data.error) {
+            setMessages(data.messages);
+            setConversation(data.conversation);
+        }
+    }, [conversationId, sessionId]);
+
     useEffect(() => {
         fetchMessages();
     }, [fetchMessages]);
@@ -123,25 +144,47 @@ const [disputeSent, setDisputeSent] = useState(false);
         transports: ["websocket"],
     });
 
+
     socketRef.current.emit("join_conversation", conversationId);
 
-    socketRef.current.on("new_message", (incomingMessage) => {
+        socketRef.current.on("new_message", (incomingMessage) => {
         setMessages((prev) => {
             const alreadyExists = prev.some((m) => m._id === incomingMessage._id);
             if (alreadyExists) return prev;
             return [...prev, incomingMessage];
         });
+
+        if (incomingMessage.sender === "system") {
+            refreshConversation();
+        }
     });
 
+    socketRef.current.on("conversation_paid", () => {
+        refreshConversation();
+    });
     return () => {
         socketRef.current.disconnect();
     };
 }, [conversationId]);
 
+ useEffect(() => {
+        const onFocus = () => {
+            refreshConversation();
+        };
+
+        window.addEventListener("focus", onFocus);
+        return () => window.removeEventListener("focus", onFocus);
+    }, [refreshConversation]);
+
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
+
+    useEffect(() => {
+        const timer = setInterval(() => setNow(Date.now()), 15000);
+        return () => clearInterval(timer);
+    }, []);
 
     const handleSendImage = async () => {
         if (!pendingImage) return;
@@ -240,17 +283,52 @@ const [disputeSent, setDisputeSent] = useState(false);
         }
     };
 
-    const handleRaiseDispute = async () => {
-    if (!disputeReason.trim()) return;
-    setDisputeSending(true);
-    const data = await raiseDisputeBuyer(conversationId, sessionId, disputeReason.trim());
-    if (!data.error) {
+      const handleRaiseDispute = async () => {
+        setDisputeError("");
+
+        if (!disputeCategory) {
+            setDisputeError("Please choose what went wrong.");
+            return;
+        }
+
+        if (!disputeReason.trim()) {
+            setDisputeError("Please describe the issue.");
+            return;
+        }
+
+        let answers;
+
+        if (disputeCategory === "not_received") {
+            if (!riderCalledAnswer || !someoneElseAnswer || !addressAnswer.trim()) {
+                setDisputeError("Please answer the three questions.");
+                return;
+            }
+
+            answers = {
+                riderCalled: riderCalledAnswer,
+                someoneElseReceived: someoneElseAnswer,
+                addressUsed: addressAnswer.trim(),
+            };
+        }
+
+        setDisputeSending(true);
+        const data = await raiseDisputeBuyer(conversationId, sessionId, disputeReason.trim(), disputeCategory, answers);
+        setDisputeSending(false);
+
+        if (data.error) {
+            setDisputeError(data.error);
+            return;
+        }
+
         setDisputeSent(true);
         setShowDisputeModal(false);
-        fetchMessages();
-    }
-    setDisputeSending(false);
-};
+        setDisputeCategory("");
+        setDisputeReason("");
+        setRiderCalledAnswer("");
+        setSomeoneElseAnswer("");
+        setAddressAnswer("");
+        refreshConversation();
+    };
 
     const handleSendAll = async () => {
         if (!input.trim() && !pendingImage) return;
@@ -285,13 +363,13 @@ const [disputeSent, setDisputeSent] = useState(false);
         }
         setBuyerPhone("");
         setReportReason("");
-        setReportSent("");
+
         setReportSending(false);
     };
 
     const handleCancelDispute = async () => {
     const data = await cancelDisputeBuyer(conversationId, sessionId);
-    if (!data.error) fetchMessages();
+    if (!data.error) refreshConversation();
 };
 
     const handleImagePick = () => {
@@ -318,9 +396,13 @@ const [disputeSent, setDisputeSent] = useState(false);
     };
 
     // ── identity verification submit ──
-    const handleVerifySubmit = async () => {
-        if (!ninValue.trim() || ninValue.trim().length < 10) {
-            setVerifyError("Enter a valid NIN or BVN.");
+      const handleVerifySubmit = async () => {
+        if (!/^\d{11}$/.test(ninValue.trim())) {
+            setVerifyError("Enter your 11-digit NIN.");
+            return;
+        }
+        if (!dobValue) {
+            setVerifyError("Enter your date of birth.");
             return;
         }
         if (!consentChecked) {
@@ -333,19 +415,18 @@ const [disputeSent, setDisputeSent] = useState(false);
 
         try {
             const data = await verifyBuyerIdentity(conversationId, sessionId, {
-                type: ninType,
                 identifier: ninValue.trim(),
+                dateOfBirth: dobValue,
                 consent: true,
-                buyerName: conversation?.buyerName || "",
-                buyerEmail: conversation?.buyerEmail || "",
             });
 
-            if (data?.error || data?.verified === false) {
-                setVerifyError(data?.error || "Verification is under review. We'll notify you here once complete.");
+            if (data?.error) {
+                setVerifyError(data.error);
                 setVerifySubmitting(false);
                 return;
             }
 
+            setNinValue("");
             setVerifiedNow(true);
             setVerifySubmitting(false);
         } catch (err) {
@@ -353,12 +434,12 @@ const [disputeSent, setDisputeSent] = useState(false);
             setVerifyError("Something went wrong. Please try again.");
             setVerifySubmitting(false);
         }
-    };
+    }; 
 
     // ── delivery PIN confirm submit ──
     const handleConfirmDelivery = async () => {
         if (!pinInput.trim()) {
-            setPinError("Enter the PIN you received.");
+            setPinError("Enter the parcel code.");
             return;
         }
 
@@ -377,12 +458,61 @@ const [disputeSent, setDisputeSent] = useState(false);
             setShowPinModal(false);
             setPinInput("");
             setPinSubmitting(false);
-            fetchMessages();
+            refreshConversation();
         } catch (err) {
             console.error("Confirm delivery error:", err);
             setPinError("Something went wrong. Please try again.");
             setPinSubmitting(false);
         }
+    };
+
+    
+    const handleRefreshPayment = async () => {
+        setRefreshingPayment(true);
+        setPaymentError("");
+
+        const data = await refreshPaymentDetails(conversationId, sessionId);
+
+        if (data?.error) {
+            setPaymentError(data.error);
+        } else {
+            await refreshConversation();
+        }
+
+        setRefreshingPayment(false);
+    };
+
+    
+    const handleRequestConfirmLink = async () => {
+        setConfirmLoading(true);
+        setConfirmError("");
+
+        const data = await requestConfirmLink(conversationId, sessionId);
+
+        setConfirmLoading(false);
+
+        if (data?.error) {
+            setConfirmError(data.error);
+            return;
+        }
+
+        setConfirmSent(true);
+    };
+
+    const handleContinuePayment = async () => {
+        setConfirmLoading(true);
+        setConfirmError("");
+
+        const data = await continuePayment(conversationId, sessionId);
+
+        if (data?.error) {
+            setConfirmError(data.error);
+            setConfirmLoading(false);
+            return;
+        }
+
+        await refreshConversation();
+        setConfirmLoading(false);
     };
 
     const renderMessageContent = (content, msgId) => {
@@ -440,6 +570,13 @@ const [disputeSent, setDisputeSent] = useState(false);
         );
     };
 
+    const paymentMessages = messages.filter(
+        (m) => m.sender === "system" && m.content.includes("💳 Payment Details")
+    );
+    const latestPaymentMsgId = paymentMessages.length > 0 ? paymentMessages[paymentMessages.length - 1]._id : null;
+    const paymentExpiresMs = conversation?.paymentExpiresAt ? new Date(conversation.paymentExpiresAt).getTime() : null;
+    const paymentExpired = paymentExpiresMs !== null && now > paymentExpiresMs;
+
     const handleCopyAccountNumber = (accountNumber) => {
         navigator.clipboard.writeText(accountNumber);
     };
@@ -447,17 +584,67 @@ const [disputeSent, setDisputeSent] = useState(false);
     const renderMessage = (msg) => {
         if (msg.sender === "system") {
 
+                        const isConfirmPrompt = msg.content.includes("[confirm]");
+            if (isConfirmPrompt) {
+                const textMatch = msg.content.match(/\[confirm\]([\s\S]*?)\[\/confirm\]/);
+                const promptText = textMatch ? textMatch[1] : "";
+
+                if (conversation?.escrowTransactionId) {
+                    return (
+                        <div key={msg._id} className={styles.systemMessage}>
+                            <p className={styles.verifySuccess}>✅ Email confirmed</p>
+                        </div>
+                    );
+                }
+
+                if (conversation?.sessionTrusted) {
+                    return (
+                        <div key={msg._id} className={styles.systemMessage}>
+                            <p>Your email is confirmed on this device.</p>
+                            {confirmError ? <p className={styles.verifyError}>{confirmError}</p> : null}
+                            <button
+                                className={styles.copyAccountBtn}
+                                onClick={handleContinuePayment}
+                                disabled={confirmLoading}
+                            >
+                                {confirmLoading ? "Getting payment details..." : "Continue to payment"}
+                            </button>
+                        </div>
+                    );
+                }
+
+                return (
+                    <div key={msg._id} className={styles.systemMessage}>
+                        <p>{promptText}</p>
+                        {confirmError ? <p className={styles.verifyError}>{confirmError}</p> : null}
+                        {confirmSent ? (
+                            <p className={styles.verifySuccess}>
+                                Link sent. Open it from your email, then come back here.
+                            </p>
+                        ) : (
+                            <button
+                                className={styles.copyAccountBtn}
+                                onClick={handleRequestConfirmLink}
+                                disabled={confirmLoading}
+                            >
+                                {confirmLoading ? "Sending..." : "Email me a link"}
+                            </button>
+                        )}
+                    </div>
+                );
+            }
+
             // ── identity verification prompt ──
             const isVerifyPrompt = msg.content.includes("[verify]");
             if (isVerifyPrompt) {
                 const textMatch = msg.content.match(/\[verify\](.*?)\[\/verify\]/s);
                 const promptText = textMatch ? textMatch[1] : "";
 
-                if (verifiedNow) {
+                if (verifiedNow || conversation?.escrowTransactionId) {
                     return (
                         <div key={msg._id} className={styles.systemMessage}>
                             <p>{promptText}</p>
-                            <p className={styles.verifySuccess}>✅ Verified — generating your payment details...</p>
+                            <p className={styles.verifySuccess}>✅ Identity Verified.</p>
                         </div>
                     );
                 }
@@ -466,29 +653,22 @@ const [disputeSent, setDisputeSent] = useState(false);
                     <div key={msg._id} className={styles.systemMessage}>
                         <p>{promptText}</p>
                         <div className={styles.verifyForm}>
-                            <div className={styles.verifyTypeRow}>
-                                <button
-                                    type="button"
-                                    className={ninType === "nin" ? `${styles.verifyTypeBtn} ${styles.activeType}` : styles.verifyTypeBtn}
-                                    onClick={() => setNinType("nin")}
-                                >
-                                    NIN
-                                </button>
-                                <button
-                                    type="button"
-                                    className={ninType === "bvn" ? `${styles.verifyTypeBtn} ${styles.activeType}` : styles.verifyTypeBtn}
-                                    onClick={() => setNinType("bvn")}
-                                >
-                                    BVN
-                                </button>
-                            </div>
                             <input
                                 type="text"
+                                inputMode="numeric"
                                 className={styles.verifyInput}
-                                placeholder={ninType === "nin" ? "Enter your NIN" : "Enter your BVN"}
+                                placeholder="Enter your 11-digit NIN"
                                 value={ninValue}
-                                onChange={(e) => setNinValue(e.target.value)}
+                                onChange={(e) => setNinValue(e.target.value.replace(/\D/g, ""))}
                                 maxLength={11}
+                            />
+                            <p className={styles.verifyLabel}>Date of birth (as on your NIN record)</p>
+                            <input
+                                type="date"
+                                className={styles.verifyInput}
+                                value={dobValue}
+                                onChange={(e) => setDobValue(e.target.value)}
+                                max={new Date().toISOString().split("T")[0]}
                             />
                             <label className={styles.verifyConsentRow}>
                                 <input
@@ -496,7 +676,7 @@ const [disputeSent, setDisputeSent] = useState(false);
                                     checked={consentChecked}
                                     onChange={(e) => setConsentChecked(e.target.checked)}
                                 />
-                                <span>I consent to identity verification for secure payment</span>
+                                <span>I agree that EscrowPay, a third party, verifies my identity, and that my payment is held by a licensed bank.</span>
                             </label>
                             {verifyError ? <p className={styles.verifyError}>{verifyError}</p> : null}
                             <button
@@ -511,9 +691,40 @@ const [disputeSent, setDisputeSent] = useState(false);
                 );
             }
 
-            // ── payment instructions (bank transfer details) ──
-            const isPaymentDetails = msg.content.includes("💳 Payment Details");
+                       const isPaymentDetails = msg.content.includes("💳 Payment Details");
             if (isPaymentDetails) {
+                if (conversation?.status === "paid") {
+                    return (
+                        <div key={msg._id} className={styles.systemMessage}>
+                            <p className={styles.verifySuccess}>✅ Payment received</p>
+                        </div>
+                    );
+                }
+
+    const isLatestPayment = msg._id === latestPaymentMsgId;
+
+               if (!isLatestPayment || paymentExpired) {
+                    return (
+                        <div key={msg._id} className={styles.systemMessage}>
+                            <p className={styles.expiredText}>
+                                ⏱ These payment details have expired. Do not transfer to this account.
+                            </p>
+                            {isLatestPayment ? (
+                                <>
+                                    {paymentError ? <p className={styles.verifyError}>{paymentError}</p> : null}
+                                    <button
+                                        className={styles.copyAccountBtn}
+                                        onClick={handleRefreshPayment}
+                                        disabled={refreshingPayment}
+                                    >
+                                        {refreshingPayment ? "Getting new details..." : "Get new payment details"}
+                                    </button>
+                                </>
+                            ) : null}
+                        </div>
+                    );
+                }
+
                 const accountMatch = msg.content.match(/Account Number:\s*(\d+)/);
                 const accountNumber = accountMatch ? accountMatch[1] : null;
 
@@ -528,29 +739,40 @@ const [disputeSent, setDisputeSent] = useState(false);
                                 Copy Account Number
                             </button>
                         ) : null}
+                        
+                       {conversation?.checkoutHostedUrl ? (
+    <div className={styles.escrowBlock}>
+        <a
+            className={styles.escrowButtonLink}
+            href={conversation.checkoutHostedUrl}
+            target="_blank"
+            rel="noreferrer"
+        >
+            <img
+                src={`${ESCROWPAY_BUTTON_BASE}/pay-with-escrowpay-lime@2x.png`}
+                srcSet={`${ESCROWPAY_BUTTON_BASE}/pay-with-escrowpay-lime@1x.png 1x, ${ESCROWPAY_BUTTON_BASE}/pay-with-escrowpay-lime@2x.png 2x, ${ESCROWPAY_BUTTON_BASE}/pay-with-escrowpay-lime@3x.png 3x`}
+                alt="Pay with EscrowPay"
+                height="40"
+            />
+        </a>
+        <p className={styles.fundsWording}>
+            Your payment is held by Rubies Microfinance Bank, licensed by the Central Bank of Nigeria, and released to the seller once you confirm delivery.
+        </p>
+        <Link to="/refund-rules" className={styles.rulesLink}>
+            How refunds and disputes work
+        </Link>
+    </div>
+) : null}
                     </div>
                 );
             }
 
-            // ── buyer-only delivery PIN ──
-            const isPinMessage = msg.content.includes("[buyer-only-pin]");
-            if (isPinMessage) {
-                const pinMatch = msg.content.match(/\[buyer-only-pin\](.*?)\[\/buyer-only-pin\]/);
-                const pin = pinMatch ? pinMatch[1] : "";
-
-                return (
-                    <div key={msg._id} className={styles.systemMessage}>
-                        <p className={styles.pinLabel}>Your Delivery PIN</p>
-                        <p className={styles.pinValue}>{pin}</p>
-                        <p className={styles.pinHint}>Enter this PIN once you receive your item to confirm delivery.</p>
-                    </div>
-                );
-            }
 
             return (
                 <div key={msg._id} className={styles.systemMessage}>
                     {renderMessageContent(msg.content, msg._id)}
                 </div>
+                
             );
         }
 
@@ -590,8 +812,12 @@ const [disputeSent, setDisputeSent] = useState(false);
         return null;
     };
 
-    const canConfirmDelivery = conversation?.orderStage === "shipped";
-
+    const stage = conversation?.orderStage;
+    const riderPhone = conversation?.shippingDetails?.riderPhone;
+    const showRiderCard = (stage === "shipped" || stage === "delivered") && !!riderPhone;
+    const canConfirmDelivery = stage === "shipped";
+    const canRaiseDispute = stage === "shipped" || stage === "delivered";
+    const canCancelDispute = stage === "disputed" && conversation?.dispute?.raisedBy === "buyer";
     return (
         <div className={styles.page}>
             <div className={styles.header}>
@@ -603,14 +829,10 @@ const [disputeSent, setDisputeSent] = useState(false);
                 {stageBadgeText() ? <span className={styles.paidBadge}>{stageBadgeText()}</span> : null}
 
                 <div className={styles.headerActions}>
-                    {canConfirmDelivery ? (
-                        <button className={styles.confirmDeliveryBtn} onClick={() => setShowPinModal(true)}>
-                            Confirm Delivery
-                        </button>
-                    ) : null}
+                    
                     {conversation?.orderStage === "released" || conversation?.orderStage === "delivered" ? (
                         <a
-                            href={`https://wa.me/2349132227203?text=${encodeURIComponent("Feedback on my MoonStore order: ")}`}
+                            href={`https://wa.me/2349126664419?text=${encodeURIComponent("Feedback on my MoonStore order: ")}`}
                             target="_blank"
                             rel="noreferrer"
                             className={styles.feedbackBtn}
@@ -618,29 +840,81 @@ const [disputeSent, setDisputeSent] = useState(false);
                             Feedback
                         </a>
                     ) : null}
-                    <button className={styles.reportBtn} onClick={() => setShowReportModal(true)}>
+                    <button className={styles.reportBtn} onClick={() => { setReportSent(false); setShowReportModal(true); }}>
                         Report
                     </button>
                 </div>
 
-                {conversation?.orderStage === "delivered" ? (
-    <button className={styles.disputeBtn} onClick={() => setShowDisputeModal(true)}>
-        Dispute
-    </button>
-) : null}
+         
 
 {showDisputeModal ? (
     <div className={styles.modalOverlay}>
         <div className={styles.modal}>
             <h3>Raise a Dispute</h3>
-            <p>Tell us what went wrong with this order. Your payment will stay on hold while we review.</p>
+            <p>Your payment stays on hold while we review.</p>
+
+            <p className={styles.fieldLabel}>What went wrong?</p>
+            <select
+                className={styles.selectInput}
+                value={disputeCategory}
+                onChange={(e) => setDisputeCategory(e.target.value)}
+            >
+                <option value="">Choose one</option>
+                <option value="not_received">I have not received my order</option>
+                <option value="wrong_item">I received the wrong item</option>
+                <option value="damaged">My item arrived damaged</option>
+                <option value="not_as_described">The item is not as described</option>
+                <option value="other">Something else</option>
+            </select>
+
+            {disputeCategory === "not_received" ? (
+                <div className={styles.questionBox}>
+                    <p className={styles.fieldLabel}>Did the delivery person call you?</p>
+                    <select
+                        className={styles.selectInput}
+                        value={riderCalledAnswer}
+                        onChange={(e) => setRiderCalledAnswer(e.target.value)}
+                    >
+                        <option value="">Choose one</option>
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                        <option value="not_sure">Not sure</option>
+                    </select>
+
+                    <p className={styles.fieldLabel}>Did anyone else receive a parcel for you?</p>
+                    <select
+                        className={styles.selectInput}
+                        value={someoneElseAnswer}
+                        onChange={(e) => setSomeoneElseAnswer(e.target.value)}
+                    >
+                        <option value="">Choose one</option>
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                        <option value="not_sure">Not sure</option>
+                    </select>
+
+                    <p className={styles.fieldLabel}>What address were you expecting it at?</p>
+                    <input
+                        type="text"
+                        className={styles.reportPhoneInput}
+                        value={addressAnswer}
+                        maxLength={200}
+                        onChange={(e) => setAddressAnswer(e.target.value)}
+                        placeholder="Street, area, city"
+                    />
+                </div>
+            ) : null}
+
             <textarea
                 className={styles.reportInput}
                 value={disputeReason}
                 onChange={(e) => setDisputeReason(e.target.value)}
-                placeholder="Describe the issue..."
+                placeholder="Describe the issue. You can send photos in the chat too."
                 rows={4}
             />
+
+            {disputeError ? <p className={styles.reportError}>{disputeError}</p> : null}
+
             <div className={styles.modalActions}>
                 <button className={styles.cancelBtn} onClick={() => setShowDisputeModal(false)}>
                     Cancel
@@ -648,7 +922,7 @@ const [disputeSent, setDisputeSent] = useState(false);
                 <button
                     className={styles.submitBtn}
                     onClick={handleRaiseDispute}
-                    disabled={disputeSending || !disputeReason.trim()}
+                    disabled={disputeSending}
                 >
                     {disputeSending ? "Submitting..." : "Submit Dispute"}
                 </button>
@@ -658,17 +932,56 @@ const [disputeSent, setDisputeSent] = useState(false);
     </div>
 ) : null}
 
-{conversation?.orderStage === "disputed" && conversation?.dispute?.raisedBy === "buyer" ? (
-    <button className={styles.cancelDisputeBtn} onClick={handleCancelDispute}>
-        Cancel Dispute
-    </button>
-) : null}
+
         </div>
 
             <div className={styles.messages}>
                 {messages?.map((msg) => renderMessage(msg))}
+
+                {showRiderCard ? (
+                    <div className={styles.systemMessage}>
+                        <p className={styles.pinLabel}>Delivery person</p>
+                        <p className={styles.riderName}>
+                            {conversation.shippingDetails.riderName || "Your delivery person"}
+                        </p>
+                        <a className={styles.riderCall} href={`tel:+${riderPhone}`}>
+                            Call +{riderPhone}
+                        </a>
+                    </div>
+                ) : null}
+
+                {conversation?.orderStage === "shipped" && conversation?.deliveryPin ? (
+                    <div className={styles.systemMessage}>
+                        <p className={styles.pinLabel}>Your parcel code</p>
+                        <p className={styles.pinValue}>{conversation.deliveryPin}</p>
+                        <p className={styles.pinHint}>
+                            When your parcel arrives, check that this code is written on it. Tap Confirm Delivery only after you are holding your parcel.
+                        </p>
+                    </div>
+                ) : null}
+
                 <div ref={bottomRef} />
             </div>
+
+                {canConfirmDelivery || canRaiseDispute || canCancelDispute ? (
+                <div className={styles.actionBar}>
+                    {canConfirmDelivery ? (
+                        <button className={styles.confirmDeliveryBtn} onClick={() => setShowPinModal(true)}>
+                            Confirm Delivery
+                        </button>
+                    ) : null}
+                    {canRaiseDispute ? (
+                        <button className={styles.disputeBtn} onClick={() => setShowDisputeModal(true)}>
+                            Raise Dispute
+                        </button>
+                    ) : null}
+                    {canCancelDispute ? (
+                        <button className={styles.disputeBtn} onClick={handleCancelDispute}>
+                            Cancel Dispute
+                        </button>
+                    ) : null}
+                </div>
+            ) : null}
 
             <div className={styles.inputBar}>
                 {imageError ? <p className={styles.imageError}>{imageError}</p> : null}
@@ -759,14 +1072,15 @@ const [disputeSent, setDisputeSent] = useState(false);
                 <div className={styles.modalOverlay}>
                     <div className={styles.modal}>
                         <h3>Confirm Delivery</h3>
-                        <p>Enter the PIN you received in this chat to confirm you got your item.</p>
+                        <p>Enter the 4-digit parcel code from this chat to confirm you are holding your parcel.</p>
                         <input
                             type="text"
+                            inputMode="numeric"
                             className={styles.reportPhoneInput}
-                            placeholder="Enter PIN"
+                            placeholder="Enter code"
                             value={pinInput}
-                            onChange={(e) => setPinInput(e.target.value)}
-                            maxLength={6}
+                            onChange={(e) => setPinInput(e.target.value.replace(/\D/g, ""))}
+                            maxLength={4}
                         />
                         {pinError ? <p className={styles.reportError}>{pinError}</p> : null}
                         <div className={styles.modalActions}>

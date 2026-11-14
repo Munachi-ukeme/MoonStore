@@ -16,6 +16,7 @@ import SignupPage from "./pages/SignupPage";
 import HomePage from "./pages/HomePage";
 import BuyerDashboard from "./buyerComponent/BuyerDashboard";
 import SessionRestore from "./pages/SessionRestore";
+import RefundRules from "./pages/RefundRules";
 import BuyerOrdersPage from "./pages/BuyerOrdersPage";
 import BuyerChatPage from "./pages/BuyerChatPage";
 import SellerInboxPage from "./pages/SellerInboxPage";
@@ -26,15 +27,16 @@ import AboutUsPage from "./pages/AboutUsPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import AcceptableUsePage from "./pages/AcceptableUsePage";
+import BuyerConfirmPage from "./pages/BuyerConfirmPage";
 import AdminLoginPage from "./adminComponent/AdminLoginPage";
 import AdminProtectedRoute from "./AdminProtectedRoute";
 import AdminSellersPage from "./adminComponent/AdminSellersPage";
 import AdminLayout from "./adminComponent/AdminLayout";
-import AdminReferralsPage from "./adminComponent/AdminReferralsPage";
 import AdminReportsPage from "./adminComponent/AdminReportsPage";
 import AdminRevenuePage from "./adminComponent/AdminRevenuePage";
 import AdminExitSurveysPage from "./adminComponent/AdminExitSurveysPage";
-import AdminUnverifiedSellersPage from "./adminComponent/AdminUnverifiedSellersPage";
+import AdminDisputesPage from "./adminComponent/AdminDisputesPage";
+import AdminDisputeDetailPage from "./adminComponent/AdminDisputeDetailPage";
 import { MaintenanceOverlay } from "./sellerComponent/MaintenanceOverlay";
 import { checkSystemStatus } from "./api/api";
 import { saveInstallPrompt } from "./utils/installPrompt";
@@ -108,11 +110,14 @@ const MainRoutes = () => {
       <Route path="/privacypolicy" element={<ErrorBoundary><PrivacyPolicy /></ErrorBoundary>} />
       <Route path="/termsofservice" element={<ErrorBoundary><TermsOfService /></ErrorBoundary>} />
       <Route path="/my-orders" element={<ErrorBoundary><BuyerDashboard /></ErrorBoundary>} />
+      <Route path="/buyer/confirm/:token" element={<ErrorBoundary><BuyerConfirmPage /></ErrorBoundary>} />
       <Route path="/restore" element={<ErrorBoundary><SessionRestore /></ErrorBoundary>} />
       <Route path="/aboutus" element={<ErrorBoundary><AboutUsPage /></ErrorBoundary>} />
       <Route path="/acceptableusepolicy" element={<ErrorBoundary><AcceptableUsePage /></ErrorBoundary>} />
+      <Route path="/refund-rules" element={<ErrorBoundary><RefundRules /></ErrorBoundary>} />
       <Route path="/admin/login" element={<ErrorBoundary><AdminLoginPage /></ErrorBoundary>} />
-      <Route path="/admin/exit-surveys" element={<ErrorBoundary><AdminExitSurveysPage /></ErrorBoundary>} />
+
+
 
       {/* Protected seller routes */}
       <Route path="/dashboard" element={
@@ -184,14 +189,6 @@ const MainRoutes = () => {
         </AdminProtectedRoute>
       }/>
 
-      <Route path="/admin/referrals" element={
-        <AdminProtectedRoute>
-          <AdminLayout>
-            <AdminReferralsPage />
-          </AdminLayout>
-        </AdminProtectedRoute>
-      }/>
-
       <Route path="/admin/reports" element={
         <AdminProtectedRoute>
           <AdminLayout>
@@ -216,10 +213,18 @@ const MainRoutes = () => {
         </AdminProtectedRoute>
       }/>
 
-      <Route path="/admin/unverifiedsellers" element={
+        <Route path="/admin/disputes" element={
         <AdminProtectedRoute>
           <AdminLayout>
-            <AdminUnverifiedSellersPage />
+            <AdminDisputesPage />
+          </AdminLayout>
+        </AdminProtectedRoute>
+      }/>
+
+      <Route path="/admin/disputes/:conversationId" element={
+        <AdminProtectedRoute>
+          <AdminLayout>
+            <AdminDisputeDetailPage />
           </AdminLayout>
         </AdminProtectedRoute>
       }/>

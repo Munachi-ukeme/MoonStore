@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { buyerLogin } from "../api/api";
-import { saveBuyerEmailLocally } from "../utils/session";
+import { requestBuyerLoginLink } from "../api/api";
 import styles from "./HomePage.module.css";
 import StepsSection from "../sellerComponent/StepsSection";
 import FAQSection from "../sellerComponent/FAQSection";
@@ -12,16 +11,19 @@ const HomePage = () => {
     const [email, setEmail] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const [infoMessage, setInfoMessage] = useState("");
 
-      const handleTrackOrders = async () => {
+        const handleSendLoginLink = async () => {
         setError("");
+        setInfoMessage("");
+
         if (!email.trim()) {
             setError("Please enter your email");
             return;
         }
 
         setLoading(true);
-        const result = await buyerLogin(email.trim());
+        const result = await requestBuyerLoginLink(email.trim());
         setLoading(false);
 
         if (result.error) {
@@ -29,32 +31,23 @@ const HomePage = () => {
             return;
         }
 
-
-        // save email and all session IDs locally so buyer is recognised
-        // across the platform
-        saveBuyerEmailLocally(email.trim());
-
-        // store all sessionIds from backend — buyer may have used
-        // multiple devices before saving email
-        localStorage.setItem("moonstore_session_ids", JSON.stringify(result.sessionIds));
-
-        navigate("/my-orders");
+        setInfoMessage(result.message);
     };
 
-     const handleTabSwitch = (tab) => {
+    const handleTabSwitch = (tab) => {
         setError("");
+        setInfoMessage("");
         setEmail("");
         setActiveTab(tab);
-    };
+    }; 
 
-    const renderBuyerTab = () => {
+        const renderBuyerTab = () => {
         return (
             <div className={styles.tabContent}>
                 <div className={styles.contentTop}>
                     <p className={styles.contentTitle}>Track Your Orders</p>
                     <p className={styles.contentText}>
-                        Enter the email you saved while shopping to see all your
-                        orders and chat history.
+                        Enter the email you used while shopping. We will email you a one-time link to see all your orders and chat history.
                     </p>
                 </div>
 
@@ -67,17 +60,18 @@ const HomePage = () => {
                         onChange={(e) => setEmail(e.target.value)}
                     />
                     {error ? <p className={styles.error}>{error}</p> : null}
+                    {infoMessage ? <p className={styles.hint}>{infoMessage}</p> : null}
                     <button
                         className={styles.primaryBtn}
-                        onClick={handleTrackOrders}
+                        onClick={handleSendLoginLink}
                         disabled={loading}
                     >
-                        {loading ? "Loading..." : "Track My Orders →"}
+                        {loading ? "Sending..." : "Email me a login link →"}
                     </button>
                 </div>
 
                 <p className={styles.hint}>
-                    No account needed — just the email you used while shopping.
+                    No account or password needed. The link works once and expires in 20 minutes.
                 </p>
             </div>
         );
@@ -97,7 +91,7 @@ const HomePage = () => {
                 <div className={styles.perks}>
                     <p className={styles.perk}>✓ Your store. Your name. Your brand.</p>
                     <p className={styles.perk}>✓ Buyers chat and pay inside your store</p>
-                    <p className={styles.perk}>✓ Money sent to your bank daily</p>
+                    <p className={styles.perk}>✓ Buyers’ payments are held safely, then sent to your bank after delivery</p>
                     <p className={styles.perk}>✓ No tech skills. No developer. No stress.</p>
                 </div>
 
@@ -124,7 +118,7 @@ const HomePage = () => {
             <div className={styles.brand}>
                 <img src={logo} alt="MoonStore logo" className={styles.logoImg} />
                 <h1 className={styles.logo}>MoonStore</h1>
-                <p className={styles.tagline}>Your Store. Your Rules.</p>
+                <p className={styles.tagline}>Build From Home. Sell Beyond Home.</p>
             </div>
 
             {/* toggle tabs */}

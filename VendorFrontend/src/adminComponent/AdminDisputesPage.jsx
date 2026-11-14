@@ -58,7 +58,9 @@ const AdminDisputesPage = () => {
                             /{d.sellerId?.slug} · {d.sellerId?.email} · {d.sellerId?.whatsappNumber}
                         </p>
 
-                        <p className={styles.reason}>Reason: {d.dispute?.reason || "Not specified"}</p>
+                        <p className={styles.reason}>
+                            Type: {d.dispute?.category || "other"} · Reason: {d.dispute?.reason || "Not specified"}
+                        </p>
 
                         <p className={styles.buyerMeta}>
                             Buyer: {d.buyerName || "—"} · {d.buyerEmail || "no email"} · Amount: ₦{d.amount?.toLocaleString()}

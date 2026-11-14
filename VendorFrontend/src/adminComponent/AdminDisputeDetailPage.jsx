@@ -1,8 +1,36 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { io } from "socket.io-client";
-import { getDisputeDetailAdmin, sendAdminDisputeMessage, resolveDisputeAdmin, BASE_URL } from "../api/api";
+import {
+    getDisputeDetailAdmin,
+    sendAdminDisputeMessage,
+    resolveDisputeAdmin,
+    notifyDisputePartiesAdmin,
+    BASE_URL,
+} from "../api/api";
 import styles from "./AdminDisputeDetailPage.module.css";
+
+const CATEGORY_LABELS = {
+    not_received: "Buyer says: not received",
+    wrong_item: "Buyer says: wrong item",
+    damaged: "Buyer says: damaged on arrival",
+    not_as_described: "Buyer says: not as described",
+    buyer_unreachable: "Seller says: buyer could not be reached",
+    buyer_refused: "Seller says: buyer refused the parcel",
+    wrong_address: "Seller says: wrong address or phone",
+    other: "Other",
+};
+
+const ANSWER_LABELS = {
+    yes: "Yes",
+    no: "No",
+    not_sure: "Not sure",
+};
+
+const formatDateTime = (value) => {
+    if (!value) return "—";
+    return new Date(value).toLocaleString("en-NG");
+};
 
 const AdminDisputeDetailPage = () => {
     const { conversationId } = useParams();
@@ -12,12 +40,16 @@ const AdminDisputeDetailPage = () => {
     const [error, setError] = useState("");
     const [input, setInput] = useState("");
     const [sending, setSending] = useState(false);
+    const [sendError, setSendError] = useState("");
     const [notifying, setNotifying] = useState(false);
-
+    const [notifyError, setNotifyError] = useState("");
 
     const [resolving, setResolving] = useState(false);
-    const [splitPercent, setSplitPercent] = useState(50);
     const [showSplitInput, setShowSplitInput] = useState(false);
+    const [splitMode, setSplitMode] = useState("percent");
+    const [splitPercent, setSplitPercent] = useState(50);
+    const [splitAmount, setSplitAmount] = useState("");
+    const [note, setNote] = useState("");
     const [resolveError, setResolveError] = useState("");
     const [resolved, setResolved] = useState(false);
 
@@ -33,6 +65,7 @@ const AdminDisputeDetailPage = () => {
         } else {
             setConversation(data.conversation);
             setMessages(data.messages);
+            setResolved(!!data.conversation?.dispute?.resolvedAt);
         }
         setLoading(false);
     }, [conversationId]);
@@ -60,50 +93,87 @@ const AdminDisputeDetailPage = () => {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
+    const getTotalNaira = () => {
+        return (conversation?.amount || 0) + (conversation?.shippingDetails?.deliveryFee || 0);
+    };
+
     const handleSend = async () => {
         if (!input.trim()) return;
         setSending(true);
+        setSendError("");
         const data = await sendAdminDisputeMessage(conversationId, input.trim());
-        if (!data.error) {
+        if (data.error) {
+            setSendError(data.error);
+        } else {
             setInput("");
         }
         setSending(false);
     };
 
     const handleNotifyParties = async () => {
-    setNotifying(true);
-    const data = await notifyDisputePartiesAdmin(conversationId);
-    if (!data.error) {
-        loadDispute();
-    }
-    setNotifying(false);
-};
+        setNotifying(true);
+        setNotifyError("");
+        const data = await notifyDisputePartiesAdmin(conversationId);
+        if (data.error) {
+            setNotifyError(data.error);
+        } else {
+            loadDispute();
+        }
+        setNotifying(false);
+    };
 
     const handleResolve = async (resolution) => {
         setResolveError("");
 
-        if (resolution === "split") {
-            const data = await resolveDisputeAdmin(conversationId, "split", splitPercent);
-            if (data.error) {
-                setResolveError(data.error);
+        let confirmText = "";
+        let splitPercentValue;
+        let splitAmountValue;
+        const totalNaira = getTotalNaira();
+
+        if (resolution === "seller") {
+            confirmText = "release all funds to the seller";
+        } else if (resolution === "buyer") {
+            confirmText = "refund all funds to the buyer";
+        } else if (splitMode === "amount") {
+            const amountNumber = Number(splitAmount);
+
+            if (!Number.isInteger(amountNumber) || amountNumber <= 0 || amountNumber >= totalNaira) {
+                setResolveError(`Enter a whole number between 1 and ${totalNaira - 1}`);
                 return;
             }
-            setResolved(true);
-            return;
+
+            splitAmountValue = amountNumber;
+            confirmText = `give the seller ₦${amountNumber.toLocaleString("en-NG")} and refund the buyer ₦${(totalNaira - amountNumber).toLocaleString("en-NG")}`;
+        } else {
+            const percentNumber = Number(splitPercent);
+
+            if (!percentNumber || percentNumber <= 0 || percentNumber >= 100) {
+                setResolveError("Enter a percentage between 1 and 99");
+                return;
+            }
+
+            splitPercentValue = percentNumber;
+            confirmText = `give the seller ${percentNumber}% and the buyer ${100 - percentNumber}%`;
         }
 
-        const confirmText = resolution === "seller" ? "release all funds to the seller" : "refund all funds to the buyer";
         if (!window.confirm(`Are you sure you want to ${confirmText}? This cannot be undone.`)) return;
 
         setResolving(true);
-        const data = await resolveDisputeAdmin(conversationId, resolution);
+        const data = await resolveDisputeAdmin(
+            conversationId,
+            resolution,
+            splitPercentValue,
+            splitAmountValue,
+            note.trim()
+        );
+        setResolving(false);
+
         if (data.error) {
             setResolveError(data.error);
-            setResolving(false);
             return;
         }
+
         setResolved(true);
-        setResolving(false);
     };
 
     const senderLabel = (sender) => {
@@ -114,16 +184,31 @@ const AdminDisputeDetailPage = () => {
     };
 
     const renderMessageContent = (content) => {
-        const imgMatch = content.match(/\[img\](.*?)\[\/img\]/);
-        if (imgMatch) {
-            return <img src={imgMatch[1]} alt="evidence" className={styles.evidenceImg} />;
-        }
-        return <span>{content}</span>;
+        const parts = content.split(/(\[img\].*?\[\/img\])/);
+
+        return parts
+            .filter((part) => part !== "")
+            .map((part, index) => {
+                const imgMatch = part.match(/^\[img\](.*?)\[\/img\]$/);
+
+                if (imgMatch) {
+                    return <img key={index} src={imgMatch[1]} alt="evidence" className={styles.evidenceImg} />;
+                }
+
+                return <span key={index}>{part.replace(/\[\/?(verify|confirm)\]/g, "")}</span>;
+            });
     };
 
     if (loading) return <p className={styles.stateText}>Loading dispute...</p>;
     if (error) return <p className={styles.errorText}>{error}</p>;
     if (!conversation) return null;
+
+    const totalNaira = getTotalNaira();
+    const deliveryFee = conversation.shippingDetails?.deliveryFee || 0;
+    const answers = conversation.dispute?.answers;
+    const hasAnswers = !!answers && (answers.riderCalled || answers.someoneElseReceived || answers.addressUsed);
+    const riderPhone = conversation.shippingDetails?.riderPhone;
+    const splitBuyerNaira = splitAmount ? totalNaira - Number(splitAmount) : totalNaira;
 
     return (
         <div className={styles.page}>
@@ -159,9 +244,27 @@ const AdminDisputeDetailPage = () => {
                     ) : (
                         <p className={styles.resolvedText}>✅ This dispute has been resolved.</p>
                     )}
+                    {sendError ? <p className={styles.errorText}>{sendError}</p> : null}
                 </div>
 
                 <div className={styles.detailsPanel}>
+                    <h2 className={styles.panelTitle}>The Dispute</h2>
+                    <p className={styles.detailValue}>
+                        Raised by the {conversation.dispute?.raisedBy || "—"} on {formatDateTime(conversation.dispute?.raisedAt)}
+                    </p>
+                    <p className={styles.detailValue}>
+                        {CATEGORY_LABELS[conversation.dispute?.category] || "No type chosen"}
+                    </p>
+
+                    {hasAnswers ? (
+                        <div className={styles.answerBox}>
+                            <p className={styles.detailLabel}>Buyer's answers</p>
+                            <p className={styles.answerRow}>Did the delivery person call? {ANSWER_LABELS[answers.riderCalled] || "—"}</p>
+                            <p className={styles.answerRow}>Did anyone else receive a parcel? {ANSWER_LABELS[answers.someoneElseReceived] || "—"}</p>
+                            <p className={styles.answerRow}>Address expected: {answers.addressUsed || "—"}</p>
+                        </div>
+                    ) : null}
+
                     <h2 className={styles.panelTitle}>Order Snapshot</h2>
                     <p className={styles.detailLabel}>Seller</p>
                     <p className={styles.detailValue}>{conversation.sellerId?.businessName}</p>
@@ -174,8 +277,24 @@ const AdminDisputeDetailPage = () => {
                         {conversation.deliveryAddress}, {conversation.deliveryCity} · {conversation.deliveryPhone}
                     </p>
 
-                    <p className={styles.detailLabel}>Amount</p>
-                    <p className={styles.detailValue}>₦{conversation.amount?.toLocaleString()}</p>
+                    <p className={styles.detailLabel}>Delivery person</p>
+                    <p className={styles.detailValue}>
+                        {conversation.shippingDetails?.riderName || "No name"}
+                        {riderPhone ? ` · +${riderPhone}` : " · no phone saved"}
+                    </p>
+
+                    <p className={styles.detailLabel}>Shipped</p>
+                    <p className={styles.detailValue}>
+                        {formatDateTime(conversation.shippedAt)} · delivery window {conversation.deliveryWindowDays || 0} day(s)
+                    </p>
+
+                    <p className={styles.detailLabel}>Parcel code</p>
+                    <p className={styles.detailValue}>{conversation.deliveryPin || "—"}</p>
+
+                    <p className={styles.detailLabel}>Money held</p>
+                    <p className={styles.detailValue}>
+                        Products ₦{conversation.amount?.toLocaleString()} + delivery ₦{deliveryFee.toLocaleString()} = ₦{totalNaira.toLocaleString()}
+                    </p>
 
                     <p className={styles.detailLabel}>Products Ordered (as seen at order time)</p>
                     {conversation.orderedProductSnapshot?.map((item, i) => (
@@ -194,10 +313,10 @@ const AdminDisputeDetailPage = () => {
 
                     {conversation.deliveredAt ? (
                         <p className={styles.contradictionNote}>
-                            ⚠️ Buyer confirmed delivery with PIN on {new Date(conversation.deliveredAt).toLocaleString("en-NG")}
+                            ⚠️ Buyer confirmed delivery with the parcel code on {formatDateTime(conversation.deliveredAt)}
                         </p>
                     ) : (
-                        <p className={styles.detailValue}>Buyer never confirmed delivery with PIN.</p>
+                        <p className={styles.detailValue}>The buyer has not confirmed delivery with the parcel code.</p>
                     )}
 
                     {!resolved ? (
@@ -205,14 +324,25 @@ const AdminDisputeDetailPage = () => {
                             <h3 className={styles.panelTitle}>Resolve Dispute</h3>
 
                             {!conversation.dispute?.responseDeadline ? (
-    <button className={styles.notifyBtn} onClick={handleNotifyParties} disabled={notifying}>
-        {notifying ? "Notifying..." : "Notify Both Parties (24h to respond)"}
-    </button>
-) : (
-    <p className={styles.deadlineText}>
-        Response deadline: {new Date(conversation.dispute.responseDeadline).toLocaleString("en-NG")}
-    </p>
-)}
+                                <button className={styles.notifyBtn} onClick={handleNotifyParties} disabled={notifying}>
+                                    {notifying ? "Notifying..." : "Ask Both Parties to Respond"}
+                                </button>
+                            ) : (
+                                <p className={styles.deadlineText}>
+                                    Both parties were asked to respond by {formatDateTime(conversation.dispute.responseDeadline)}
+                                </p>
+                            )}
+                            {notifyError ? <p className={styles.errorText}>{notifyError}</p> : null}
+
+                            <textarea
+                                className={styles.noteInput}
+                                value={note}
+                                onChange={(e) => setNote(e.target.value)}
+                                placeholder="Note to both sides (optional). It is shown in the chat."
+                                rows={3}
+                                maxLength={500}
+                            />
+
                             {resolveError ? <p className={styles.errorText}>{resolveError}</p> : null}
 
                             <button
@@ -235,17 +365,57 @@ const AdminDisputeDetailPage = () => {
                                     Split Between Both
                                 </button>
                             ) : (
-                                <div className={styles.splitRow}>
-                                    <label>Seller gets:</label>
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        max="99"
-                                        value={splitPercent}
-                                        onChange={(e) => setSplitPercent(e.target.value)}
-                                    />
-                                    <span>% · Buyer gets {100 - splitPercent}%</span>
-                                    <button className={styles.splitConfirmBtn} onClick={() => handleResolve("split")}>
+                                <div className={styles.splitBox}>
+                                    <div className={styles.splitModeRow}>
+                                        <button
+                                            className={splitMode === "percent" ? styles.modeBtnActive : styles.modeBtn}
+                                            onClick={() => setSplitMode("percent")}
+                                        >
+                                            By percent
+                                        </button>
+                                        <button
+                                            className={splitMode === "amount" ? styles.modeBtnActive : styles.modeBtn}
+                                            onClick={() => setSplitMode("amount")}
+                                        >
+                                            By amount (₦)
+                                        </button>
+                                    </div>
+
+                                    {splitMode === "percent" ? (
+                                        <div className={styles.splitRow}>
+                                            <label>Seller gets:</label>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                max="99"
+                                                value={splitPercent}
+                                                onChange={(e) => setSplitPercent(e.target.value)}
+                                            />
+                                            <span>% · Buyer gets {100 - splitPercent}%</span>
+                                        </div>
+                                    ) : (
+                                        <div className={styles.splitRow}>
+                                            <label>Seller gets ₦</label>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                max={totalNaira - 1}
+                                                value={splitAmount}
+                                                onChange={(e) => setSplitAmount(e.target.value)}
+                                            />
+                                            <span>· Buyer gets ₦{splitBuyerNaira.toLocaleString()}</span>
+                                        </div>
+                                    )}
+
+                                    <p className={styles.hintText}>
+                                        Failed delivery that was the buyer's fault: give the seller the delivery fee plus the courier's return fee; the buyer gets the rest.
+                                    </p>
+
+                                    <button
+                                        className={styles.splitConfirmBtn}
+                                        onClick={() => handleResolve("split")}
+                                        disabled={resolving}
+                                    >
                                         Confirm Split
                                     </button>
                                 </div>

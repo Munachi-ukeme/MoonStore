@@ -1,62 +1,52 @@
-// Admin routes - protected by admin secret key
+// Admin routes - protected by admin secret key (checked inside each controller function)
 const express = require("express")
 const router = express.Router()
+const rateLimit = require("express-rate-limit")
 const {
   activateStore,
   deactivateStore,
   adminLogin,
   deleteSeller,
   getAllSellers,
-  markCommissionPaid,
-  getAllReferrals,
   adminLogout,
   getReportedConversations,
   exportConversationPdf,
   getRevenueSummary,
   getExitSurveys,
-  getUnverifiedSellers,
-  verifySubaccount,
+  getDisputedConversations,
+  getDisputeDetail,
+  sendAdminMessage,
+  notifyDisputeParties,
+  resolveDispute,
 } = require("../controllers/adminController")
 
-// PUT /api/admin/activate → activate one store
-router.put("/activate", activateStore)
+// only failed passkey attempts count against the limit
+const adminLoginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  skipSuccessfulRequests: true,
+  message: { message: "Too many login attempts. Please try again in 15 minutes." },
+})
 
-// PUT /api/admin/deactivate → deactivate one store
+router.put("/activate", activateStore)
 router.put("/deactivate", deactivateStore)
 
-router.post("/login", adminLogin);
+router.post("/login", adminLoginLimiter, adminLogin)
+router.post("/logout", adminLogout)
 
-// DELETE /api/admin/delete-seller → delete seller account + all data
 router.delete("/delete-seller", deleteSeller)
-
-// GET /api/admin/get- all all sellers
 router.get("/sellers", getAllSellers)
 
-router.post("/logout", adminLogout);
+router.get("/reports", getReportedConversations)
+router.get("/reports/:conversationId/export", exportConversationPdf)
 
-//mark commission as paid
-router.put("/mark-commission-paid", markCommissionPaid)
+router.get("/revenue-summary", getRevenueSummary)
+router.get("/exit-surveys", getExitSurveys)
 
-// get all referrals
-router.get("/referrals", getAllReferrals)
-
-router.get("/reports", getReportedConversations);
-
-router.get("/reports/:conversationId/export", exportConversationPdf);
-
-router.get("/revenue-summary", getRevenueSummary);
-
-router.get("/exit-surveys", getExitSurveys);
-
-// GET /api/admin/unverified-sellers → list sellers awaiting subaccount verification
-router.get("/unverified-sellers", getUnverifiedSellers)
-
-// PUT /api/admin/verify-subaccount → unlock Products/Categories for a seller
-router.put("/verify-subaccount", verifySubaccount)
-
-router.get("/disputes", getDisputedConversations);
-router.get("/disputes/:conversationId", getDisputeDetail);
-router.post("/disputes/:conversationId/message", sendAdminMessage);
-router.post("/disputes/:conversationId/resolve", resolveDispute);
+router.get("/disputes", getDisputedConversations)
+router.get("/disputes/:conversationId", getDisputeDetail)
+router.post("/disputes/:conversationId/message", sendAdminMessage)
+router.post("/disputes/:conversationId/notify", notifyDisputeParties)
+router.post("/disputes/:conversationId/resolve", resolveDispute)
 
 module.exports = router

@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { startConversation } from "../api/api";
-import { grossUpPrice } from "../utils/pricing";
 import { getOrCreateSessionId } from "../utils/session";
 import styles from "./OrderTray.module.css";
 
@@ -99,10 +98,11 @@ const OrderTray = ({ slug }) => {
                 tray.deliveryAddress,
                 tray.deliveryCity,
                 tray.deliveryPhone,
+                tray.deliveryZone,
             );
 
             if (data?.error) {
-                setOrderError("Could not start order. Please try again.");
+                setOrderError(data.error);
                 setTimeout(() => setOrderError(""), 3000);
                 setOrdering(false);
                 return;
@@ -121,7 +121,9 @@ const OrderTray = ({ slug }) => {
 
     if (!tray || !tray.items || tray.items.length === 0) return null;
 
-    const total = tray.items.reduce((sum, item) => sum + grossUpPrice(item.price) * item.quantity, 0);
+    const itemsTotal = tray.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const deliveryFee = tray.deliveryZone ? tray.deliveryZone.price : 0;
+    const total = itemsTotal + deliveryFee;
     const itemCount = tray.items.length;
 
     return (
@@ -163,7 +165,7 @@ const OrderTray = ({ slug }) => {
     {item.sizes && item.sizes.length > 0 ? ` · Size: ${item.sizes.join(", ")}` : ""}
 </p>
                                    <p className={styles.itemPrice}>
-                                        ₦{(grossUpPrice(item.price) * item.quantity).toLocaleString()}
+                                        ₦{(item.price * item.quantity).toLocaleString()}
                                     </p>
                                 </div>
                                 <button
@@ -177,6 +179,13 @@ const OrderTray = ({ slug }) => {
                     </div>
 
                     <div className={styles.divider} />
+
+                    {tray.deliveryZone ? (
+                        <div className={styles.totalRow}>
+                            <span className={styles.totalLabel}>Delivery ({tray.deliveryZone.label})</span>
+                            <span className={styles.totalValue}>₦{deliveryFee.toLocaleString()}</span>
+                        </div>
+                    ) : null}
 
                     <div className={styles.totalRow}>
                         <span className={styles.totalLabel}>Total</span>

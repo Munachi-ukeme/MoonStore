@@ -5,8 +5,11 @@ const markOrderPaid = async ({ conversation, reference }) => {
     const Transaction = require("../models/Transaction");
     const { getIO } = require("./socket");
     const { sendLowStockEmail } = require("./mailer");
+    const { getQuantityEntries } = require("./quantities");
+    const { generateParcelCode } = require("./parcelCode");
 
     if (conversation.status === "paid") return;
+    const sellerId = conversation.sellerId._id || conversation.sellerId;
 
     const realPrice = conversation.amount;
     const platformFeeAmount = Math.round((realPrice * conversation.marketplaceCommissionBps) / 10000);
@@ -16,12 +19,16 @@ const markOrderPaid = async ({ conversation, reference }) => {
     conversation.orderStage = "payment_held";
     conversation.paidAt = new Date();
     conversation.shipDeadlineAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
+    // the seller writes this code on the parcel; the buyer sees it only after the order is shipped
+    if (!conversation.deliveryPin) {
+        conversation.deliveryPin = generateParcelCode();
+    }
     await conversation.save();
 
-    const seller = await Seller.findById(conversation.sellerId);
+    const seller = await Seller.findById(sellerId)
 
     await Transaction.create({
-        sellerId: conversation.sellerId,
+        sellerId,
         type: "order",
         amount: realPrice,
         platformFee: platformFeeAmount,
@@ -33,7 +40,7 @@ const markOrderPaid = async ({ conversation, reference }) => {
     });
 
     try {
-        for (const [productId, quantityOrdered] of Object.entries(conversation.productQuantities || {})) {
+        for (const [productId, quantityOrdered] of getQuantityEntries(conversation.productQuantities)) {
             const product = await Product.findById(productId);
 
             if (!product || product.stockCount === undefined || product.stockCount === null) {

@@ -20,10 +20,10 @@ const BuyerDashboard = () => {
         }
 
         const loadConversations = async () => {
-            // retrieve all session IDs linked to this buyer
-            // JSON.parse safely reads the array we stored as a string
             const stored = localStorage.getItem("moonstore_session_ids");
-            const sessionIds = stored ? JSON.parse(stored) : [];
+            const storedIds = stored ? JSON.parse(stored) : [];
+            const currentId = localStorage.getItem("moonstore_session_id");
+            const sessionIds = Array.from(new Set([...storedIds, currentId].filter(Boolean)));
 
             if (sessionIds.length === 0) {
                 setLoading(false);
@@ -81,7 +81,7 @@ const BuyerDashboard = () => {
                     <div key={conv._id} className={styles.row}>
                         <div className={styles.rowInfo}>
                             <p className={styles.sellerName}>{conv.sellerId?.businessName}</p>
-                            <p className={styles.productName}>{conv.productId?.name}</p>
+                            <p className={styles.productName}>{conv.productIds?.[0]?.name}</p>
                         </div>
                         <div className={styles.rowRight}>
                             {renderBadge(conv.status)}

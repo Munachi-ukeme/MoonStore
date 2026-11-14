@@ -310,3 +310,43 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+.zoneCard {
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.zoneRow {
+  display: flex;
+  gap: 10px;
+}
+
+.zoneRow .field {
+  flex: 1;
+}
+
+.removeZoneBtn {
+  align-self: flex-end;
+  background: transparent;
+  border: none;
+  color: #dc2626;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.addZoneBtn {
+  padding: 11px;
+  background: #f5f2ff;
+  color: #6c47ff;
+  border: 1px dashed #6c47ff;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}

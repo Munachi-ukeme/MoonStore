@@ -11,13 +11,11 @@ const PERIOD_OPTIONS = [
   { value: "last_year", label: "Last Year" },
 ];
 
-
 const AnalyticsSection = () => {
   const [period, setPeriod] = useState("month");
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
 
   const fetchAnalytics = useCallback(async () => {
       setLoading(true);
@@ -42,14 +40,14 @@ const AnalyticsSection = () => {
          value: `₦${data.totalSales.toLocaleString()}`,
          },
 
-          {
-          label: "Your Earnings",
-          value: `₦${data.sellerEarnings.toLocaleString()}`,
+        {
+          label: "Held in Escrow",
+          value: `₦${data.heldInEscrow.toLocaleString()}`,
         },
 
-        {
-          label: "Pending Settlement",
-          value: `₦${data.pendingPayments.toLocaleString()}`,
+          {
+          label: "Released to You",
+          value: `₦${data.releasedToYou.toLocaleString()}`,
         },
 
         {
@@ -65,10 +63,19 @@ const AnalyticsSection = () => {
         {
           label: "Products Sold",
           value: data.productsSold,
-        },        
+        },
+
+        {
+          label: "Disputed",
+          value: `${data.disputedCount} · ₦${data.disputedAmount.toLocaleString()}`,
+        },
+
+        {
+          label: "Refunded",
+          value: `${data.refundedCount} · ₦${data.refundedAmount.toLocaleString()}`,
+        },
       ]
     : [];
-
 
     return (
     <div className={styles.wrapper}>

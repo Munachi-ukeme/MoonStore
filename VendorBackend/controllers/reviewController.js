@@ -1,7 +1,6 @@
 const Review = require("../models/Review");
 const Transaction = require("../models/Transaction");
-
-const REVIEW_UNLOCK_HOURS = 24;
+const Conversation = require("../models/Conversation");
 
 const checkEligibility = async (req, res) => {
     try {
@@ -21,14 +20,10 @@ const checkEligibility = async (req, res) => {
             return res.json({ eligible: false, reason: "not_purchased" });
         }
 
-        const hoursSincePaid = (Date.now() - new Date(transaction.paidAt).getTime()) / (1000 * 60 * 60);
+        const conversation = await Conversation.findById(transaction.conversationId);
 
-        if (hoursSincePaid < REVIEW_UNLOCK_HOURS) {
-            return res.json({
-                eligible: false,
-                reason: "too_soon",
-                unlocksAt: new Date(new Date(transaction.paidAt).getTime() + REVIEW_UNLOCK_HOURS * 60 * 60 * 1000),
-            });
+        if (!conversation || !conversation.deliveredAt) {
+            return res.json({ eligible: false, reason: "not_delivered" });
         }
 
         const existingReview = await Review.findOne({ productId, buyerEmail });
@@ -65,10 +60,10 @@ const createReview = async (req, res) => {
             return res.status(403).json({ error: "You can only review products you've purchased" });
         }
 
-        const hoursSincePaid = (Date.now() - new Date(transaction.paidAt).getTime()) / (1000 * 60 * 60);
+        const conversation = await Conversation.findById(transaction.conversationId);
 
-        if (hoursSincePaid < REVIEW_UNLOCK_HOURS) {
-            return res.status(403).json({ error: "Review not yet available for this order" });
+        if (!conversation || !conversation.deliveredAt) {
+            return res.status(403).json({ error: "Review not yet available — delivery not confirmed" });
         }
 
         const review = await Review.create({
