@@ -2,7 +2,7 @@ export default async function handler(req, res) {
   try {
     const { slug, productSlug } = req.query;
 
-    const response = await fetch(`https://moonstore.onrender.com/api/store/${slug}/${productSlug}`);
+    const response = await fetch(`https://api.moonstore.ng/api/store/${slug}/${productSlug}`);
     const data = await response.json();
 
     if (!data || data.error) {

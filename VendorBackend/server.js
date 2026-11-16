@@ -23,7 +23,7 @@ app.use(helmet());
 // 2. CORS MUST COME BEFORE MAINTENANCE MIDDLEWARE
 // Allows maintenance 503 responses to pass browser CORS checks safely
 app.use(cors({
-  origin: [process.env.FRONTEND_URL],
+  origin: [process.env.FRONTEND_URL, "https://www.moonstore.ng"].filter(Boolean),
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "x-session-id", "admin-key", "x-maintenance-bypass"],

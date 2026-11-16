@@ -44,10 +44,9 @@ const SECTIONS = [
     {
         "t": "6. Returns and refunds",
         "p": [
-            "Wrong item, damaged, or not as described: if the seller is at fault you get a refund. We may ask you to send the item back first and keep the money frozen until it arrives.",
+            "Wrong item, damaged, or not as described: if the seller is at fault you get a refund. The money stays held while the seller sends a dispatch to collect the item, which must happen within 48 hours.",
             "Change of mind, wrong size or colour you chose: this is not the seller’s fault, so the buyer is on their own.",
-            "Low-value orders (₦10,000 and below): the team may refund without asking for the item back.",
-            "If the seller is out of stock, the order is refunded automatically after 48 hours."
+            "Every order is refundable when the seller is at fault. The seller must arrange a dispatch to collect the item within 48 hours. If the seller does not, the buyer is refunded even if the item is never sent back.",
         ]
     },
     {
