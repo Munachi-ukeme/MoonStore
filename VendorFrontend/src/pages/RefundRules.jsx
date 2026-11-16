@@ -80,7 +80,7 @@ const SECTIONS = [
     {
         "t": "11. Need help?",
         "p": [
-            "Use the report button in your chat, or message support on WhatsApp: +2348152905325."
+            "Use the report button in your chat, or message support on WhatsApp: +2349126664419."
         ]
     }
 ];

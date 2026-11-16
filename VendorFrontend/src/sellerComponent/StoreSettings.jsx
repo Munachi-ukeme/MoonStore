@@ -196,7 +196,7 @@ const StoreSettings = () => {
   };
 
   const handleWhatsappChannelButton = () => {
-    window.open("https://whatsapp.com/channel/0029Vb84tO9GpLHI1O3xll2o", "_blank", "noopener,noreferrer");
+    window.open("https://whatsapp.com/channel/0029Vb9UqZxIHphB9e1PQa0g", "_blank", "noopener,noreferrer");
   };
 
   // Main Menu View
