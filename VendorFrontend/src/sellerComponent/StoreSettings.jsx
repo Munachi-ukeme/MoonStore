@@ -115,61 +115,61 @@ const StoreSettings = () => {
     setDeliveryZones((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSaveDelivery = async () => {
-    clearMessages();
+ const handleRetryPayout = async () => {
+  setPayoutMessage("Finishing your payout setup...");
+  const data = await retryPayoutSetup();
 
-    if (deliveryZones.length === 0) {
-      setError("Add at least one delivery option before saving.");
-      timerRef.current = setTimeout(() => setError(null), 2500);
-      return;
-    }
+  if (data?.error) {
+    setPayoutMessage(data.error);
+    return;
+  }
 
-      const handleRetryPayout = async () => {
-    setPayoutMessage("Finishing your payout setup...");
-    const data = await retryPayoutSetup();
+  setPayoutMessage("Payout setup complete. You can now add products.");
+  setTimeout(() => window.location.reload(), 1200);
+};
 
-    if (data?.error) {
-      setPayoutMessage(data.error);
-      return;
-    }
+const handleSaveDelivery = async () => {
+  clearMessages();
 
-    setPayoutMessage("Payout setup complete. You can now add products.");
-    setTimeout(() => window.location.reload(), 1200);
-  };
+  if (deliveryZones.length === 0) {
+    setError("Add at least one delivery option before saving.");
+    timerRef.current = setTimeout(() => setError(null), 2500);
+    return;
+  }
 
-    const hasBlank = deliveryZones.some(
-      (zone) => !zone.label.trim() || zone.price === "" || zone.estimatedDays === ""
-    );
+  const hasBlank = deliveryZones.some(
+    (zone) => !zone.label.trim() || zone.price === "" || zone.estimatedDays === ""
+  );
 
-    if (hasBlank) {
-      setError("Fill in every field, or remove the empty delivery option.");
-      timerRef.current = setTimeout(() => setError(null), 3000);
-      return;
-    }
+  if (hasBlank) {
+    setError("Fill in every field, or remove the empty delivery option.");
+    timerRef.current = setTimeout(() => setError(null), 3000);
+    return;
+  }
 
-    setDeliveryLoading(true);
-    const data = await updateDeliveryOptions(
-      deliveryZones.map((zone) => ({
-        label: zone.label.trim(),
-        price: Number(zone.price),
-        estimatedDays: Number(zone.estimatedDays),
-      }))
-    );
-    setDeliveryLoading(false);
+  setDeliveryLoading(true);
+  const data = await updateDeliveryOptions(
+    deliveryZones.map((zone) => ({
+      label: zone.label.trim(),
+      price: Number(zone.price),
+      estimatedDays: Number(zone.estimatedDays),
+    }))
+  );
+  setDeliveryLoading(false);
 
-    if (data?.error) {
-      setError(data.error);
-      timerRef.current = setTimeout(() => setError(null), 3000);
-      return;
-    }
+  if (data?.error) {
+    setError(data.error);
+    timerRef.current = setTimeout(() => setError(null), 3000);
+    return;
+  }
 
-    updateSeller(data.seller);
-    setSuccess("Delivery options saved.");
-    timerRef.current = setTimeout(() => {
-      setSuccess(null);
-      goBack();
-    }, 1500);
-  };
+  updateSeller(data.seller);
+  setSuccess("Delivery options saved.");
+  timerRef.current = setTimeout(() => {
+    setSuccess(null);
+    goBack();
+  }, 1500);
+};
 
   const handleDeleteAccount = async () => {
     if (reason.trim().length < 10) {
@@ -192,7 +192,7 @@ const StoreSettings = () => {
 
   const handleHelpButton = () => {
     const message = `Hi, I need help with my MoonStore store. Business: ${seller?.businessName}`;
-    window.open(`https://wa.me/2348152905325?text=${encodeURIComponent(message)}`, "_blank");
+    window.open(`https://wa.me/2349126664419?text=${encodeURIComponent(message)}`, "_blank");
   };
 
   const handleWhatsappChannelButton = () => {

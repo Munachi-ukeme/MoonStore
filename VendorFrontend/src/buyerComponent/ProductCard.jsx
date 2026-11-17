@@ -43,7 +43,7 @@ function ProductCard({ product, slug}){
             <div className={styles.info}>
                 <p className={styles.name}>{product.name}</p>
                 <p className={styles.price}>
-                    ₦{grossUpPrice(product.price).toLocaleString()}
+                    ₦{Number(product.price).toLocaleString()}
                 </p>
 
                 {showLowStockText ? (

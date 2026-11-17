@@ -18,7 +18,6 @@ const ProductForm = ({ editingProduct, onSaved, onCancel }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [originalPrice, setOriginalPrice] = useState("");
-    const [displayPrice, setDisplayPrice] = useState(null);
     const [stockCount, setStockCount] = useState("");
 
     useEffect(() => {
@@ -45,15 +44,9 @@ const ProductForm = ({ editingProduct, onSaved, onCancel }) => {
                     : String(editingProduct.stockCount)
             );
 
-            if (editingProduct.price) {
-                setDisplayPrice(grossUpPrice(Number(editingProduct.price)));
-            } else {
-                setDisplayPrice(null);
-            }
         } else {
             setName("");
             setOriginalPrice("");
-            setDisplayPrice(null);
             setDescription("");
             setCategoryId("");
             setImages([]);
@@ -189,15 +182,9 @@ const ProductForm = ({ editingProduct, onSaved, onCancel }) => {
         onSaved(data);
     };
 
-    const handlePriceChange = (e) => {
-        const val = e.target.value;
-        setOriginalPrice(val);
-        if (val && !isNaN(val) && Number(val) > 0) {
-            setDisplayPrice(grossUpPrice(Number(val)));
-        } else {
-            setDisplayPrice(null);
-        }
-    };
+   const handlePriceChange = (e) => {
+    setOriginalPrice(e.target.value);
+};
 
     return (
         <div className={styles.container}>
@@ -227,11 +214,7 @@ const ProductForm = ({ editingProduct, onSaved, onCancel }) => {
                     onChange={handlePriceChange}
                     placeholder="e.g 15,000.00"
                 />
-                {displayPrice ? (
-                    <p className={styles.priceNote}>
-                        Buyer will pay <strong>₦{displayPrice.toLocaleString()}</strong> (₦{(displayPrice - Number(originalPrice)).toLocaleString()} includes Paystack gateway processing fee).
-                    </p>
-                ) : null}
+               
             </div>
 
             <div className={styles.field}>

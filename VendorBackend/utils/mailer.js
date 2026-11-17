@@ -37,7 +37,7 @@ const sendSellerNewChatEmail = async (sellerEmail, sellerBusinessName, productNa
             style="display:inline-block;padding:10px 20px;background:#6d28d9;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;">
             View Conversation
           </a>
-          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore, Your Store. Your Rules.</p>
+          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore — Buy with Greater Confidence. Sell with Less Stress.</p>
         </div>
       `,
     });
@@ -61,7 +61,7 @@ const sendBuyerReplyEmail = async (buyerEmail, sellerBusinessName, storeSlug, se
             style="display:inline-block;padding:10px 20px;background:#6d28d9;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;">
             View Reply
           </a>
-          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore — Your Store. Your Rules.</p>
+          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore — Buy with Greater Confidence. Sell with Less Stress.</p>
         </div>
       `,
     });
@@ -86,6 +86,7 @@ const sendPasswordResetEmail = async (sellerEmail, sellerBusinessName, resetToke
             Reset Password
           </a>
           <p style="color:#9ca3af;font-size:12px;margin-top:24px;">If you didn't request this, ignore this email.</p>
+          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore — Buy with Greater Confidence. Sell with Less Stress.</p>
         </div>
       `,
     });
@@ -110,6 +111,7 @@ const sendSignupConfirmationEmail = async (email, businessName, signupToken) => 
             Confirm Email & Continue
           </a>
           <p style="color:#9ca3af;font-size:12px;margin-top:24px;">If you didn't request this, ignore this email.</p>
+          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore — Buy with Greater Confidence. Sell with Less Stress.</p>
         </div>
       `,
     });
@@ -133,7 +135,7 @@ const sendLowStockEmail = async (sellerEmail, sellerBusinessName, productName, s
             style="display:inline-block;padding:10px 20px;background:#6d28d9;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;">
             Update Stock
           </a>
-          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore — Your Store. Your Rules.</p>
+          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore — Buy with Greater Confidence. Sell with Less Stress.</p>
         </div>
       `,
     });
@@ -157,7 +159,7 @@ const sendInactivityWarningEmail = async (sellerEmail, sellerBusinessName) => {
             style="display:inline-block;padding:10px 20px;background:#6d28d9;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;">
             Go to Dashboard
           </a>
-          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore — Your Store. Your Rules.</p>
+          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore — Buy with Greater Confidence. Sell with Less Stress.</p>
         </div>
       `,
     });
@@ -177,7 +179,7 @@ const sendStoreDeactivatedEmail = async (sellerEmail, sellerBusinessName) => {
           <h2 style="color: #6d28d9;">Your store has been deactivated</h2>
           <p>Hi ${escapeHtml(sellerBusinessName)}, your store has been deactivated due to 30 days of inactivity.</p>
           <p>If you'd like to reactivate your store, please contact support.</p>
-          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore — Your Store. Your Rules.</p>
+          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore — Buy with Greater Confidence. Sell with Less Stress.</p>
         </div>
       `,
     });
@@ -202,6 +204,7 @@ const sendAdminDeactivationSummaryEmail = async (deactivatedSellers) => {
           <p>The following stores were automatically deactivated due to 30 days of inactivity:</p>
           <ul>${listHtml}</ul>
           <p>They will be permanently deleted in 7 days if not reactivated.</p>
+          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore — Buy with Greater Confidence. Sell with Less Stress.</p>
         </div>
       `,
     });
@@ -221,7 +224,7 @@ const sendStoreDeletedEmail = async (sellerEmail, sellerBusinessName) => {
           <h2 style="color: #6d28d9;">Your store has been deleted</h2>
           <p>Hi ${escapeHtml(sellerBusinessName)}, your store was permanently deleted after 30 days of inactivity followed by a 7-day grace period with no response.</p>
           <p>If you believe this was a mistake, please contact support.</p>
-          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore — Your Store. Your Rules.</p>
+          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore — Buy with Greater Confidence. Sell with Less Stress.</p>
         </div>
       `,
     });
@@ -244,6 +247,7 @@ const sendAdminDeletionSummaryEmail = async (deletedSellers) => {
         <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
           <h2 style="color: #6d28d9;">Auto-deletion summary</h2>
           <p>The following stores were permanently deleted after 30 days inactive + 7 days grace period:</p>
+          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore — Buy with Greater Confidence. Sell with Less Stress.</p>
           <ul>${listHtml}</ul>
         </div>
       `,
@@ -269,6 +273,7 @@ const sendAdminNewDisputeEmail = async (conversationId, sellerBusinessName, reas
             style="display:inline-block;padding:10px 20px;background:#6d28d9;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;">
             Review Dispute
           </a>
+          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore — Buy with Greater Confidence. Sell with Less Stress.</p>
         </div>
       `,
     });
@@ -292,7 +297,7 @@ const sendDisputeNotificationEmail = async (toEmail, recipientName, chatLink, de
             style="display:inline-block;padding:10px 20px;background:#6d28d9;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;">
             Go to Chat
           </a>
-          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore — Your Store. Your Rules.</p>
+          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore — Buy with Greater Confidence. Sell with Less Stress.</p>
         </div>
       `,
     });
@@ -346,6 +351,7 @@ const sendBuyerLoginLinkEmail = async (buyerEmail, token, purpose, storeName) =>
             ${isConfirm ? "Yes, continue my order" : "Log in"}
           </a>
           <p style="color:#9ca3af;font-size:12px;margin-top:24px;">If this wasn't you, ignore this email. Nothing will happen.</p>
+          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore — Buy with Greater Confidence. Sell with Less Stress.</p>
         </div>
       `,
     });
@@ -382,6 +388,7 @@ const sendBuyerShippedEmail = async (buyerEmail, storeName, riderName, riderPhon
             style="display:inline-block;padding:10px 20px;background:#6d28d9;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;">
             Open My Orders
           </a>
+          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore — Buy with Greater Confidence. Sell with Less Stress.</p>
         </div>
       `,
     });
@@ -409,6 +416,7 @@ const sendBuyerReleaseReminderEmail = async (buyerEmail, storeName, isDelivered)
             style="display:inline-block;padding:10px 20px;background:#6d28d9;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;">
             Open My Orders
           </a>
+          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore — Buy with Greater Confidence. Sell with Less Stress.</p>
         </div>
       `,
     });
@@ -432,6 +440,7 @@ const sendBuyerOrderCancelledEmail = async (buyerEmail, storeName, reasonText) =
             style="display:inline-block;padding:10px 20px;background:#6d28d9;color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;">
             Open My Orders
           </a>
+          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore — Buy with Greater Confidence. Sell with Less Stress.</p>
         </div>
       `,
     });
@@ -451,6 +460,7 @@ const sendBuyerDisputeWarningEmail = async (buyerEmail) => {
           <h2 style="color: #6d28d9;">Please read this</h2>
           <p>Two disputes you raised were decided in the seller's favour. If a third is decided the same way, we will stop new orders from your email for 90 days.</p>
           <p>Please only raise a dispute when there is a real problem with an order.</p>
+          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore — Buy with Greater Confidence. Sell with Less Stress.</p>
         </div>
       `,
     });
@@ -470,6 +480,7 @@ const sendBuyerBlockedEmail = async (buyerEmail, untilDate) => {
           <h2 style="color: #6d28d9;">New orders are paused</h2>
           <p>Three disputes you raised were decided in the seller's favour, so new orders from your email are paused until <strong>${escapeHtml(untilDate.toLocaleDateString("en-NG"))}</strong>.</p>
           <p>Orders you already paid for are not affected. If you think this is a mistake, contact MoonStore support on WhatsApp 09126664419.</p>
+          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore — Buy with Greater Confidence. Sell with Less Stress.</p>
         </div>
       `,
     });
@@ -489,6 +500,7 @@ const sendSellerDisputeWarningEmail = async (sellerEmail, businessName) => {
           <h2 style="color: #6d28d9;">Please read this</h2>
           <p>Hi ${escapeHtml(businessName)}, three disputes on your store have been decided in the buyer's favour. If another is decided the same way, your store may be suspended after review.</p>
           <p>Please check items, packaging and delivery details before you ship, and keep proof of dispatch.</p>
+          <p style="color:#9ca3af;font-size:12px;margin-top:24px;">MoonStore — Buy with Greater Confidence. Sell with Less Stress.</p>
         </div>
       `,
     });
