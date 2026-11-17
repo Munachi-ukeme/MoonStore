@@ -23,7 +23,6 @@ const SignupPage = () => {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
-    const [refFromUrl, setRefFromUrl] = useState(false);
 
     const [formDetails, setFormDetails] = useState({
         businessName: "",
@@ -66,9 +65,7 @@ const SignupPage = () => {
                 whatsappNumber: result.whatsappNumber,
                 howHeardAboutUs: result.howHeardAboutUs || "",
                 howHeardAboutUsOther: result.howHeardAboutUsOther || "",
-                referredBy: result.referredBy || "",
             }));
-            if (result.referredBy) setRefFromUrl(true);
             setStep(2);
         };
 
@@ -184,7 +181,6 @@ const SignupPage = () => {
             whatsappNumber: formDetails.whatsappNumber.trim(),
             howHeardAboutUs: formDetails.howHeardAboutUs,
             howHeardAboutUsOther: formDetails.howHeardAboutUs === "Other" ? formDetails.howHeardAboutUsOther.trim() : "",
-            referredBy: formDetails.referredBy.trim() || undefined,
         });
         setLoading(false);
 

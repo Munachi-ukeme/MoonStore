@@ -22,12 +22,16 @@ const generateSlug = (businessName) => {
 const requestSignupConfirmation = async (req, res) => {
   try {
 
-        const errors = validationResult(req);
+    const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ message: errors.array()[0].msg });
     }
 
-        const { businessName, email, password, whatsappNumber, referredBy, howHeardAboutUs, howHeardAboutUsOther } = req.body;
+    const { businessName, email, password, whatsappNumber, howHeardAboutUs, howHeardAboutUsOther } = req.body;
+
+    if (typeof businessName !== "string" || typeof email !== "string" || typeof password !== "string" || typeof whatsappNumber !== "string") {
+            return res.status(400).json({ message: "Invalid details" });
+        }
         
 
    if (!businessName || !email || !password || !whatsappNumber || !howHeardAboutUs) {
@@ -54,7 +58,6 @@ const requestSignupConfirmation = async (req, res) => {
         email,
         hashedPassword,
         whatsappNumber,
-        referredBy: referredBy || null,
         howHeardAboutUs,
         howHeardAboutUsOther: howHeardAboutUsOther || "",
       },
@@ -102,7 +105,6 @@ const verifySignupToken = async (req, res) => {
       email: decoded.email,
       hashedPassword: decoded.hashedPassword,
       whatsappNumber: decoded.whatsappNumber,
-      referredBy: decoded.referredBy,
       howHeardAboutUs: decoded.howHeardAboutUs,
       howHeardAboutUsOther: decoded.howHeardAboutUsOther,
     });
