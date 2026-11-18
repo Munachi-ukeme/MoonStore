@@ -8,9 +8,9 @@ import logo from "../assets/logo.png";
 
 // Add these three image files to src/assets, or change the imports to match
 // the filenames you use for your generated images.
-import heroVendor from "../assets/moonstore-hero-vendor.jpg";
-import vendorProblem from "../assets/moonstore-vendor-problem.jpg";
-import buyerParcel from "../assets/moonstore-buyer-parcel.jpg";
+import heroVendor from "../assets/moonstore-hero-vendor.png";
+import vendorProblem from "../assets/moonstore-vendor-problem.png";
+import buyerParcel from "../assets/moonstore-buyer-parcel.png";
 
 const HomePage = () => {
     const navigate = useNavigate();
