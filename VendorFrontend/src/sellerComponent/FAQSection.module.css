@@ -1,57 +1,78 @@
 .section {
-    padding: 32px 16px;
-    max-width: 480px;
-    margin: 0 auto;
+    width: min(900px, calc(100% - 64px));
+    margin: 0 auto 82px;
+    padding: 10px 0;
 }
 
+.headingGroup { margin-bottom: 28px; text-align: center; }
+.eyebrow {
+    color: #6d28d9;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .12em;
+}
 .heading {
-    font-size: 18px;
-    font-weight: 700;
-    text-align: center;
-    color: #1a1a1a;
-    margin-bottom: 20px;
+    margin: 8px 0;
+    color: #19152b;
+    font-size: clamp(26px, 3vw, 36px);
+    letter-spacing: -.035em;
 }
+.subheading { margin: 0; color: #6b7280; font-size: 13px; }
 
-.list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
+.list { display: grid; gap: 10px; }
 .item {
-    border: 1px solid #e5e7eb;
-    border-radius: 10px;
-    padding: 4px 14px;
+    padding: 3px 18px;
+    border: 1px solid #e8e4ee;
+    border-radius: 12px;
+    background: #fff;
+    transition: border-color .18s ease, box-shadow .18s ease;
 }
-
+.item.open {
+    border-color: #d5c3f6;
+    box-shadow: 0 5px 18px rgba(50, 25, 100, .05);
+}
 .questionBtn {
     width: 100%;
-    background: none;
-    border: none;
+    min-height: 54px;
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
+    gap: 18px;
     padding: 12px 0;
-    cursor: pointer;
+    border: 0;
+    background: transparent;
     text-align: left;
+    cursor: pointer;
 }
-
-.questionText {
-    font-size: 13px;
-    font-weight: 600;
-    color: #1a1a1a;
-}
-
+.questionText { color: #211b30; font-size: 14px; font-weight: 700; line-height: 1.4; }
 .icon {
-    font-size: 16px;
+    flex: 0 0 27px;
+    width: 27px;
+    height: 27px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
     color: #6d28d9;
-    flex-shrink: 0;
-    margin-left: 8px;
+    background: #f1eaff;
+    font-size: 18px;
+    line-height: 1;
+}
+.answer {
+    margin: 0;
+    padding: 0 34px 17px 0;
+    color: #6b7280;
+    font-size: 13px;
+    line-height: 1.7;
 }
 
-.answer {
-    font-size: 12px;
-    color: #6b7280;
-    line-height: 1.6;
-    padding-bottom: 14px;
+@media (max-width: 640px) {
+    .section { width: calc(100% - 32px); margin-bottom: 56px; }
+    .headingGroup { margin-bottom: 20px; }
+    .heading { font-size: 25px; }
+    .subheading { font-size: 12px; line-height: 1.5; }
+    .item { padding: 2px 13px; border-radius: 10px; }
+    .questionBtn { min-height: 52px; gap: 10px; }
+    .questionText { font-size: 12px; }
+    .icon { width: 24px; height: 24px; flex-basis: 24px; font-size: 16px; }
+    .answer { padding: 0 4px 14px 0; font-size: 12px; }
 }

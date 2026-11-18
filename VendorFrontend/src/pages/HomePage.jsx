@@ -232,6 +232,8 @@ const HomePage = () => {
                     <Link to="/privacypolicy">Privacy Policy</Link>
                     <Link to="/termsofservice">Terms of Service</Link>
                     <Link to="/acceptableusepolicy">Acceptable Use Policy</Link>
+                    <Link to="/refundrules">Refund Rules</Link>
+
                 </nav>
                 <p>Powered by <strong>MoonStore</strong></p>
             </footer>

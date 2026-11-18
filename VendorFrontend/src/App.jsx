@@ -114,7 +114,7 @@ const MainRoutes = () => {
       <Route path="/restore" element={<ErrorBoundary><SessionRestore /></ErrorBoundary>} />
       <Route path="/aboutus" element={<ErrorBoundary><AboutUsPage /></ErrorBoundary>} />
       <Route path="/acceptableusepolicy" element={<ErrorBoundary><AcceptableUsePage /></ErrorBoundary>} />
-      <Route path="/refund-rules" element={<ErrorBoundary><RefundRules /></ErrorBoundary>} />
+      <Route path="/refundrules" element={<ErrorBoundary><RefundRules /></ErrorBoundary>} />
       <Route path="/admin/login" element={<ErrorBoundary><AdminLoginPage /></ErrorBoundary>} />
 
 
