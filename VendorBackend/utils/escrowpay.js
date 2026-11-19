@@ -1,7 +1,13 @@
 const crypto = require("crypto");
 
-const ESCROWPAY_BASE_URL = process.env.ESCROWPAY_BASE_URL;
-const ESCROWPAY_SECRET_KEY = process.env.ESCROW_SECRET_KEY;
+const ESCROWPAY_BASE_URL = (process.env.ESCROWPAY_BASE_URL || "").trim().replace(/\/+$/, "");
+const ESCROWPAY_SECRET_KEY = (process.env.ESCROW_SECRET_KEY || "").trim();
+console.log("EscrowPay config:", {
+    baseUrl: ESCROWPAY_BASE_URL,
+    keyLength: ESCROWPAY_SECRET_KEY ? ESCROWPAY_SECRET_KEY.length : 0,
+    keyStart: ESCROWPAY_SECRET_KEY ? ESCROWPAY_SECRET_KEY.slice(0, 7) : null,
+    hasSpaceOrQuote: ESCROWPAY_SECRET_KEY ? /[\s"']/.test(ESCROWPAY_SECRET_KEY) : null,
+});
 const REQUEST_TIMEOUT_MS = 20000;
 
 // Idempotency keys must be 16-255 visible ASCII characters. Calls that move money pass their own
