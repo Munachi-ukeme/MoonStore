@@ -199,7 +199,7 @@ const retryPayoutSetup = async (req, res) => {
             payoutData.status !== "verified" ||
             payoutData.payout_eligible !== true
         ) {
-          console.error("Payout setup failed:", result.status, JSON.stringify(result.data));
+          console.error("Payout setup failed:", payoutResult.status, JSON.stringify(payoutResult.data));
             return res.status(500).json({
                 message: "We couldn't set up your payout account right now. Please try again shortly.",
             });

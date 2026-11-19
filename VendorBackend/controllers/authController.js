@@ -306,6 +306,9 @@ const registerSeller = async (req, res) => {
       payoutDone = true;
     }
 
+    if (!payoutDone) {
+      console.error("Signup payout setup failed:", payoutResult.status, JSON.stringify(payoutResult.data));
+    }
     const token = jwt.sign({ id: seller._id }, process.env.JWT_SECRET, {
       expiresIn: "30d",
     });
