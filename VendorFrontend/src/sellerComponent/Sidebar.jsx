@@ -135,12 +135,12 @@ const Sidebar = ({ isOpen, onClose, onToggle, isWide }) => {
                         >
                             ✕
                         </button>
-                        <p className={styles.popupTitle}>Your store is under review</p>
-                        <p className={styles.popupText}>
-                            It will be unlocked within the next 24 hours. Use this time to set
-                            your store up properly by adding your business logo, banner, and
-                            other details in Settings if you have not done so.
-                        </p>
+                        <p className={styles.popupTitle}>Finish your payout setup</p>
+<p className={styles.popupText}>
+    Your store can't add products until your payout account is set up.
+    Open Settings and tap "Finish payout setup". If it keeps failing,
+    contact MoonStore support.
+</p>
                         <button
                             className={styles.popupBtn}
                             onClick={() => {

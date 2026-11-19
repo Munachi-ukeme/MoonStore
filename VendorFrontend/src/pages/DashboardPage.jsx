@@ -106,7 +106,7 @@ function DashboardPage() {
                         </p>
                         <div className={styles.popupSteps}>
                             <p className={styles.popupStep}>
-                                1. Go to Settings and finish setting up your store, add your logo, tagline, banner, etc
+                                1. Go to Settings and finish setting up your store, add your logo, tagline, banner, delivery locations, etc
                             </p>
 
                             <p className={styles.popupStep}> 2. Turn on email notifications so you never miss an order alert</p>
