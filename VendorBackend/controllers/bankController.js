@@ -6,6 +6,7 @@ const getBanks = async (req, res) => {
         const result = await listBanks();
 
         if (!result.ok) {
+            console.error("Banks failed:", result.status, JSON.stringify(result.data));
             return res.status(500).json({ message: "Could not load banks" });
         }
 
