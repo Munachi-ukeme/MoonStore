@@ -543,6 +543,9 @@ const handleSaveDelivery = async () => {
 
         <p className={styles.hint}>
           Double-check this is the correct account. Your sales money will be sent here, and MoonStore cannot recover money sent to the wrong account.
+          
+          Use a bank account in your own name, exactly as it appears on your NIN. Business or someone else's accounts will be rejected.
+
         </p>
 
         {success ? <p className={styles.success}>{success}</p> : null}

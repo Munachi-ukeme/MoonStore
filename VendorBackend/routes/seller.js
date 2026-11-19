@@ -7,7 +7,7 @@ const { protect } = require("../middleware/authmiddleware")
 const payoutLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 5,
-    message: { message: "Too many attempts. Please wait a few minutes and try again." },
+    message: { message: "Too many attempts. Please wait for 15 minutes and try again." },
 })
 
 router.get("/me", protect, getMe)

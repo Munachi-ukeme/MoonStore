@@ -21,7 +21,6 @@ const generateSlug = (businessName) => {
 // POST /api/auth/request-signup-confirmation
 const requestSignupConfirmation = async (req, res) => {
   try {
-
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ message: errors.array()[0].msg });
@@ -29,12 +28,16 @@ const requestSignupConfirmation = async (req, res) => {
 
     const { businessName, email, password, whatsappNumber, howHeardAboutUs, howHeardAboutUsOther } = req.body;
 
-    if (typeof businessName !== "string" || typeof email !== "string" || typeof password !== "string" || typeof whatsappNumber !== "string") {
-            return res.status(400).json({ message: "Invalid details" });
-        }
-        
+    if (
+      typeof businessName !== "string" ||
+      typeof email !== "string" ||
+      typeof password !== "string" ||
+      typeof whatsappNumber !== "string"
+    ) {
+      return res.status(400).json({ message: "Invalid details" });
+    }
 
-   if (!businessName || !email || !password || !whatsappNumber || !howHeardAboutUs) {
+    if (!businessName || !email || !password || !whatsappNumber || !howHeardAboutUs) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -72,7 +75,8 @@ const requestSignupConfirmation = async (req, res) => {
 
     res.status(200).json({ message: "Confirmation email sent" });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Request signup error:", error.message);
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 };
 
@@ -82,7 +86,7 @@ const verifySignupToken = async (req, res) => {
   try {
     const { token } = req.query;
 
-    if (!token) {
+    if (typeof token !== "string" || !token) {
       return res.status(400).json({ message: "Missing token" });
     }
 
@@ -109,7 +113,8 @@ const verifySignupToken = async (req, res) => {
       howHeardAboutUsOther: decoded.howHeardAboutUsOther,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Verify signup token error:", error.message);
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 };
 
@@ -124,7 +129,7 @@ const registerSeller = async (req, res) => {
 
     const { signupToken, identifier, dateOfBirth, consent, bankDetails } = req.body;
 
-    if (!signupToken) {
+    if (typeof signupToken !== "string" || !signupToken) {
       return res.status(400).json({
         message: "Email confirmation is required before completing registration.",
       });
@@ -292,7 +297,7 @@ const registerSeller = async (req, res) => {
     });
     const payoutData = payoutResult.data && payoutResult.data.data;
 
-     if (
+    if (
       payoutResult.ok &&
       payoutData &&
       payoutData.id &&
@@ -306,13 +311,17 @@ const registerSeller = async (req, res) => {
       payoutDone = true;
     }
 
-        let payoutNotice = "";
+    let payoutNotice = "";
 
     if (!payoutDone) {
       console.error("Signup payout setup failed:", payoutResult.status, JSON.stringify(payoutResult.data));
 
+      const failCode = payoutResult.data && payoutResult.data.detail && payoutResult.data.detail.code;
+
       if (payoutResult.status === 409) {
         payoutNotice = "This bank account is already linked to another MoonStore store. Use a different account or contact MoonStore support.";
+      } else if (payoutResult.status === 422 && failCode === "account_name_mismatch") {
+        payoutNotice = "The account name does not match the name on your NIN. Use a bank account in your own name.";
       }
     }
 
@@ -338,7 +347,8 @@ const registerSeller = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error("Register seller error:", error.message);
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 };
 
@@ -352,6 +362,10 @@ const loginSeller = async (req, res) => {
     }
 
     const { email, password } = req.body;
+
+    if (typeof email !== "string" || typeof password !== "string") {
+      return res.status(400).json({ error: "Invalid email or password" });
+    }
 
     const seller = await Seller.findOne({ email });
     if (!seller) {
@@ -391,7 +405,8 @@ const loginSeller = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Login error:", error.message);
+    res.status(500).json({ error: "Something went wrong. Please try again." });
   }
 };
 

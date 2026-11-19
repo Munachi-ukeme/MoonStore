@@ -414,6 +414,9 @@ const SignupPage = () => {
                 </div>
 
                 <div className={styles.field}>
+                    <p className={styles.hint}>
+  Use a bank account in your own name, exactly as it appears on your NIN. Business or someone else's accounts will be rejected.
+</p>
                     <label className={styles.label}>Select Bank</label>
                     {banksLoading ? (
                         <p className={styles.hint}>Loading banks...</p>
@@ -434,7 +437,9 @@ const SignupPage = () => {
                 </div>
 
                 <div className={styles.field}>
+                    
                     <label className={styles.label}>Account Number</label>
+                    
                     <input
                         className={styles.input}
                         type="text"

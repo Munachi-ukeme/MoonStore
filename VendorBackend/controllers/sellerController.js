@@ -198,6 +198,17 @@ const retryPayoutSetup = async (req, res) => {
         }
 
         if (
+            payoutResult.status === 422 &&
+            payoutResult.data &&
+            payoutResult.data.detail &&
+            payoutResult.data.detail.code === "account_name_mismatch"
+        ) {
+            return res.status(422).json({
+                message: "The account name does not match the name on your NIN. Use a bank account in your own name.",
+            });
+        }
+
+        if (
             !payoutResult.ok ||
             !payoutData ||
             !payoutData.id ||
@@ -275,6 +286,17 @@ const changeBankAccount = async (req, res) => {
         if (payoutResult.status === 409) {
             return res.status(409).json({
                 message: "This bank account is already linked to another MoonStore store. Use a different account or contact MoonStore support.",
+            });
+        }
+
+        if (
+            payoutResult.status === 422 &&
+            payoutResult.data &&
+            payoutResult.data.detail &&
+            payoutResult.data.detail.code === "account_name_mismatch"
+        ) {
+            return res.status(422).json({
+                message: "The account name does not match the name on your NIN. Use a bank account in your own name.",
             });
         }
 
