@@ -216,8 +216,9 @@ const retryPayoutSetup = async (req, res) => {
         await seller.save();
 
         res.json({ message: "Payout setup complete" });
-    } catch (err) {
-        res.status(500).json({ message: err.message });
+        } catch (err) {
+        console.error("Bank account error:", err.message);
+        res.status(500).json({ message: "Something went wrong. Please try again." });
     }
 };
 
@@ -304,8 +305,9 @@ const changeBankAccount = async (req, res) => {
         const updated = await Seller.findById(seller._id).select("-password");
 
         res.json({ message: "Payout setup complete", seller: updated });
-    } catch (err) {
-        res.status(500).json({ message: err.message });
+        } catch (err) {
+        console.error("Bank account error:", err.message);
+        res.status(500).json({ message: "Something went wrong. Please try again." });
     }
 };
 
