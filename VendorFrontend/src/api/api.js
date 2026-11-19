@@ -1006,6 +1006,21 @@ export const retryPayoutSetup = async () => {
   }
 };
 
+export const changeBankAccount = async (accountNumber, bankCode, bankName) => {
+  try {
+    const res = await fetchWithTimeout(`${BASE_URL}/seller/bank-account`, {
+      method: "PUT",
+      headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+      body: JSON.stringify({ accountNumber, bankCode, bankName }),
+    });
+    const json = await res.json();
+    if (!res.ok) return { error: json.message || "Could not change bank account." };
+    return json;
+  } catch (err) {
+    return { error: err.message || "Could not change bank account." };
+  }
+};
+
 
 export const refreshPaymentDetails = async (conversationId, sessionId) => {
   try {

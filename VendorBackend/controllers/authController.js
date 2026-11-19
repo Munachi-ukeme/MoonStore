@@ -306,9 +306,16 @@ const registerSeller = async (req, res) => {
       payoutDone = true;
     }
 
+        let payoutNotice = "";
+
     if (!payoutDone) {
       console.error("Signup payout setup failed:", payoutResult.status, JSON.stringify(payoutResult.data));
+
+      if (payoutResult.status === 409) {
+        payoutNotice = "This bank account is already linked to another MoonStore store. Use a different account or contact MoonStore support.";
+      }
     }
+
     const token = jwt.sign({ id: seller._id }, process.env.JWT_SECRET, {
       expiresIn: "30d",
     });
@@ -316,7 +323,7 @@ const registerSeller = async (req, res) => {
     res.status(201).json({
       message: payoutDone
         ? "Seller registered successfully"
-        : "Seller registered. Payout setup still needs to be finished from Settings.",
+        : payoutNotice || "Seller registered. Payout setup still needs to be finished from Settings.",
       token,
       seller: {
         id: seller._id,

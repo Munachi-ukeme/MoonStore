@@ -5,7 +5,7 @@ const ExitSurvey = require("../models/ExitSurvey");
 const bcrypt = require("bcryptjs");
 const Conversation = require("../models/Conversation");
 const Message = require("../models/Message");
-const { createPayoutAccount } = require("../utils/escrowpay");
+const { createPayoutAccount, resolveBankAccount } = require("../utils/escrowpay");
 
 // CHANGE PASSWORD
 // PUT /api/seller/change-password
@@ -159,7 +159,6 @@ const updateDeliveryOptions = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
-
 const retryPayoutSetup = async (req, res) => {
     try {
         const seller = await Seller.findById(req.seller._id);
@@ -192,14 +191,20 @@ const retryPayoutSetup = async (req, res) => {
         });
         const payoutData = payoutResult.data && payoutResult.data.data;
 
-                if (
+        if (payoutResult.status === 409) {
+            return res.status(409).json({
+                message: "This bank account is already linked to another MoonStore store. Change your bank account, or contact MoonStore support.",
+            });
+        }
+
+        if (
             !payoutResult.ok ||
             !payoutData ||
             !payoutData.id ||
             payoutData.status !== "verified" ||
             payoutData.payout_eligible !== true
         ) {
-          console.error("Payout setup failed:", payoutResult.status, JSON.stringify(payoutResult.data));
+            console.error("Payout setup failed:", payoutResult.status, JSON.stringify(payoutResult.data));
             return res.status(500).json({
                 message: "We couldn't set up your payout account right now. Please try again shortly.",
             });
@@ -216,4 +221,92 @@ const retryPayoutSetup = async (req, res) => {
     }
 };
 
-module.exports = { deleteSeller, changePassword, getMe, updateDeliveryOptions, retryPayoutSetup }
+// CHANGE BANK ACCOUNT — only while payout setup is not finished
+// PUT /api/seller/bank-account
+const changeBankAccount = async (req, res) => {
+    try {
+        const { accountNumber, bankCode, bankName } = req.body;
+
+        if (typeof accountNumber !== "string" || !/^\d{10}$/.test(accountNumber)) {
+            return res.status(400).json({ message: "Enter a valid 10-digit account number" });
+        }
+
+        if (typeof bankCode !== "string" || !bankCode.trim() || bankCode.length > 10) {
+            return res.status(400).json({ message: "Select a bank" });
+        }
+
+        const seller = await Seller.findById(req.seller._id);
+
+        if (!seller) {
+            return res.status(404).json({ message: "Seller not found" });
+        }
+
+        if (seller.onboardingStatus === "completed") {
+            return res.status(400).json({
+                message: "Your payout account is already set up. To change it, contact MoonStore support.",
+            });
+        }
+
+        if (!seller.escrowPayMerchantRef) {
+            return res.status(400).json({
+                message: "Your identity verification was not completed. Please contact MoonStore support.",
+            });
+        }
+
+        const resolved = await resolveBankAccount({ bankCode: bankCode.trim(), accountNumber });
+        const resolvedData = resolved.data && resolved.data.data;
+
+        if (!resolved.ok || !resolvedData || resolvedData.status !== "verified") {
+            return res.status(400).json({
+                message: "Bank account could not be verified. Check the account number and bank.",
+            });
+        }
+
+        const payoutResult = await createPayoutAccount({
+            ownerType: "party",
+            ownerId: seller.escrowPayMerchantRef,
+            bankCode: bankCode.trim(),
+            accountNumber,
+            isDefault: true,
+        });
+        const payoutData = payoutResult.data && payoutResult.data.data;
+
+        if (payoutResult.status === 409) {
+            return res.status(409).json({
+                message: "This bank account is already linked to another MoonStore store. Use a different account or contact MoonStore support.",
+            });
+        }
+
+        if (
+            !payoutResult.ok ||
+            !payoutData ||
+            !payoutData.id ||
+            payoutData.status !== "verified" ||
+            payoutData.payout_eligible !== true
+        ) {
+            console.error("Change bank failed:", payoutResult.status, JSON.stringify(payoutResult.data));
+            return res.status(500).json({
+                message: "We couldn't set up this bank account right now. Please try again shortly.",
+            });
+        }
+
+        seller.bankDetails = {
+            accountNumber,
+            bankCode: bankCode.trim(),
+            bankName: typeof bankName === "string" ? bankName.slice(0, 80) : "",
+            accountName: resolvedData.account_name,
+        };
+        seller.payoutAccountId = payoutData.id;
+        seller.onboardingStatus = "completed";
+        seller.subaccountVerified = true;
+        await seller.save();
+
+        const updated = await Seller.findById(seller._id).select("-password");
+
+        res.json({ message: "Payout setup complete", seller: updated });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+module.exports = { deleteSeller, changePassword, getMe, updateDeliveryOptions, retryPayoutSetup, changeBankAccount }

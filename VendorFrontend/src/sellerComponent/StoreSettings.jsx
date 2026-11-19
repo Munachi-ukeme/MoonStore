@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { updateStoreSettings, deleteSellerAccount, updateDeliveryOptions, retryPayoutSetup } from "../api/api";
+import { updateStoreSettings, deleteSellerAccount, updateDeliveryOptions, retryPayoutSetup, getBanks, verifyAccount, changeBankAccount } from "../api/api";
 import ChangePassword from "../sellerComponent/ChangePassword";
 import styles from "./StoreSettings.module.css";
 import InstallAppButton from "../sellerComponent/InstallAppButton";
@@ -25,7 +25,15 @@ const StoreSettings = () => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [payoutMessage, setPayoutMessage] = useState("");
-
+    // Change bank account
+  const [banks, setBanks] = useState([]);
+  const [bankLoading, setBankLoading] = useState(false);
+  const [bankCode, setBankCode] = useState("");
+  const [bankName, setBankName] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [resolvedName, setResolvedName] = useState("");
+  const [resolving, setResolving] = useState(false);
+  const [bankSaving, setBankSaving] = useState(false);
     // Delivery options
   const [deliveryZones, setDeliveryZones] = useState([]);
   const [deliveryLoading, setDeliveryLoading] = useState(false);
@@ -58,6 +66,45 @@ const StoreSettings = () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
   }, []);
+
+    useEffect(() => {
+    if (activeSection !== "bank" || banks.length > 0) return;
+
+    const loadBanks = async () => {
+      setBankLoading(true);
+      const result = await getBanks();
+      if (!result.error && result.banks) {
+        setBanks(
+          result.banks.filter(
+            (bank, index, self) => self.findIndex((b) => b.code === bank.code) === index
+          )
+        );
+      }
+      setBankLoading(false);
+    };
+
+    loadBanks();
+  }, [activeSection]);
+
+  useEffect(() => {
+    if (accountNumber.length === 10 && bankCode) {
+      const resolve = async () => {
+        setResolving(true);
+        setResolvedName("");
+        const result = await verifyAccount(accountNumber, bankCode);
+        if (result.error) {
+          setError("Account not found. Check the number and selected bank.");
+        } else {
+          setError(null);
+          setResolvedName(result.accountName);
+        }
+        setResolving(false);
+      };
+      resolve();
+    } else {
+      setResolvedName("");
+    }
+  }, [accountNumber, bankCode]);
 
   const clearMessages = () => {
     setError(null);
@@ -171,6 +218,44 @@ const handleSaveDelivery = async () => {
   }, 1500);
 };
 
+  const handleBankSelect = (e) => {
+    const selected = banks.find((b) => b.code === e.target.value);
+    setBankCode(selected ? selected.code : "");
+    setBankName(selected ? selected.name : "");
+  };
+
+  const handleSaveBank = async () => {
+    clearMessages();
+
+    if (!bankCode) {
+      setError("Please select a bank.");
+      return;
+    }
+
+    if (accountNumber.length !== 10) {
+      setError("Enter a valid 10-digit account number.");
+      return;
+    }
+
+    if (!resolvedName) {
+      setError("Account name could not be resolved. Check your details.");
+      return;
+    }
+
+    setBankSaving(true);
+    const data = await changeBankAccount(accountNumber, bankCode, bankName);
+    setBankSaving(false);
+
+    if (data?.error) {
+      setError(data.error);
+      return;
+    }
+
+    updateSeller(data.seller);
+    setSuccess("Payout setup complete. You can now add products.");
+    timerRef.current = setTimeout(() => window.location.reload(), 1500);
+  };
+
   const handleDeleteAccount = async () => {
     if (reason.trim().length < 10) {
       setReasonError("Please provide a reason (at least 10 characters).");
@@ -213,6 +298,19 @@ const handleSaveDelivery = async () => {
                 <div>
                   <p className={styles.menuTitle}>Finish payout setup</p>
                   <p className={styles.menuSub}>Your store can't take orders until this is done</p>
+                </div>
+              </div>
+              <span className={styles.chevron}>›</span>
+            </div>
+          ) : null}
+
+            {seller?.onboardingStatus === "pending" ? (
+            <div className={styles.menuItem} onClick={() => setActiveSection("bank")}>
+              <div className={styles.menuLeft}>
+                <span className={styles.menuIcon}>💳</span>
+                <div>
+                  <p className={styles.menuTitle}>Change bank account</p>
+                  <p className={styles.menuSub}>Use a different account for payouts</p>
                 </div>
               </div>
               <span className={styles.chevron}>›</span>
@@ -427,6 +525,63 @@ const handleSaveDelivery = async () => {
 
           <button className={styles.saveBtn} onClick={handleSaveDelivery} disabled={deliveryLoading}>
             {deliveryLoading ? "Saving..." : "Save Delivery Options"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+
+    // Change Bank Account Section
+  if (activeSection === "bank") {
+    return (
+      <div className={styles.container}>
+        <div className={styles.sectionHeader}>
+          <button className={styles.backBtn} onClick={goBack}>←</button>
+          <h2 className={styles.sectionTitle}>Change Bank Account</h2>
+        </div>
+
+        <p className={styles.hint}>
+          Double-check this is the correct account. Your sales money will be sent here, and MoonStore cannot recover money sent to the wrong account.
+        </p>
+
+        {success ? <p className={styles.success}>{success}</p> : null}
+        {error ? <p className={styles.error}>{error}</p> : null}
+
+        <div className={styles.form}>
+          <div className={styles.field}>
+            <label className={styles.label}>Select Bank</label>
+            {bankLoading ? (
+              <p className={styles.hint}>Loading banks...</p>
+            ) : (
+              <select className={styles.input} value={bankCode} onChange={handleBankSelect}>
+                <option value="">-- Select your bank --</option>
+                {banks.map((bank) => (
+                  <option key={bank.code} value={bank.code}>
+                    {bank.name}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          <div className={styles.field}>
+            <label className={styles.label}>Account Number</label>
+            <input
+              className={styles.input}
+              type="text"
+              inputMode="numeric"
+              maxLength={10}
+              value={accountNumber}
+              onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, ""))}
+              placeholder="10-digit account number"
+            />
+            {resolving ? <p className={styles.hint}>Verifying account...</p> : null}
+            {resolvedName && !resolving ? <p className={styles.success}>✓ {resolvedName}</p> : null}
+          </div>
+
+          <button className={styles.saveBtn} onClick={handleSaveBank} disabled={bankSaving}>
+            {bankSaving ? "Setting up..." : "Save and finish payout setup"}
           </button>
         </div>
       </div>
