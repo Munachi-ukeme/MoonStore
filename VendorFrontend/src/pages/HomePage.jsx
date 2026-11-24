@@ -36,7 +36,7 @@ const HomePage = () => {
                 setError(result.error);
             } else {
                 setInfoMessage(result?.message || "If an order is linked to this email, a login link will be sent.");
-                setTimeout(() => setInfoMessage(""), 8000);
+                setTimeout(() => setInfoMessage(""), 3000);
             }
         } catch {
             setError("We couldn't send your login link. Please try again.");
@@ -203,6 +203,7 @@ const HomePage = () => {
     setEmail(event.target.value);
     setError("");
     setInfoMessage("");
+    setEmail("");
 }}
                     />
                     {error ? <p className={styles.formError}>{error}</p> : null}
