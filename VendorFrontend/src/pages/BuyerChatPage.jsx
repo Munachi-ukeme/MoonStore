@@ -84,7 +84,6 @@ const BuyerChatPage = () => {
     const [paymentError, setPaymentError] = useState("");
     const [confirmSent, setConfirmSent] = useState(false);
     const [confirmLoading, setConfirmLoading] = useState(false);
-    const [confirmError, setConfirmError] = useState("");
    const [disputeCategory, setDisputeCategory] = useState("");
     const [disputeError, setDisputeError] = useState("");
     const [riderCalledAnswer, setRiderCalledAnswer] = useState("");
@@ -96,8 +95,9 @@ const BuyerChatPage = () => {
     const [ninValue, setNinValue] = useState("");
     const [consentChecked, setConsentChecked] = useState(false);
     const [verifySubmitting, setVerifySubmitting] = useState(false);
-    const [verifyError, setVerifyError] = useState("");
+    
     const [verifiedNow, setVerifiedNow] = useState(false);
+    const [popupMessage, setPopupMessage] = useState("");
 
     // ── delivery PIN confirmation state ──
     const [showPinModal, setShowPinModal] = useState(false);
@@ -407,45 +407,44 @@ const BuyerChatPage = () => {
     };
 
     // ── identity verification submit ──
-      const handleVerifySubmit = async () => {
-        if (!/^\d{11}$/.test(ninValue.trim())) {
-            setVerifyError("Enter your 11-digit NIN.");
-            return;
-        }
-        if (!dobValue) {
-            setVerifyError("Enter your date of birth.");
-            return;
-        }
-        if (!consentChecked) {
-            setVerifyError("You must agree to continue.");
-            return;
-        }
+     const handleVerifySubmit = async () => {
+    if (!/^\d{11}$/.test(ninValue.trim())) {
+        setPopupMessage("Enter your 11-digit NIN.");
+        return;
+    }
+    if (!dobValue) {
+        setPopupMessage("Enter your date of birth.");
+        return;
+    }
+    if (!consentChecked) {
+        setPopupMessage("Tick the box to agree before you continue.");
+        return;
+    }
 
-        setVerifySubmitting(true);
-        setVerifyError("");
+    setVerifySubmitting(true);
 
-        try {
-            const data = await verifyBuyerIdentity(conversationId, sessionId, {
-                identifier: ninValue.trim(),
-                dateOfBirth: dobValue,
-                consent: true,
-            });
+    try {
+        const data = await verifyBuyerIdentity(conversationId, sessionId, {
+            identifier: ninValue.trim(),
+            dateOfBirth: dobValue,
+            consent: true,
+        });
 
-            if (data?.error) {
-                setVerifyError(data.error);
-                setVerifySubmitting(false);
-                return;
-            }
-
-            setNinValue("");
-            setVerifiedNow(true);
+        if (data?.error) {
+            setPopupMessage(data.error);
             setVerifySubmitting(false);
-        } catch (err) {
-            console.error("Verify error:", err);
-            setVerifyError("Something went wrong. Please try again.");
-            setVerifySubmitting(false);
+            return;
         }
-    }; 
+
+        setNinValue("");
+        setVerifiedNow(true);
+        setVerifySubmitting(false);
+    } catch (err) {
+        console.error("Verify error:", err);
+        setPopupMessage("Something went wrong. Please try again.");
+        setVerifySubmitting(false);
+    }
+};
 
     // ── delivery PIN confirm submit ──
     const handleConfirmDelivery = async () => {
@@ -494,37 +493,36 @@ const BuyerChatPage = () => {
     };
 
     
-    const handleRequestConfirmLink = async () => {
-        setConfirmLoading(true);
-        setConfirmError("");
+   const handleRequestConfirmLink = async () => {
+    setConfirmLoading(true);
 
-        const data = await requestConfirmLink(conversationId, sessionId);
+    const data = await requestConfirmLink(conversationId, sessionId);
 
+    setConfirmLoading(false);
+
+    if (data?.error) {
+        setPopupMessage(data.error);
+        return;
+    }
+
+    setConfirmSent(true);
+    setPopupMessage("We sent a link to your email. Open the email, tap the link, then come back to this chat.");
+};
+
+const handleContinuePayment = async () => {
+    setConfirmLoading(true);
+
+    const data = await continuePayment(conversationId, sessionId);
+
+    if (data?.error) {
+        setPopupMessage(data.error);
         setConfirmLoading(false);
+        return;
+    }
 
-        if (data?.error) {
-            setConfirmError(data.error);
-            return;
-        }
-
-        setConfirmSent(true);
-    };
-
-    const handleContinuePayment = async () => {
-        setConfirmLoading(true);
-        setConfirmError("");
-
-        const data = await continuePayment(conversationId, sessionId);
-
-        if (data?.error) {
-            setConfirmError(data.error);
-            setConfirmLoading(false);
-            return;
-        }
-
-        await refreshConversation();
-        setConfirmLoading(false);
-    };
+    await refreshConversation();
+    setConfirmLoading(false);
+};
 
     const renderMessageContent = (content, msgId) => {
         if (!content) return null;
@@ -592,59 +590,57 @@ const BuyerChatPage = () => {
         navigator.clipboard.writeText(accountNumber);
     };
 
+    const renderConfirmCard = (msgId, introText) => {
+    if (conversation?.escrowTransactionId) {
+        return (
+            <div key={msgId} className={styles.systemMessage}>
+                <p className={styles.verifySuccess}>✅ Email confirmed</p>
+            </div>
+        );
+    }
+
+    if (conversation?.sessionTrusted) {
+        return (
+            <div key={msgId} className={styles.systemMessage}>
+                <p>Your email is confirmed on this device.</p>
+                <button
+                    className={styles.copyAccountBtn}
+                    onClick={handleContinuePayment}
+                    disabled={confirmLoading}
+                >
+                    {confirmLoading ? "Getting payment details..." : "Continue to payment"}
+                </button>
+            </div>
+        );
+    }
+
+    return (
+        <div key={msgId} className={styles.systemMessage}>
+            <p>{introText}</p>
+            {confirmSent ? (
+                <p className={styles.verifySuccess}>Link sent. Open it from your email, then come back here.</p>
+            ) : (
+                <button
+                    className={styles.copyAccountBtn}
+                    onClick={handleRequestConfirmLink}
+                    disabled={confirmLoading}
+                >
+                    {confirmLoading ? "Sending..." : "Email me a link"}
+                </button>
+            )}
+        </div>
+    );
+};
+
+
     const renderMessage = (msg) => {
         if (msg.sender === "system") {
 
-                        const isConfirmPrompt = msg.content.includes("[confirm]");
-            if (isConfirmPrompt) {
-                const textMatch = msg.content.match(/\[confirm\]([\s\S]*?)\[\/confirm\]/);
-                const promptText = textMatch ? textMatch[1] : "";
-
-                if (conversation?.escrowTransactionId) {
-                    return (
-                        <div key={msg._id} className={styles.systemMessage}>
-                            <p className={styles.verifySuccess}>✅ Email confirmed</p>
-                        </div>
-                    );
-                }
-
-                if (conversation?.sessionTrusted) {
-                    return (
-                        <div key={msg._id} className={styles.systemMessage}>
-                            <p>Your email is confirmed on this device.</p>
-                            {confirmError ? <p className={styles.verifyError}>{confirmError}</p> : null}
-                            <button
-                                className={styles.copyAccountBtn}
-                                onClick={handleContinuePayment}
-                                disabled={confirmLoading}
-                            >
-                                {confirmLoading ? "Getting payment details..." : "Continue to payment"}
-                            </button>
-                        </div>
-                    );
-                }
-
-                return (
-                    <div key={msg._id} className={styles.systemMessage}>
-                        <p>{promptText}</p>
-                        {confirmError ? <p className={styles.verifyError}>{confirmError}</p> : null}
-                        {confirmSent ? (
-                            <p className={styles.verifySuccess}>
-                                Link sent. Open it from your email, then come back here.
-                            </p>
-                        ) : (
-                            <button
-                                className={styles.copyAccountBtn}
-                                onClick={handleRequestConfirmLink}
-                                disabled={confirmLoading}
-                            >
-                                {confirmLoading ? "Sending..." : "Email me a link"}
-                            </button>
-                        )}
-                    </div>
-                );
-            }
-
+const isConfirmPrompt = msg.content.includes("[confirm]");
+if (isConfirmPrompt) {
+    const textMatch = msg.content.match(/\[confirm\]([\s\S]*?)\[\/confirm\]/);
+    return renderConfirmCard(msg._id, textMatch ? textMatch[1] : "");
+}
             // ── identity verification prompt ──
             const isVerifyPrompt = msg.content.includes("[verify]");
             if (isVerifyPrompt) {
@@ -659,6 +655,13 @@ const BuyerChatPage = () => {
                         </div>
                     );
                 }
+
+                if (conversation?.buyerVerified) {
+    return renderConfirmCard(
+        msg._id,
+        "Your identity is already verified from an earlier order. Confirm your email and we will take you to payment."
+    );
+}
 
                 return (
                     <div key={msg._id} className={styles.systemMessage}>
@@ -689,7 +692,7 @@ const BuyerChatPage = () => {
                                 />
                                 <span>I agree that EscrowPay, a third party, verifies my identity, and that my payment is held by a licensed bank.</span>
                             </label>
-                            {verifyError ? <p className={styles.verifyError}>{verifyError}</p> : null}
+                            
                             <button
                                 className={styles.verifySubmitBtn}
                                 onClick={handleVerifySubmit}
@@ -1135,6 +1138,20 @@ const BuyerChatPage = () => {
                     />
                 </div>
             ) : null}
+
+            {popupMessage ? (
+    <div className={styles.modalOverlay}>
+        <div className={styles.modal}>
+            <p>{popupMessage}</p>
+            <div className={styles.modalActions}>
+                <button className={styles.submitBtn} onClick={() => setPopupMessage("")}>
+                    OK
+                </button>
+            </div>
+        </div>
+    </div>
+) : null}
+
         </div>
     );
 };

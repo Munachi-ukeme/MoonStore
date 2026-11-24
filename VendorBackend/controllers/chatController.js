@@ -492,6 +492,12 @@ const getMessages = async (req, res) => {
         const conversationForBuyer = removeInternalFields(conversation.toObject());
         conversationForBuyer.sessionTrusted = isSessionTrusted(buyerRecord, conversation.buyerSessionId);
 
+    conversationForBuyer.buyerVerified = !!(
+    buyerRecord &&
+    buyerRecord.identityVerificationStatus === "verified" &&
+    buyerRecord.escrowPayPartyId
+);
+
         res.json({ conversation: conversationForBuyer, messages });
 
     } catch (err) {

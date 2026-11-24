@@ -142,7 +142,7 @@ const HomePage = () => {
                     <article className={styles.benefitCard}>
                         <div className={styles.benefitIcon}>▤</div>
                         <h3>Keep orders together</h3>
-                        <p>Customers can browse, order and chat with you through your MoonStore store.</p>
+                        <p>Customers can browse, order, chat with you and pay through your MoonStore store.</p>
                     </article>
                 </div>
             </section>
