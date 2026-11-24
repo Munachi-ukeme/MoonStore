@@ -11,6 +11,7 @@ import {
     raiseDisputeSeller,
     cancelDisputeSeller,
     BASE_URL,
+    getSellerToken,
 } from "../api/api";
 import styles from "./SellerChatThreadPage.module.css";
 import CancelOrderModal from "../sellerComponent/CancelOrderModal";
@@ -111,31 +112,50 @@ const [disputeSent, setDisputeSent] = useState(false);
         fetchThread();
     }, [fetchThread]);
 
-    useEffect(() => {
-    const SOCKET_URL = BASE_URL.replace(/\/api$/, "");
+        const refreshThread = useCallback(async () => {
+        const data = await getSellerChatMessages(conversationId);
+        if (!data.error) {
+            setMessages(data.messages);
+            setConversation(data.conversation);
+        }
+    }, [conversationId]);
 
-    socketRef.current = io(SOCKET_URL, {
-        transports: ["websocket"],
-    });
+    
+        useEffect(() => {
+        const SOCKET_URL = BASE_URL.replace(/\/api$/, "");
+        const socket = io(SOCKET_URL, { transports: ["websocket"] });
+        socketRef.current = socket;
 
-    socketRef.current.emit("join_conversation", conversationId);
+        let connectedBefore = false;
 
-    socketRef.current.on("new_message", (incomingMessage) => {
-        setMessages((prev) => {
-            const alreadyExists = prev.some((m) => m._id === incomingMessage._id);
-            if (alreadyExists) return prev;
-            return [...prev, incomingMessage];
+        socket.on("connect", () => {
+            socket.emit("join_conversation", { conversationId, token: getSellerToken() });
+            if (connectedBefore) refreshThread();
+            connectedBefore = true;
         });
-    });
 
-    return () => {
-        socketRef.current.disconnect();
-    };
-}, [conversationId]);
+        socket.on("new_message", (incomingMessage) => {
+            setMessages((prev) => {
+                const alreadyExists = prev.some((m) => m._id === incomingMessage._id);
+                if (alreadyExists) return prev;
+                return [...prev, incomingMessage];
+            });
+        });
+
+        return () => {
+            socket.disconnect();
+        };
+    }, [conversationId, refreshThread]);
+
+
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
+
+    const addMessageOnce = (newMessage) => {
+    setMessages((prev) => (prev.some((m) => m._id === newMessage._id) ? prev : [...prev, newMessage]));
+};
 
     const handleSendAll = async () => {
         const typedText = input.trim();
@@ -194,7 +214,7 @@ const [disputeSent, setDisputeSent] = useState(false);
 
             if (!safeMessage.content) safeMessage.content = finalPayload;
 
-            setMessages((prev) => [...prev, safeMessage]);
+            addMessageOnce(safeMessage);
             
             // Clear inputs upon successful send
             setInput("");
@@ -305,7 +325,7 @@ const [disputeSent, setDisputeSent] = useState(false);
 };
 
     const renderMessageContent = (content, msgId) => {
-        if (!content) return <span key={`${msgId}-empty`} style={{ display: "none" }} />;
+       if (!content) return null;
 
         let decodedContent = content;
         try {
@@ -348,11 +368,7 @@ const [disputeSent, setDisputeSent] = useState(false);
 
     const renderMessage = (msg) => {
         if (msg.sender === "system") {
-            const isPaymentLink = msg.content.includes("https://");
-            if (isPaymentLink) {
-                const urlMatch = msg.content.match(/https:\/\/\S+/);
-                const url = urlMatch ? urlMatch[0] : null;
-            }
+           
             return (
                 <div key={msg._id} className={styles.systemMessage}>
                     {renderMessageContent(msg.content, msg._id)}

@@ -36,6 +36,7 @@ const HomePage = () => {
                 setError(result.error);
             } else {
                 setInfoMessage(result?.message || "If an order is linked to this email, a login link will be sent.");
+                setTimeout(() => setInfoMessage(""), 8000);
             }
         } catch {
             setError("We couldn't send your login link. Please try again.");
@@ -198,10 +199,14 @@ const HomePage = () => {
                         autoComplete="email"
                         placeholder="you@example.com"
                         value={email}
-                        onChange={(event) => setEmail(event.target.value)}
+                        onChange={(event) => {
+    setEmail(event.target.value);
+    setError("");
+    setInfoMessage("");
+}}
                     />
-                    {error && <p className={styles.formError}>{error}</p>}
-                    {infoMessage && <p className={styles.formInfo}>{infoMessage}</p>}
+                    {error ? <p className={styles.formError}>{error}</p> : null}
+{infoMessage ? <p className={styles.formInfo}>{infoMessage}</p> : null}
                     <button className={styles.primaryButton} type="submit" disabled={loading}>
                         {loading ? "Sending..." : "Email me a login link →"}
                     </button>

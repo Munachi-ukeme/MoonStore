@@ -139,33 +139,39 @@ const BuyerChatPage = () => {
         fetchMessages();
     }, [fetchMessages]);
 
-    useEffect(() => {
-    socketRef.current = io(SOCKET_URL, {
-        transports: ["websocket"],
-    });
+       useEffect(() => {
+        const socket = io(SOCKET_URL, { transports: ["websocket"] });
+        socketRef.current = socket;
 
+        let connectedBefore = false;
 
-    socketRef.current.emit("join_conversation", conversationId);
-
-        socketRef.current.on("new_message", (incomingMessage) => {
-        setMessages((prev) => {
-            const alreadyExists = prev.some((m) => m._id === incomingMessage._id);
-            if (alreadyExists) return prev;
-            return [...prev, incomingMessage];
+        socket.on("connect", () => {
+            socket.emit("join_conversation", { conversationId, sessionId });
+            if (connectedBefore) refreshConversation();
+            connectedBefore = true;
         });
 
-        if (incomingMessage.sender === "system") {
-            refreshConversation();
-        }
-    });
+        socket.on("new_message", (incomingMessage) => {
+            setMessages((prev) => {
+                const alreadyExists = prev.some((m) => m._id === incomingMessage._id);
+                if (alreadyExists) return prev;
+                return [...prev, incomingMessage];
+            });
 
-    socketRef.current.on("conversation_paid", () => {
-        refreshConversation();
-    });
-    return () => {
-        socketRef.current.disconnect();
-    };
-}, [conversationId]);
+            if (incomingMessage.sender === "system") {
+                refreshConversation();
+            }
+        });
+
+        socket.on("conversation_paid", () => {
+            refreshConversation();
+        });
+
+        return () => {
+            socket.disconnect();
+        };
+    }, [conversationId, sessionId, refreshConversation]);
+
 
  useEffect(() => {
         const onFocus = () => {
@@ -185,6 +191,11 @@ const BuyerChatPage = () => {
         const timer = setInterval(() => setNow(Date.now()), 15000);
         return () => clearInterval(timer);
     }, []);
+    
+    const addMessageOnce = (newMessage) => {
+    setMessages((prev) => (prev.some((m) => m._id === newMessage._id) ? prev : [...prev, newMessage]));
+};
+
 
     const handleSendImage = async () => {
         if (!pendingImage) return;
@@ -226,7 +237,7 @@ const BuyerChatPage = () => {
 
             if (!safeMessage.content) safeMessage.content = wrapped;
 
-            setMessages((prev) => [...prev, safeMessage]);
+            addMessageOnce(safeMessage);
             setImagePreview(null);
             setPendingImage(null);
 
@@ -274,7 +285,7 @@ const BuyerChatPage = () => {
                 safeMessage.content = typedText;
             }
 
-            setMessages((prev) => [...prev, safeMessage]);
+            addMessageOnce(safeMessage);
             setInput("");
 
         } catch (err) {

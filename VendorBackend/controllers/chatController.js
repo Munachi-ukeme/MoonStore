@@ -372,7 +372,7 @@ const startConversation = async (req, res) => {
             orderLines += line + "\n";
         });
 
-        let orderMessage = `New Order Request\n\n${orderLines}\nSubtotal: ₦${totalAmount.toLocaleString()}`;
+        let orderMessage = `New Order Request\n\n${orderLines}\nItems total: ₦${totalAmount.toLocaleString()}`;
 
                 if (validatedZone) {
             orderMessage += `\nDelivery (${validatedZone.label}): ₦${deliveryFee.toLocaleString()}`;

@@ -15,8 +15,8 @@ const ProductPage = () => {
     const [store, setStore] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [selectedColors, setSelectedColors] = useState([]);
-    const [selectedSizes, setSelectedSizes] = useState([]);
+    const [selectedColor, setSelectedColor] = useState("");
+    const [selectedSize, setSelectedSize] = useState("");
     const [quantity, setQuantity] = useState(1);
     const [currentImage, setCurrentImage] = useState(0);
     const [copied, setCopied] = useState(false);
@@ -162,21 +162,8 @@ const ProductPage = () => {
         if (quantity > 1) setQuantity((prev) => prev - 1);
     };
 
-    const handleColorSelect = (color) => {
-        if (selectedColors.includes(color)) {
-            setSelectedColors(selectedColors.filter((c) => c !== color));
-        } else {
-            setSelectedColors([...selectedColors, color]);
-        }
-    };
-
-    const handleSizeSelect = (size) => {
-        if (selectedSizes.includes(size)) {
-            setSelectedSizes(selectedSizes.filter((s) => s !== size));
-        } else {
-            setSelectedSizes([...selectedSizes, size]);
-        }
-    };
+  const handleColorSelect = (color) => setSelectedColor(color);
+const handleSizeSelect = (size) => setSelectedSize(size);
 
     const handleCopyLink = () => {
         navigator.clipboard.writeText(window.location.href);
@@ -184,8 +171,18 @@ const ProductPage = () => {
         setTimeout(() => setCopied(false), 2000);
     };
 
+    const getMissingChoice = () => {
+    if (product.colors && product.colors.length > 0 && !selectedColor) return "Please choose a color.";
+    if (product.sizes && product.sizes.length > 0 && !selectedSize) return "Please choose a size.";
+    if (deliveryZones.length > 0 && !selectedZone) return "Please choose a delivery location.";
+    if (!buyerName.trim() || !deliveryAddress.trim() || !deliveryCity.trim() || !deliveryPhone.trim()) {
+        return "Please fill in your delivery details.";
+    }
+    return "";
+};
+
     const handleAddToOrder = () => {
-        if (!product.inStock) return;
+        if (!product.inStock || getMissingChoice()) return;
 
         try {
             const existing = localStorage.getItem(TRAY_KEY(slug));
@@ -215,8 +212,8 @@ const ProductPage = () => {
                 productName: product.name,
                 price: product.price,
                 quantity,
-                colors: selectedColors.length > 0 ? selectedColors : null,
-                sizes: selectedSizes.length > 0 ? selectedSizes : null,
+                colors: selectedColor ? [selectedColor] : null,
+                sizes: selectedSize ? [selectedSize] : null,
                 image: product.images && product.images.length > 0 ? product.images[0] : null,
             });
 
@@ -389,13 +386,13 @@ const ProductPage = () => {
                     {product.colors && product.colors.length > 0 ? (
                         <div className={styles.selectorSection}>
                             <p className={styles.selectorLabel}>Color</p>
-                            <p className={styles.deliveryHint}>You can pick more than one colors</p>
+                            <p className={styles.deliveryHint}>Pick one color</p>
                             <div className={styles.options}>
                                 {product.colors.map((color) => (
                                     <button
                                         key={color}
                                         className={
-                                            selectedColors.includes(color)
+                                            selectedColor === color
                                                 ? `${styles.optionBtn} ${styles.activeOption}`
                                                 : styles.optionBtn
                                         }
@@ -411,13 +408,13 @@ const ProductPage = () => {
                     {product.sizes && product.sizes.length > 0 ? (
                         <div className={styles.selectorSection}>
                             <p className={styles.selectorLabel}>Size</p>
-                            <p className={styles.deliveryHint}>You can pick more than one sizes</p>
+                            <p className={styles.deliveryHint}>Pick one size</p>
                             <div className={styles.options}>
                                 {product.sizes.map((size) => (
                                     <button
                                         key={size}
                                         className={
-                                            selectedSizes.includes(size)
+                                            selectedSize === size
                                                 ? `${styles.optionBtn} ${styles.activeOption}`
                                                 : styles.optionBtn
                                         }
@@ -432,7 +429,7 @@ const ProductPage = () => {
 
                     <div className={styles.deliverySection}>
                         <p className={styles.selectorLabel}>Delivery Details</p>
-                        <p className={styles.deliveryHint}>Optional — fill in if you want delivery</p>
+                        <p className={styles.deliveryHint}>Required — choose where we should deliver</p>
 
                         {deliveryZones.length > 0 ? (
                             <div className={styles.zonePicker}>
@@ -519,13 +516,15 @@ const ProductPage = () => {
                         {selectedZone ? <span className={styles.deliveryLine}> (incl. ₦{deliveryFee.toLocaleString()} delivery)</span> : null}
                     </p>
 
-                    <button
-                        className={addedToTray ? `${styles.orderBtn} ${styles.addedBtn}` : styles.orderBtn}
-                        onClick={handleAddToOrder}
-                        disabled={!product.inStock || addedToTray}
-                    >
-                        {addedToTray ? "✓ Added!" : "Add to Cart"}
-                    </button>
+                    {getMissingChoice() ? <p className={styles.deliveryHint}>{getMissingChoice()}</p> : null}
+
+<button
+    className={addedToTray ? `${styles.orderBtn} ${styles.addedBtn}` : styles.orderBtn}
+    onClick={handleAddToOrder}
+    disabled={!product.inStock || addedToTray || getMissingChoice() !== ""}
+>
+    {addedToTray ? "✓ Added!" : "Add to Cart"}
+</button>
 
                     <button className={styles.copyBtn} onClick={handleCopyLink}>
                         {copied ? "✓ Link Copied!" : "Copy Product Link"}

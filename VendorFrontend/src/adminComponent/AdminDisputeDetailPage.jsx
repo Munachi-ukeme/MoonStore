@@ -1,12 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams } from "react-router-dom";
-import { io } from "socket.io-client";
 import {
     getDisputeDetailAdmin,
     sendAdminDisputeMessage,
     resolveDisputeAdmin,
     notifyDisputePartiesAdmin,
-    BASE_URL,
 } from "../api/api";
 import styles from "./AdminDisputeDetailPage.module.css";
 
@@ -53,9 +51,7 @@ const AdminDisputeDetailPage = () => {
     const [resolveError, setResolveError] = useState("");
     const [resolved, setResolved] = useState(false);
 
-    const socketRef = useRef(null);
     const bottomRef = useRef(null);
-    const SOCKET_URL = BASE_URL.replace(/\/api$/, "");
 
     const loadDispute = useCallback(async () => {
         setError("");
@@ -74,20 +70,15 @@ const AdminDisputeDetailPage = () => {
         loadDispute();
     }, [loadDispute]);
 
+    // reload when the admin comes back to this tab, instead of keeping a live connection open
     useEffect(() => {
-        socketRef.current = io(SOCKET_URL, { transports: ["websocket"] });
-        socketRef.current.emit("join_conversation", conversationId);
+        const onFocus = () => {
+            loadDispute();
+        };
 
-        socketRef.current.on("new_message", (incomingMessage) => {
-            setMessages((prev) => {
-                const exists = prev.some((m) => m._id === incomingMessage._id);
-                if (exists) return prev;
-                return [...prev, incomingMessage];
-            });
-        });
-
-        return () => socketRef.current.disconnect();
-    }, [conversationId, SOCKET_URL]);
+        window.addEventListener("focus", onFocus);
+        return () => window.removeEventListener("focus", onFocus);
+    }, [loadDispute]);
 
     useEffect(() => {
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -106,6 +97,7 @@ const AdminDisputeDetailPage = () => {
             setSendError(data.error);
         } else {
             setInput("");
+            await loadDispute();
         }
         setSending(false);
     };
@@ -216,6 +208,9 @@ const AdminDisputeDetailPage = () => {
 
                 <div className={styles.chatPanel}>
                     <h2 className={styles.panelTitle}>Dispute Chat</h2>
+                    <button className={styles.notifyBtn} onClick={loadDispute}>
+                        Refresh messages
+                    </button>
                     <p className={styles.disputeReason}>Reason: {conversation.dispute?.reason}</p>
 
                     <div className={styles.messages}>

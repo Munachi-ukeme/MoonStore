@@ -17,6 +17,8 @@ const getAdminHeaders = () => {
   return adminToken ? { "admin-key": adminToken } : {};
 };
 
+export const getSellerToken = () => localStorage.getItem("token") || "";
+
 // Core Fetch Wrapper handling Timeouts & Global 503 Maintenance Mode
 const fetchWithTimeout = async (url, options = {}, timeout = 20000) => {
   const controller = new AbortController();
