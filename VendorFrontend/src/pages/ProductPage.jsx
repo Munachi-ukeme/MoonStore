@@ -516,8 +516,7 @@ const handleSizeSelect = (size) => setSelectedSize(size);
                         {selectedZone ? <span className={styles.deliveryLine}> (incl. ₦{deliveryFee.toLocaleString()} delivery)</span> : null}
                     </p>
 
-                    {getMissingChoice() ? <p className={styles.deliveryHint}>{getMissingChoice()}</p> : null}
-
+                    {getMissingChoice() ? <p className={styles.missingHint}>{getMissingChoice()}</p> : null}
 <button
     className={addedToTray ? `${styles.orderBtn} ${styles.addedBtn}` : styles.orderBtn}
     onClick={handleAddToOrder}

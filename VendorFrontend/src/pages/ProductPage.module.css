@@ -236,8 +236,22 @@
 
 .deliveryHint {
     font-size: 11px;
-    color: red;
+    color: #9ca3af;
     margin: -4px 0 0;
+}
+
+.missingHint {
+    margin: 8px 0 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: #d92d20;
+}
+
+.orderBtn:disabled:not(.addedBtn) {
+    background: #d0d0d0;
+    color: #8a8a8a;
+    border-color: #d0d0d0;
+    cursor: not-allowed;
 }
 
 .deliveryInput {
