@@ -39,8 +39,9 @@ const faqs = [
         answer: "When you mark an order as shipped, MoonStore generates a parcel code and sends it to both you and the buyer in the order chat. Write the code on the package. The buyer checks that it matches the code in their chat and enters it to confirm receipt.",
     },
     {
-        question: "Does MoonStore ask for my NIN or BVN?",
-        answer: "EscrowPay requires identity information for seller payout account setup. Your NIN and date of birth are sent to EscrowPay for verification. MoonStore does not store or log your NIN or date of birth. MoonStore does not request your BVN as part of this process.",
+     question: "Does MoonStore ask for my NIN or BVN?",
+     answer: "Yes. Buyers and sellers are required to provide their NIN and date of birth for identity verification through EscrowPay. For buyers, this helps ensure refunds can be processed to the account used to make the payment. For sellers, it is required for payout account setup. MoonStore does not store or log your NIN or date of birth. MoonStore does not request your BVN as part of this process.",
+
     },
     {
         question: "Do I need technical skills or my own website?",

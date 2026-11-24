@@ -101,7 +101,7 @@ const RefundRules = () => {
             ))}
 
             <p className={styles.footer}>
-                Need help? WhatsApp +2348152905325
+                Need help? WhatsApp +2349126664419
             </p>
         </div>
     );
