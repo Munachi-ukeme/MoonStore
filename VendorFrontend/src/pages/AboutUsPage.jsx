@@ -10,6 +10,7 @@ function AboutUsPage() {
             <button
                 className={styles.backBtn}
                 onClick={() => navigate("/dashboard")}
+                aria-label="Go back"
             >
                 ←
             </button>
@@ -19,14 +20,16 @@ function AboutUsPage() {
 
                 <p className={styles.intro}>
                     MoonStore is a fashion e-commerce platform built to
-                    make buying and selling fashion online easier and
-                    safer. We help fashion vendors sell smarter, reduce
-                    the stress of managing sales, and grow their
-                    businesses online, while giving buyers a safer and
+                    provide a safer way to buy and sell fashion online.
+                    We help fashion vendors showcase their products,
+                    receive orders and payments, and reduce the stress
+                    of managing sales, while giving buyers a safer and
                     easier way to shop for fashion. Through individual
-                    online stores, marketplace discovery, and
-                    escrow-protected payments, we are creating a better
-                    way for vendors and buyers to do business.
+                    vendor stores and escrow-protected payments, we're
+                    making online fashion buying and selling easier.
+                    We're also working on a marketplace where buyers
+                    will be able to discover products from different
+                    MoonStore vendors.
                 </p>
 
                 <div className={styles.section}>
@@ -35,58 +38,61 @@ function AboutUsPage() {
                         A future where African fashion businesses can
                         grow beyond the limits of physical shops and
                         social media, and where people can discover and
-                        buy fashion online without unnecessary fear or
-                        difficulty. We want to make it easier for vendors
-                        to reach customers and build successful
-                        businesses online, while making fashion shopping
-                        safer and more convenient for buyers across
-                        Africa.
+                        buy fashion online with greater confidence.
+                        We want vendors to reach more customers and
+                        build successful businesses online, while
+                        making fashion shopping safer and easier
+                        for buyers across Africa.
                     </p>
                 </div>
 
                 <div className={styles.section}>
                     <h2 className={styles.sectionTitle}>Our Mission</h2>
                     <p className={styles.sectionText}>
-                        To help fashion vendors sell smarter, spend less
-                        time struggling to manage sales, and grow their
+                        To help fashion vendors sell smarter, spend
+                        less time managing sales, and grow their
                         businesses online, while giving buyers a safer
-                        and easier way to discover and purchase fashion
-                        products. We do this through individual vendor
-                        stores, marketplace discovery, and an
-                        escrow-protected payment process designed to
-                        protect both buyers and sellers.
+                        and easier way to shop for fashion. We do this
+                        through individual vendor stores, online
+                        ordering, and an escrow-protected payment
+                        process designed to provide clearer rules
+                        for both buyers and sellers.
                     </p>
                 </div>
 
                 <div className={styles.section}>
                     <h2 className={styles.sectionTitle}>Why We Exist</h2>
+
                     <p className={styles.sectionText}>
                         Selling fashion online should not mean spending
                         the whole day answering the same questions,
                         searching through messages, confirming payments,
-                        and trying to keep track of orders. Vendors have
-                        businesses to run, but managing sales through
-                        scattered conversations can make things harder
-                        than they need to be.
+                        and trying to keep track of orders. Vendors
+                        have businesses to run, but managing sales
+                        through scattered conversations can make
+                        things harder than they need to be.
                     </p>
 
                     <p className={styles.sectionText}>
-                        Buyers also face problems. Someone may love a
-                        product but hesitate to pay because they are
-                        afraid the seller might not deliver. This makes
-                        it harder for genuine vendors to earn the trust
-                        of new customers.
+                        Buyers also face problems. Someone may love
+                        a product but hesitate to pay because they
+                        are afraid the seller might not deliver.
+                        This makes it harder for genuine vendors
+                        to earn the confidence of new customers.
                     </p>
 
                     <p className={styles.sectionText}>
-                        We built MoonStore to help solve these problems.
-                        Vendors can display their products through their
-                        own online stores, receive orders, and reach
-                        potential customers through our marketplace.
-                        Buyers can discover products and shop through a
-                        clearer buying process, with payments protected
-                        by our escrow system and its defined delivery,
-                        payout, and dispute rules.
+                        We built MoonStore to help address these
+                        problems. Vendors can display their products
+                        through their own online stores, receive
+                        orders and payments, and share their product
+                        links with customers. We're also building a
+                        marketplace where buyers can discover fashion
+                        products from different vendors. With our
+                        escrow-protected payment process, buyers and
+                        sellers have defined rules for delivery
+                        confirmation, payment release, and handling
+                        reported issues.
                     </p>
                 </div>
 
@@ -96,12 +102,13 @@ function AboutUsPage() {
                     </h2>
 
                     <p className={styles.sectionText}>
-                        MoonStore is built for fashion vendors who want
-                        a better way to sell and grow their businesses
-                        online. Whether you sell clothes, shoes, bags,
-                        fabrics, hair, or other fashion products, you
-                        can have your own online store to display what
-                        you sell and receive orders from customers.
+                        MoonStore is built for fashion vendors who
+                        want a better and safer way to sell online.
+                        Whether you sell clothes, shoes, bags,
+                        fabrics, hair, or other fashion products,
+                        you can have your own online store to display
+                        what you sell, share your products, and
+                        receive orders from customers.
                     </p>
 
                     <p className={styles.sectionText}>
@@ -114,26 +121,29 @@ function AboutUsPage() {
                     </p>
 
                     <p className={styles.sectionText}>
-                        And because paying an unfamiliar online seller
-                        can be worrying, our escrow-protected payment
-                        process gives buyers and sellers defined rules
-                        for delivery confirmation, payment release,
+                        And because paying an unfamiliar online
+                        seller can be worrying, our escrow-protected
+                        payment process provides defined rules for
+                        delivery confirmation, payment release,
                         and handling reported issues.
                     </p>
                 </div>
 
                 <div className={styles.section}>
-                    <h2 className={styles.sectionTitle}>Meet the Founder</h2>
+                    <h2 className={styles.sectionTitle}>
+                        Meet the Founder
+                    </h2>
 
                     <p className={styles.sectionText}>
-                        Ukeme Munachi Favour is a  Certified Full Stack
-                        Software developer and cybersecurity student
-                        at MIVA Open University based in Lagos, Nigeria. He is
-                        the founder and developer behind MoonStore,
-                        responsible for building the platform and
-                        developing its core features, including vendor
-                        stores, marketplace functionality, real-time
-                        communication, and escrow-protected payments.
+                        Ukeme Munachi Favour is a certified full-stack
+                        software developer and cybersecurity student
+                        at MIVA Open University, based in Lagos,
+                        Nigeria. He is the founder and developer
+                        behind MoonStore, responsible for building
+                        the platform and developing its core features,
+                        including vendor stores, marketplace
+                        functionality, real-time communication,
+                        and escrow-protected payments.
                     </p>
 
                     <p className={styles.sectionText}>
@@ -141,41 +151,45 @@ function AboutUsPage() {
                         recognising the challenges fashion vendors
                         face when selling online. Good products can
                         attract attention, but managing customer
-                        enquiries, receiving payments, and earning the
-                        trust of new buyers can make selling difficult.
-                        He saw an opportunity to build something that
-                        could make that experience better for both
+                        enquiries, receiving payments, and helping
+                        new buyers feel confident about purchasing
+                        can make selling difficult. He saw an
+                        opportunity to build something that could
+                        make that experience better for both
                         vendors and buyers.
                     </p>
 
                     <p className={styles.sectionText}>
-                        MoonStore is part of his commitment to building
-                        technology that solves real problems faced by
-                        African businesses. Starting with fashion,
-                        his goal is to contribute to a future where
-                        more African businesses can use technology to
-                        operate and grow.
+                        MoonStore is part of his commitment to
+                        building technology that solves real problems
+                        faced by African businesses. Starting with
+                        fashion, his goal is to contribute to a
+                        future where more African businesses can
+                        use technology to operate and grow.
                     </p>
                 </div>
 
                 <div className={styles.section}>
-                    <h2 className={styles.sectionTitle}>Our Promise</h2>
+                    <h2 className={styles.sectionTitle}>
+                        Our Promise
+                    </h2>
 
                     <p className={styles.sectionText}>
                         We are committed to making online fashion
-                        commerce easier and safer for everyone using
-                        MoonStore. We want vendors to spend less time
-                        struggling to manage sales and more time
-                        growing their businesses. We want buyers to
-                        discover great products and shop with greater
-                        confidence, knowing that their payments follow
-                        clear protection rules.
+                        buying and selling safer and easier for
+                        everyone using MoonStore. We want vendors
+                        to spend less time struggling to manage
+                        sales and more time running their businesses.
+                        We want buyers to discover great products
+                        and shop with greater confidence, knowing
+                        that their payments follow clear protection
+                        rules.
                     </p>
 
                     <p className={styles.sectionText}>
-                        We are building a platform where vendors can
-                        grow their businesses and buyers can enjoy a
-                        better way to shop for fashion.
+                        We're building a platform where fashion
+                        vendors can sell with less stress and buyers
+                        can enjoy a safer way to shop for fashion.
                     </p>
 
                     <p className={styles.sectionText}>

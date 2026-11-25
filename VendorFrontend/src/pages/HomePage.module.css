@@ -196,6 +196,14 @@
     font-weight: 700;
 }
 
+.problemHighlight {
+    margin-top: 24px;
+    color: var(--purple);
+    font-size: 16px;
+    font-weight: 800;
+    line-height: 1.6;
+}
+
 .noteIcon {
     width: 23px;
     height: 23px;

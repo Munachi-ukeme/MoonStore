@@ -5,9 +5,6 @@ import styles from "./HomePage.module.css";
 import StepsSection from "../sellerComponent/StepsSection";
 import FAQSection from "../sellerComponent/FAQSection";
 import logo from "../assets/logo.png";
-
-// Add these three image files to src/assets, or change the imports to match
-// the filenames you use for your generated images.
 import heroVendor from "../assets/hero.png"
 import vendorProblem from "../assets/vendorproblem.png";
 import buyerParcel from "../assets/buyerparcel.png";
@@ -76,10 +73,10 @@ const HomePage = () => {
                 <div className={styles.heroCopy}>
                     <span className={styles.eyebrow}>FOR AFRICAN FASHION VENDORS</span>
                     <h1>
-                        Run your fashion business with <span>less stress.</span>
+                        A safer way to buy and sell fashion <span>online.</span>
                     </h1>
                     <p>
-                        Give customers an easier way to browse your products, place orders
+                        Give customers a clearer way to browse your products, place orders
                         and pay with greater confidence.
                     </p>
                     <div className={styles.heroActions}>
@@ -115,37 +112,56 @@ const HomePage = () => {
                         <li>Buyers may hesitate because they fear paying and not receiving their items.</li>
                         <li>Keeping track of orders across different messages can become stressful.</li>
                     </ul>
+
+                     <p className={styles.problemHighlight}>
+            Your videos bring the customers. MoonStore turns them into paid orders.
+        </p>
+
                 </div>
             </section>
 
-            <section className={styles.solutionSection}>
-                <div className={styles.sectionIntro}>
-                    <span className={styles.eyebrow}>A BETTER WAY TO SELL</span>
-                    <h2>Give your fashion business a better way to sell.</h2>
-                    <p>
-                        MoonStore gives you your own branded online store and tools to manage
-                        orders, while helping buyers shop with greater confidence.
-                    </p>
-                </div>
+          <section className={styles.solutionSection}>
+    <div className={styles.sectionIntro}>
+        <span className={styles.eyebrow}>A SAFER WAY TO BUY AND SELL</span>
 
-                <div className={styles.benefitGrid}>
-                    <article className={styles.benefitCard}>
-                        <div className={styles.benefitIcon}>▣</div>
-                        <h3>Your own branded store</h3>
-                        <p>Show your products, prices and business details in one place you can share with customers.</p>
-                    </article>
-                    <article className={styles.benefitCard}>
-                        <div className={styles.benefitIcon}>✓</div>
-                        <h3>Escrow-protected payments</h3>
-                        <p>Buyer payments are held through the escrow process and released according to the order rules.</p>
-                    </article>
-                    <article className={styles.benefitCard}>
-                        <div className={styles.benefitIcon}>▤</div>
-                        <h3>Keep orders together</h3>
-                        <p>Customers can browse, order, chat with you and pay through your MoonStore store.</p>
-                    </article>
-                </div>
-            </section>
+        <h2>A safer way to buy and sell fashion online.</h2>
+
+        <p>
+            MoonStore gives vendors a place to showcase their products,
+            receive orders and payments, while giving buyers a clearer
+            way to shop and pay with greater confidence.
+        </p>
+    </div>
+
+    <div className={styles.benefitGrid}>
+        <article className={styles.benefitCard}>
+            <div className={styles.benefitIcon}>▣</div>
+            <h3>Your own branded store</h3>
+            <p>
+                Show your products, prices and business details in one
+                place you can share with customers.
+            </p>
+        </article>
+
+        <article className={styles.benefitCard}>
+            <div className={styles.benefitIcon}>✓</div>
+            <h3>Escrow-protected payments</h3>
+            <p>
+                Buyer payments are held through the escrow process
+                and released according to the order rules.
+            </p>
+        </article>
+
+        <article className={styles.benefitCard}>
+            <div className={styles.benefitIcon}>▤</div>
+            <h3>Keep orders together</h3>
+            <p>
+                Customers can browse, order, chat with you and pay
+                through your MoonStore store.
+            </p>
+        </article>
+    </div>
+</section>
 
             <StepsSection />
 
@@ -220,8 +236,8 @@ const HomePage = () => {
             <section className={styles.finalCta}>
                 <div>
                     <span className={styles.eyebrow}>YOUR BUSINESS CAN SELL WITH LESS STRESS</span>
-                    <h2>Give your fashion business a better way to sell.</h2>
-                    <p>Create your store and give customers a clearer way to shop from you.</p>
+                    <h2>Give customers a safer way to shop from you.</h2>
+                    <p>Set up your store and make it easier for customers to browse, order and pay.</p>
                 </div>
                 <button className={styles.finalCtaButton} onClick={() => navigate("/register")}>
                     Start Selling on MoonStore <span aria-hidden="true">→</span>
