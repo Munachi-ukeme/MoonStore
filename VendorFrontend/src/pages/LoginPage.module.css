@@ -1,94 +1,132 @@
-/* the full page wrapper, centers the card on screen */
 
-*{
+* {
     font-family: sans-serif;
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
-.container{
+
+.container {
     min-height: 100vh;
+    min-height: 100dvh;
     background-color: #f3f0ff;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 20px;
+    padding: 24px 20px;
 }
 
-/* the white card sitting in the middle */
-.card{
+.card {
     background-color: #ffffff;
     border-radius: 16px;
-    padding: 48px 40px;
+    padding: 44px 40px;
     width: 100%;
     max-width: 420px;
     box-shadow: 0 8px 32px rgba(109, 40, 217, 0.12);
 }
 
-/* brand name */
-.title{ 
-    font-size: 28px;
+.title {
+    font-size: clamp(26px, 4vw, 30px);
     font-weight: 800;
     color: #6d28d9;
     letter-spacing: -0.5px;
     text-align: center;
 }
 
-/* tagline below the brandname */
-.subtitle{
-   font-size: 14px; 
-   color: #7c3aed;
-   margin-top: 2px;
-   margin-bottom: 10px;
-   text-align: center;
+.subtitle {
+    font-size: 14px;
+    color: #7c3aed;
+    margin-top: 5px;
+    margin-bottom: 24px;
+    text-align: center;
+    line-height: 1.5;
 }
 
-/* error message */
-.error{
-    color: red;
+.error {
+    color: #b91c1c;
     font-size: 13px;
     background-color: #fef2f2;
     border: 1px solid #fecaca;
     border-radius: 8px;
-    padding: 10px 14px;
-    margin-bottom: 20px;
+    padding: 12px 14px;
+    margin-bottom: 18px;
     text-align: center;
+    line-height: 1.5;
 }
 
-/* wrap each label and input */
-.field{
+.form {
+    width: 100%;
+}
+
+.field {
     display: flex;
     flex-direction: column;
-    margin-bottom: 10px;
+    margin-bottom: 18px;
+    width: 100%;
 }
 
-.label{
+.label {
     font-size: 14px;
     font-weight: 600;
     color: #374151;
-    margin-bottom: 2px;
+    margin-bottom: 7px;
 }
 
-.input{
-    padding: 12px 16px;
-    border: 1.px solid #ddd6fe;
+.input {
+    width: 100%;
+    min-width: 0;
+    padding: 13px 15px;
+    border: 1px solid #ddd6fe;
     border-radius: 8px;
-    font-size: 15px;
+    font-size: 16px;
     color: #1e1b2e;
     background-color: #faf8ff;
     outline: none;
-    transition: border-color 0.2s;
-    font-size: 16px;
+    transition: border-color 0.2s, background-color 0.2s;
 }
 
-/* //input when the seller clicks into input */
-.input:focus{
+.input:focus {
     border-color: #7c3aed;
     background-color: #ffffff;
 }
 
-.button{
+.input::placeholder {
+    color: #9ca3af;
+}
+
+.passwordWrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
     width: 100%;
+}
+
+.passwordWrapper .input {
+    padding-right: 72px;
+}
+
+.eyeBtn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    font-size: 12px;
+    color: #6b7280;
+    cursor: pointer;
+    font-weight: 600;
+    padding: 8px;
+    white-space: nowrap;
+}
+
+.eyeBtn:hover {
+    color: #6d28d9;
+}
+
+.button {
+    width: 100%;
+    min-height: 48px;
     padding: 13px;
     background-color: #7c3aed;
     color: #ffffff;
@@ -98,33 +136,34 @@
     border-radius: 8px;
     cursor: pointer;
     transition: background-color 0.2s;
+    margin-top: 4px;
 }
 
-/* button when hovered */
-.button:hover{
+.button:hover {
     background-color: #6d28d9;
 }
 
-/* button when :disabled during loading */
-.button:disabled{
+.button:disabled {
     background-color: #a78bfa;
     cursor: not-allowed;
 }
 
-.resetPasswordLink{
+.resetPasswordLink,
+.registerLink,
+.buyerLink {
     text-align: center;
     font-size: 13px;
     color: #6b7280;
-    margin: 16px 0 0;
+    line-height: 1.6;
 }
 
-/* login link */
-.registerLink {
-    text-align: center;
-    font-size: 13px;
-    color: #6b7280;
-    margin: 16px 0 0;
-    margin-top: 10px;
+.resetPasswordLink {
+    margin-top: 18px;
+}
+
+.registerLink,
+.buyerLink {
+    margin-top: 12px;
 }
 
 .linkBtn {
@@ -134,44 +173,74 @@
     font-weight: 600;
     font-size: 13px;
     cursor: pointer;
-    padding: 0;
+    padding: 3px;
 }
 
-.buyerLink{
-    text-align: center;
-    font-size: 13px;
-    color: #6b7280;
-    margin: 16px 0 0;
-    margin-top: 10px;
+.linkBtn:hover {
+    color: #4c1d95;
+    text-decoration: underline;
 }
 
-.passwordWrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
+button:focus-visible {
+    outline: 2px solid #7c3aed;
+    outline-offset: 3px;
 }
 
-.passwordWrapper .input {
-    width: 100%;
-    padding-right: 70px;
+/* Tablet */
+@media (max-width: 768px) {
+    .card {
+        max-width: 400px;
+        padding: 40px 32px;
+    }
 }
 
-.eyeBtn {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    font-size: 12px;
-    color: #6b7280;
-    cursor: pointer;
-    font-weight: 600;
-    padding: 4px 8px;
-    white-space: nowrap;
+/* Mobile */
+@media (max-width: 480px) {
+    .container {
+        padding: 20px 16px;
+        align-items: center;
+    }
+
+    .card {
+        padding: 34px 24px;
+        border-radius: 14px;
+    }
+
+    .subtitle {
+        margin-bottom: 22px;
+    }
+
+    .field {
+        margin-bottom: 16px;
+    }
+
+    .input {
+        padding: 13px 14px;
+        font-size: 16px;
+    }
+
+    .button {
+        min-height: 48px;
+    }
 }
 
+/* Very small mobile screens */
+@media (max-width: 350px) {
+    .container {
+        padding: 16px 12px;
+    }
 
-.eyeBtn:hover {
-    color: #6d28d9;
+    .card {
+        padding: 28px 18px;
+    }
+
+    .title {
+        font-size: 25px;
+    }
+
+    .resetPasswordLink,
+    .registerLink,
+    .buyerLink {
+        font-size: 12px;
+    }
 }
