@@ -1,102 +1,95 @@
-import { Link, useNavigate } from "react-router-dom";
+
+import { Link } from "react-router-dom";
 import styles from "./Footer.module.css";
 
 const Footer = ({ store }) => {
-    const navigate = useNavigate();
-
     return (
-        <div className={styles.footer}>
-
-            {/* logo */}
-            {store?.logo ? (
+        <footer className={styles.footer}>
+            {/* Logo */}
+            {store?.logo && (
                 <img
                     src={store.logo}
-                    alt={store?.businessName}
+                    alt={`${store?.businessName || "Store"} logo`}
                     className={styles.logo}
                 />
-            ) : null}
+            )}
 
-            {/* business name */}
-            <h3 className={styles.businessName}>{store?.businessName}</h3>
+            {/* Business name */}
+            {store?.businessName && (
+                <h3 className={styles.businessName}>
+                    {store.businessName}
+                </h3>
+            )}
 
-            {/* tagline */}
-            {store?.tagline ? (
-                <p className={styles.tagline}>{store.tagline}</p>
-            ) : null}
+            {/* Tagline */}
+            {store?.tagline && (
+                <p className={styles.tagline}>
+                    {store.tagline}
+                </p>
+            )}
 
-            {/* divider */}
             <div className={styles.divider} />
 
-            {/* contact */}
+            {/* Contact */}
             <div className={styles.contact}>
-                {store?.whatsappNumber ? (
+                {store?.whatsappNumber && (
                     <a
-                        href={`https://wa.me/${store.whatsappNumber}`}
+                        href={`https://wa.me/${store.whatsappNumber.replace(/\D/g, "")}`}
                         className={styles.contactLink}
                         target="_blank"
-                        rel="noreferrer"
+                        rel="noopener noreferrer"
                     >
                         💬 WhatsApp: {store.whatsappNumber}
                     </a>
-                ) : null}
+                )}
 
-                {store?.phoneNumber ? (
+                {store?.phoneNumber && (
                     <a
                         href={`tel:${store.phoneNumber}`}
                         className={styles.contactLink}
                     >
                         📞 Call: {store.phoneNumber}
                     </a>
-                ) : null}
+                )}
 
-                {store?.address ? (
-                    <p className={styles.address}>📍 {store.address}</p>
-                ) : null}
+                {store?.address && (
+                    <p className={styles.address}>
+                        📍 {store.address}
+                    </p>
+                )}
             </div>
 
-            {/* divider */}
             <div className={styles.divider} />
 
-            {/* legal */}
-            <div className={styles.legal}>
-                <Link
-                    className={styles.legalLink}
-                    to="/aboutus"
-                >
+            {/* Legal links */}
+            <nav className={styles.legal} aria-label="Footer navigation">
+                <Link className={styles.legalLink} to="/aboutus">
                     About Us
                 </Link>
-                <span className={styles.dot}>·</span>
 
-                <Link
-                    className={styles.legalLink}
-                    to="/privacypolicy"
-                >
+                <Link className={styles.legalLink} to="/privacypolicy">
                     Privacy Policy
                 </Link>
-                <span className={styles.dot}>·</span>
-                <Link
-                    className={styles.legalLink}
-                    to="/termsofservice"
-                >
+
+                <Link className={styles.legalLink} to="/termsofservice">
                     Terms of Service
                 </Link>
 
-                <Link
-                    className={styles.legalLink}
-                    to="/acceptableusepolicy"
-                >
+                <Link className={styles.legalLink} to="/acceptableusepolicy">
                     Acceptable Use Policy
                 </Link>
 
-                <Link className={styles.legalLink} to="/refund-rules">Refund Rules</Link>
-            </div>
+                <Link className={styles.legalLink} to="/refund-rules">
+                    Refund Rules
+                </Link>
+            </nav>
 
-            {/* powered by */}
+            {/* Powered by */}
             <p className={styles.poweredBy}>
-                Powered by <span className={styles.moonstore}>MoonStore</span>
+                Powered by{" "}
+                <span className={styles.moonstore}>MoonStore</span>
             </p>
-
-        </div>
+        </footer>
     );
 };
 

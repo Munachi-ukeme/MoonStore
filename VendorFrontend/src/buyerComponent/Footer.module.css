@@ -1,57 +1,74 @@
+
 .footer {
+    width: 100%;
+    box-sizing: border-box;
     background: #0f0a1e;
-    padding: 32px 20px 48px;
+    padding: 36px 24px 40px;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 12px;
     margin-top: 24px;
+    overflow: hidden;
 }
 
 .logo {
-    width: 56px;
-    height: 56px;
+    width: 58px;
+    height: 58px;
     border-radius: 50%;
     object-fit: cover;
     border: 2px solid #6c47ff;
     margin-bottom: 4px;
+    flex-shrink: 0;
 }
 
 .businessName {
-    font-size: 15px;
+    max-width: 100%;
+    font-size: clamp(15px, 2vw, 18px);
     font-weight: 700;
     color: #ffffff;
     text-align: center;
     margin: 0;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
 }
 
 .tagline {
-    font-size: 12px;
+    max-width: 500px;
+    font-size: 13px;
     color: #a78bfa;
     text-align: center;
     margin: 0;
-    line-height: 1.5;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
 }
 
 .divider {
-    width: 40px;
+    width: 48px;
     height: 1px;
     background: #2d1f5e;
-    margin: 8px 0;
+    margin: 10px 0;
+    flex-shrink: 0;
 }
 
 .contact {
+    width: 100%;
+    max-width: 500px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
 }
 
 .contactLink {
+    max-width: 100%;
     font-size: 13px;
     color: #c4b5fd;
     text-decoration: none;
     font-weight: 500;
+    text-align: center;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
 }
 
 .contactLink:hover {
@@ -59,47 +76,130 @@
 }
 
 .address {
+    max-width: 500px;
     font-size: 12px;
     color: #8b7cb3;
     text-align: center;
-    line-height: 1.5;
+    line-height: 1.6;
     margin: 0;
+    overflow-wrap: anywhere;
 }
 
 .legal {
+    width: 100%;
+    max-width: 850px;
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-top: 4px;
+    justify-content: center;
+    flex-wrap: wrap;
+    column-gap: 22px;
+    row-gap: 14px;
+    margin-top: 6px;
 }
 
 .legalLink {
-    font-size: 11px;
-    color: #6b5fa0;
+    font-size: 12px;
+    color: #a394cc;
     background: none;
     border: none;
     cursor: pointer;
-    padding: 0;
+    padding: 4px 0;
     font-weight: 500;
     text-decoration: none;
+    text-align: center;
+    line-height: 1.5;
+    transition: color 0.2s ease;
 }
 
 .legalLink:hover {
-    color: #a78bfa;
-}
-
-.dot {
-    font-size: 11px;
-    color: #4a3f6b;
+    color: #ffffff;
 }
 
 .poweredBy {
-    font-size: 11px;
-    color: #4a3f6b;
-    margin: 4px 0 0 0;
+    font-size: 12px;
+    color: #8b7cb3;
+    text-align: center;
+    margin: 8px 0 0;
 }
 
 .moonstore {
-    color: #6c47ff;
+    color: #a78bfa;
     font-weight: 700;
+}
+
+/* Tablet */
+@media (max-width: 768px) {
+    .footer {
+        padding: 32px 20px 36px;
+    }
+
+    .legal {
+        max-width: 550px;
+        column-gap: 20px;
+        row-gap: 12px;
+    }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+    .footer {
+        padding: 30px 16px 32px;
+        gap: 11px;
+    }
+
+    .logo {
+        width: 54px;
+        height: 54px;
+    }
+
+    .businessName {
+        font-size: 15px;
+    }
+
+    .tagline {
+        font-size: 12px;
+    }
+
+    .contact {
+        gap: 9px;
+    }
+
+    .contactLink {
+        font-size: 12px;
+    }
+
+    .address {
+        font-size: 12px;
+    }
+
+    .legal {
+        max-width: 360px;
+        column-gap: 18px;
+        row-gap: 10px;
+    }
+
+    .legalLink {
+        font-size: 11px;
+    }
+
+    .poweredBy {
+        font-size: 11px;
+    }
+}
+
+/* Very small mobile screens */
+@media (max-width: 350px) {
+    .footer {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .legal {
+        column-gap: 14px;
+        row-gap: 8px;
+    }
+
+    .legalLink {
+        font-size: 10px;
+    }
 }
